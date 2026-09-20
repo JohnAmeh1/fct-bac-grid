@@ -35,6 +35,7 @@ urlpatterns = [
     # ── Admin: Users ───────────────────────────────────────────
     path('management/users/', views.admin_manage_users, name='admin_manage_users'),
     path('management/users/reset-demo-data/', views.admin_reset_demo_data, name='admin_reset_demo_data'),
+    path('management/users/reset-demo-data/progress/<str:progress_key>/', views.admin_reset_demo_data_progress, name='admin_reset_demo_data_progress'),
     path('management/users/<int:user_id>/', views.admin_view_user, name='admin_view_user'),
     path('management/users/<int:user_id>/delete/', views.admin_delete_user, name='admin_delete_user'),
 

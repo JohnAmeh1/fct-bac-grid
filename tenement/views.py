@@ -1263,6 +1263,154 @@ def admin_manage_users(request):
     return render(request, 'admin/manage_users.html', context)
 
 
+def _chunked_delete(queryset, progress_callback=None, label='rows'):
+    """
+    Delete a large queryset in small batches by primary key instead of one
+    `.delete()` call.
+
+    A single `.delete()` on 100k+ rows forces Django's collector to SELECT
+    every related row up front (for cascades and signals) before issuing
+    any DELETE — with a large table and CASCADE-linked children, that alone
+    can run well past a gunicorn worker's timeout, which is what was
+    killing this request (WORKER TIMEOUT -> SIGABRT -> 500). Deleting a
+    bounded batch of primary keys at a time keeps each round trip small,
+    regardless of total table size.
+    """
+    model = queryset.model
+    total = queryset.count()
+    deleted = 0
+    batch_size = 500
+    while True:
+        batch_ids = list(queryset.values_list('pk', flat=True)[:batch_size])
+        if not batch_ids:
+            break
+        model.objects.filter(pk__in=batch_ids).delete()
+        deleted += len(batch_ids)
+        if progress_callback:
+            progress_callback(deleted, total, f'Deleting {label}… ({deleted}/{total})')
+    return deleted
+
+
+def _run_demo_reset_in_background(protected_user_ids, progress_key):
+    """
+    Runs the (potentially very slow, 100k+ row) demo-data wipe off the
+    request thread — see _chunked_delete() for why this can't be a single
+    synchronous `.delete()` call. Progress is written to the cache so the
+    browser can poll `admin_reset_demo_data_progress` for status, mirroring
+    the existing bulk-property-import background job.
+    """
+    cache_key = f'demo_reset_progress:{progress_key}'
+
+    def set_progress(current, total, message):
+        percent = int((current / total) * 100) if total else 100
+        cache.set(cache_key, {
+            'status': 'running',
+            'message': message,
+            'percent': percent,
+            'done': False,
+            'error': '',
+        }, timeout=3600)
+
+    try:
+        property_count = Property.objects.count()
+        _chunked_delete(
+            Property.objects.all(),
+            progress_callback=lambda cur, tot, msg: set_progress(cur, property_count, msg),
+            label='properties',
+        )
+
+        users_qs = User.objects.exclude(id__in=protected_user_ids)
+        user_count = users_qs.count()
+        _chunked_delete(
+            users_qs,
+            progress_callback=lambda cur, tot, msg: set_progress(cur, user_count, msg),
+            label='non-admin accounts',
+        )
+
+        cache.set(cache_key, {
+            'status': 'done',
+            'message': f'Reset complete: {property_count} properties deleted and {user_count} non-admin accounts removed.',
+            'percent': 100,
+            'done': True,
+            'error': '',
+        }, timeout=3600)
+    except Exception as exc:
+        logger.error("Demo data reset failed: %s", exc)
+        cache.set(cache_key, {
+            'status': 'error',
+            'message': 'Reset failed.',
+            'percent': 0,
+            'done': True,
+            'error': str(exc),
+        }, timeout=3600)
+    finally:
+        # Each thread gets its own DB connection; close it explicitly so
+        # long-running background threads don't leak idle connections
+        # against the (remote, connection-limited) Neon database.
+        from django.db import connections
+        connections.close_all()
+
+
+_RESET_PROGRESS_PAGE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Resetting demo data…</title>
+  <style>
+    body {{ font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }}
+    .bar-track {{ background: #e5e7eb; border-radius: 8px; height: 20px; overflow: hidden; margin: 16px 0; }}
+    .bar-fill {{ background: #dc2626; height: 100%; width: 0%; transition: width 0.4s ease; }}
+    .status {{ color: #4b5563; }}
+    .error {{ color: #b91c1c; font-weight: 600; }}
+    .success {{ color: #15803d; font-weight: 600; }}
+    a.button {{ display: inline-block; margin-top: 20px; padding: 10px 18px; background: #111827; color: #fff; text-decoration: none; border-radius: 6px; }}
+  </style>
+</head>
+<body>
+  <h2>Resetting demo data…</h2>
+  <p class="status" id="status-message">Starting reset…</p>
+  <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+  <p id="percent-text">0%</p>
+  <div id="result"></div>
+
+  <script>
+    const progressUrl = "{progress_url}";
+    const doneUrl = "{done_url}";
+
+    async function poll() {{
+      try {{
+        const res = await fetch(progressUrl, {{ cache: "no-store" }});
+        const data = await res.json();
+
+        document.getElementById("status-message").textContent = data.message || "Working…";
+        document.getElementById("bar-fill").style.width = (data.percent || 0) + "%";
+        document.getElementById("percent-text").textContent = (data.percent || 0) + "%";
+
+        if (data.done) {{
+          const resultEl = document.getElementById("result");
+          if (data.status === "error") {{
+            resultEl.innerHTML = '<p class="error">Reset failed: ' + (data.error || "unknown error") + '</p>' +
+              '<a class="button" href="' + doneUrl + '">Back to user management</a>';
+          }} else {{
+            resultEl.innerHTML = '<p class="success">' + (data.message || "Reset complete.") + '</p>' +
+              '<a class="button" href="' + doneUrl + '">Back to user management</a>';
+          }}
+          return;
+        }}
+        setTimeout(poll, 1500);
+      }} catch (e) {{
+        document.getElementById("status-message").textContent = "Lost connection to progress updates — the reset is still running in the background. Reloading…";
+        setTimeout(() => window.location.reload(), 3000);
+      }}
+    }}
+    poll();
+  </script>
+</body>
+</html>
+"""
+
+
 @staff_member_required
 def admin_reset_demo_data(request):
     profile = request.user.userprofile
@@ -1271,16 +1419,50 @@ def admin_reset_demo_data(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        property_count = Property.objects.count()
         protected_user_ids = list(
             User.objects.filter(userprofile__user_type='admin').values_list('id', flat=True)
         )
 
-        Property.objects.all().delete()
-        User.objects.exclude(id__in=protected_user_ids).delete()
+        progress_key = uuid.uuid4().hex
+        cache.set(f'demo_reset_progress:{progress_key}', {
+            'status': 'running',
+            'message': 'Starting reset…',
+            'percent': 0,
+            'done': False,
+            'error': '',
+        }, timeout=3600)
 
-        messages.success(request, f'Reset complete: {property_count} properties deleted and all non-admin accounts removed.')
+        thread = threading.Thread(
+            target=_run_demo_reset_in_background,
+            args=(protected_user_ids, progress_key),
+            daemon=True,
+        )
+        thread.start()
+
+        progress_url = reverse('admin_reset_demo_data_progress', args=[progress_key])
+        done_url = reverse('admin_manage_users')
+        html = _RESET_PROGRESS_PAGE_TEMPLATE.format(progress_url=progress_url, done_url=done_url)
+        return HttpResponse(html)
+
     return redirect('admin_manage_users')
+
+
+@staff_member_required
+@require_GET
+def admin_reset_demo_data_progress(request, progress_key):
+    profile = request.user.userprofile
+    if profile.user_type != 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    progress_data = cache.get(f'demo_reset_progress:{progress_key}', {})
+    payload = {
+        'status': progress_data.get('status', 'idle'),
+        'message': progress_data.get('message', 'Awaiting reset...'),
+        'percent': progress_data.get('percent', 0),
+        'done': progress_data.get('done', False),
+        'error': progress_data.get('error', ''),
+    }
+    return JsonResponse(payload)
 
 
 @staff_member_required
