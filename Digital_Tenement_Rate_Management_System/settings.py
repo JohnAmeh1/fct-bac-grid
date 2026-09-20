@@ -121,7 +121,7 @@ CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
 
 PAYSTACK_SECRET_KEY = 'sk_test_17f3c3ed7cf5147fba18be087cf1a4192dfd67fe'
 PAYSTACK_PUBLIC_KEY = 'pk_test_fdeb97ce15dc119e28cc589fcb24fac669b14f81'
-PAYSTACK_CALLBACK_URL = 'http://yourdomain.com/payments/verify/'
+PAYSTACK_CALLBACK_URL = 'http://www.bacgrid.com/payments/verify/'
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
