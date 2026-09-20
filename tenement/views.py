@@ -1111,12 +1111,13 @@ def admin_manage_users(request):
     users_page_range = get_paginator_page_range(users_page)
 
     context = {
-        'users':           users_page,
-        'page_range':      users_page_range,
-        'total_users':     UserProfile.objects.filter(email_verified=True).count(),
-        'total_landlords': UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
-        'total_admins':    UserProfile.objects.filter(user_type='admin', email_verified=True).count(),
-        'total_staff':     UserProfile.objects.filter(user_type='staff', email_verified=True).count(),
+        'users':            users_page,
+        'page_range':       users_page_range,
+        'total_users':      UserProfile.objects.filter(email_verified=True).count(),
+        'total_landlords':  UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
+        'total_admins':     UserProfile.objects.filter(user_type='admin', email_verified=True).count(),
+        'total_staff':      UserProfile.objects.filter(user_type='staff', email_verified=True).count(),
+        'total_field_staff': UserProfile.objects.filter(user_type='field_staff', email_verified=True).count(),
     }
     return render(request, 'admin/manage_users.html', context)
 

@@ -347,6 +347,13 @@
         <div class="stat-lbl">Staff</div>
       </div>
     </div>
+    <div class="stat-pill c-purple">
+      <div class="stat-ico"><i class="fas fa-person-digging"></i></div>
+      <div>
+        <div class="stat-num">{{ total_field_staff }}</div>
+        <div class="stat-lbl">Field Staff</div>
+      </div>
+    </div>
   </div>
 
   <!-- Layout: sidebar + table -->
@@ -409,6 +416,13 @@
               <span class="fsb-opt-lbl">Staff</span>
             </div>
             <span class="fcnt adm">{{ total_staff }}</span>
+          </label>
+          <label class="fsb-opt">
+            <div class="fsb-opt-l">
+              <input type="radio" name="user_type" value="field_staff" {% if request.GET.user_type == 'field_staff' %}checked{% endif %}>
+              <span class="fsb-opt-lbl">Field Staff</span>
+            </div>
+            <span class="fcnt adm">{{ total_field_staff }}</span>
           </label>
         </div>
 
