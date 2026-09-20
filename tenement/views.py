@@ -56,8 +56,33 @@ from reportlab.platypus import Table, TableStyle
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
+
+# Bulk-imported property/landlord accounts (see generate_dummy_property_credentials)
+# get an auto-generated placeholder address on this fake domain. It's syntactically
+# well-formed, but Paystack's own validation rejects it — which is what was causing
+# "Could not connect to payment gateway" for those accounts.
+PLACEHOLDER_EMAIL_DOMAIN = '@bwariproperty.local'
+
+
+def _user_has_payable_email(user):
+    """
+    True only if user.email is present, well-formed, and not one of our own
+    internal placeholder addresses. Used as a pre-flight check before ever
+    calling Paystack, so we can send the person to fix their profile with a
+    clear message instead of a cryptic gateway failure.
+    """
+    email = (user.email or '').strip()
+    if not email or email.lower().endswith(PLACEHOLDER_EMAIL_DOMAIN):
+        return False
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False
+    return True
 
 PAYSTACK_TIMEOUT = 15  # seconds — prevents the view from hanging indefinitely
 
@@ -102,6 +127,21 @@ def _paystack_request(method, url, **kwargs):
             url, response.status_code, response.text[:1000]
         )
     return response, None
+
+
+def _paystack_error_mentions_email(response):
+    """
+    True if a non-200 Paystack response is specifically complaining about
+    the email field (e.g. "\"email\" must be a valid email"). Used as a
+    safety net alongside _user_has_payable_email(): that pre-flight check
+    catches known-bad addresses before we ever call Paystack, this catches
+    anything it missed by reading Paystack's own verdict.
+    """
+    try:
+        body = response.json()
+    except ValueError:
+        return False
+    return 'email' in str(body.get('message', '')).lower()
 
 # Helper: email sending
 from django.core.mail import send_mail
@@ -2031,6 +2071,14 @@ def initiate_payment(request, property_id, rate_id):
             messages.info(request, "This payment has already been made.")
             return redirect('landlord_payments')
 
+    if not _user_has_payable_email(request.user):
+        messages.error(
+            request,
+            "Please add a valid email address to your profile before making a payment — "
+            "our payment provider requires one to process the transaction."
+        )
+        return redirect('profile')
+
     reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
     payment = Payment.objects.create(
         landlord=request.user,
@@ -2067,6 +2115,15 @@ def initiate_payment(request, property_id, rate_id):
             return redirect(resp_data['data']['authorization_url'])
         else:
             messages.error(request, f"Payment initialization failed: {resp_data.get('message', 'Unknown error')}")
+    elif _paystack_error_mentions_email(response):
+        payment.status = 'failed'
+        payment.save()
+        messages.error(
+            request,
+            "We couldn't process this payment because the email address on your profile "
+            "isn't valid. Please update it to a real email address and try again."
+        )
+        return redirect('profile')
     else:
         messages.error(request, "Could not connect to payment gateway. Please try again later.")
 
@@ -2270,6 +2327,11 @@ def get_paystack_access_code(request, property_id, rate_id):
     if Payment.objects.filter(landlord=request.user, property=property_obj, payment_rate=rate, status='success').exists():
         return JsonResponse({'error': 'Already paid'}, status=400)
 
+    if not _user_has_payable_email(request.user):
+        return JsonResponse({
+            'error': 'Please add a valid email address to your profile before making a payment.'
+        }, status=400)
+
     reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
     payment = Payment.objects.create(
         landlord=request.user,
@@ -2313,6 +2375,12 @@ def get_paystack_access_code(request, property_id, rate_id):
             payment.status = 'failed'
             payment.save()
             return JsonResponse({'error': resp_data.get('message', 'Initialization failed')}, status=400)
+    elif _paystack_error_mentions_email(response):
+        payment.status = 'failed'
+        payment.save()
+        return JsonResponse({
+            'error': "Please update your profile with a real, valid email address before making a payment."
+        }, status=400)
     else:
         payment.status = 'failed'
         payment.save()
