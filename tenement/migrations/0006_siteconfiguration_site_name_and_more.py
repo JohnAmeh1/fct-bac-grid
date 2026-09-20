@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='siteconfiguration',
             name='site_name',
-            field=models.CharField(default='Bwari Tenement System', max_length=100),
+            field=models.CharField(default='FCT BAC Grid', max_length=100),
         ),
         migrations.AlterField(
             model_name='userprofile',

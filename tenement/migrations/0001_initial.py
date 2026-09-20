@@ -120,7 +120,7 @@ class Migration(migrations.Migration):
             name='SiteConfiguration',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('site_name', models.CharField(default='Bwari Tenement System', max_length=100)),
+                ('site_name', models.CharField(default='FCT BAC Grid', max_length=100)),
                 ('site_tagline', models.CharField(blank=True, default='Managing tenement rates efficiently', max_length=255)),
                 ('welcome_message', models.TextField(blank=True, default='', help_text='Message shown on the dashboard welcome banner.')),
                 ('contact_email', models.EmailField(blank=True, default='', max_length=254)),

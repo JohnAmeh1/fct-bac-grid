@@ -147,7 +147,7 @@ def _paystack_error_mentions_email(response):
 from django.core.mail import send_mail
 
 def send_otp_email(user, otp_code):
-    subject = 'Email Verification – Bwari Tenement System'
+    subject = 'Email Verification – FCT BAC Grid'
     message = (
         f"Hello {user.first_name or user.username},\n\n"
         f"Your verification code is:\n\n"
@@ -623,7 +623,7 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
 
 
 def send_forgot_password_email(user, otp_code):
-    subject = 'Password Reset – Bwari Tenement System'
+    subject = 'Password Reset – FCT BAC Grid'
     message = (
         f"Hello {user.first_name or user.username},\n\n"
         f"We received a request to reset your password.\n\n"
@@ -828,7 +828,7 @@ def verify_email(request):
             if user_otp.verify(code):
                 profile.email_verified = True
                 profile.save(update_fields=['email_verified'])
-                messages.success(request, 'Email verified! Welcome to the Bwari Tenement System.')
+                messages.success(request, 'Email verified! Welcome to the FCT BAC Grid.')
                 return redirect('dashboard')
             else:
                 messages.error(request, 'Invalid code. Please try again.')
@@ -1708,7 +1708,7 @@ def admin_export_users(request):
     # Title row
     ws.merge_cells('A1:K1')
     title_cell = ws['A1']
-    title_cell.value = "Bwari Tenement System — User Directory"
+    title_cell.value = "FCT BAC Grid — User Directory"
     title_cell.font  = title_font
     title_cell.alignment = Alignment(horizontal="center", vertical="center")
     ws.row_dimensions[1].height = 30
@@ -2404,7 +2404,7 @@ def download_receipt_pdf(request, payment_id):
         naira_symbol = 'NGN '
 
     p.setFont(title_font, 20)
-    p.drawString(50, height - 50, "Bwari Tenement System")
+    p.drawString(50, height - 50, "FCT BAC Grid")
     p.setFont(body_font, 12)
     p.drawString(50, height - 70, "Official Payment Receipt")
     p.line(50, height - 80, width - 50, height - 80)
