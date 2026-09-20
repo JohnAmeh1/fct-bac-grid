@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sanitation Payment | Bwari Tenement System{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ===== Design System (mirrored from manage_complaints.html) ===== */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;
+    --border:#e5e7eb;--border-2:#d1d5db;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;--accent-dk:#1558c8;
+    --green:#16a34a;--green-dim:#dcfce7;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --teal:#0d9488;--teal-dim:#ccfbf1;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.07);--shadow-md:0 8px 24px rgba(0,0,0,.09);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:1200px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .fade{animation:fadein .35s ease both;}.fade-1{animation-delay:.05s;}
+
+  /* Header */
+  .pg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px;flex-wrap:wrap;}
+  .pg-header-left{display:flex;align-items:center;gap:14px;}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);transition:all var(--transition);flex-shrink:0;}
+  .back-btn:hover{background:var(--surface-3);color:var(--ink);}
+  .pg-title{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin:0;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+
+  /* Stats */
+  .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+  @media(max-width:640px){.stats-grid{grid-template-columns:1fr;}}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);}
+  .stat-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:6px;}
+  .stat-val{font-size:2rem;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-1px;}
+
+  /* Section labels */
+  .section-label{font-size:1rem;font-weight:700;margin:24px 0 16px;color:var(--ink);letter-spacing:-.2px;}
+
+  /* Table card */
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:24px;}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.845rem;}
+  thead th{background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:12px 18px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td{padding:14px 18px;vertical-align:middle;color:var(--ink-2);}
+
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:700;}
+  .chip.green{background:var(--green-dim);color:var(--green);}
+  .chip.blue{background:var(--accent-dim);color:var(--accent);}
+  .chip.amber{background:var(--amber-dim);color:var(--amber);}
+  .chip.red{background:var(--red-dim);color:var(--red);}
+  .chip.purple{background:var(--purple-dim);color:var(--purple);}
+  .chip.teal{background:var(--teal-dim);color:var(--teal);}
+
+  .btn-pay{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);text-decoration:none;transition:background var(--transition);}
+  .btn-pay:hover{background:var(--accent-dk);}
+  .btn-outline-sm{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);text-decoration:none;border:1px solid var(--border);color:var(--ink-2);background:var(--surface);transition:all var(--transition);}
+  .btn-outline-sm:hover{background:var(--surface-3);color:var(--ink);}
+
+  .empty-state{text-align:center;padding:40px 24px;color:var(--ink-4);font-size:.9rem;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="pg-wrap">
+
+  <div class="pg-header fade">
+    <div class="pg-header-left">
+      <a href="{% url 'dashboard' %}" class="back-btn"><i class="fas fa-chevron-left"></i> Dashboard</a>
+      <div>
+        <h1 class="pg-title">Environmental Sanitation Levy</h1>
+        <p class="pg-sub">Monthly sanitation fee – all residents must pay</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid fade">
+    <div class="stat-card">
+      <div class="stat-label">Pending Levy</div>
+      <div class="stat-val">{{ obligations|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Successful Payments</div>
+      <div class="stat-val">{{ successful_payments_count|default:"0" }}</div>
+    </div>
+  </div>
+
+  <!-- Pending Payments -->
+  <div class="section-label fade fade-1">Pending Sanitation Bill</div>
+  {% if obligations %}
+  <div class="table-card fade fade-1">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Rate</th>
+            <th>Amount</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in obligations %}
+          <tr>
+            <td>{{ item.rate.name }}</td>
+            <td>₦{{ item.amount }}</td>
+            <td>
+              <a href="{% url 'initiate_payment' 0 item.rate.id %}" class="btn-pay"><i class="fas fa-credit-card"></i> Pay Now</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state fade fade-1"><i class="fas fa-check-circle"></i> No pending sanitation bill — you're all paid up!</div>
+  {% endif %}
+
+  <!-- Active Coverage -->
+  {% if paid_coverage %}
+  <div class="section-label fade fade-1">Active Levy Coverage</div>
+  <div class="table-card fade fade-1">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Rate</th>
+            <th>Paid On</th>
+            <th>Expires On</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in paid_coverage %}
+          <tr>
+            <td>{{ item.rate.name }}</td>
+            <td>{{ item.payment.paid_at|date:"M d, Y" }}</td>
+            <td>{{ item.payment.expires_at|date:"M d, Y" }}</td>
+            <td><span class="chip green">Active</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Payment History -->
+  <div class="section-label fade fade-1">Levy Payment History</div>
+  <div class="table-card fade fade-1">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Rate</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in payments %}
+          <tr>
+            <td>{{ payment.created_at|date:"M d, Y" }}</td>
+            <td>{{ payment.payment_rate.name|default:"—" }}</td>
+            <td>₦{{ payment.amount }}</td>
+            <td>
+              {% if payment.status == 'success' %}
+                <span class="chip green">Paid</span>
+              {% else %}
+                <span class="chip amber">Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if payment.status == 'success' %}
+                <a href="{% url 'payment_receipt' payment.id %}" class="btn-outline-sm">View</a>
+                <a href="{% url 'download_receipt_pdf' payment.id %}" class="btn-outline-sm">PDF</a>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="empty-state">No levy payments yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

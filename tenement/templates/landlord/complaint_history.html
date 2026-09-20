@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Reports | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;
+    --border:#e5e7eb;--border-2:#d1d5db;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;--accent-dk:#1558c8;
+    --green:#16a34a;--green-dim:#dcfce7;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --teal:#0d9488;--teal-dim:#ccfbf1;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.07);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+
+  .pg-wrap{
+    font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface-2);
+    min-height:100vh;padding:40px 32px 64px;max-width:900px;margin:0 auto;
+  }
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+
+  .pg-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px;}
+  .pg-header h1{font-size:1.5rem;font-weight:700;margin:0 0 6px;letter-spacing:-.4px;}
+  .pg-header p{font-size:.85rem;color:var(--ink-3);margin:0;}
+
+  .btn-primary{
+    background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;
+    font-size:.85rem;font-weight:600;padding:10px 22px;border-radius:var(--radius-sm);
+    border:none;cursor:pointer;text-decoration:none;
+    display:inline-flex;align-items:center;gap:8px;transition:background var(--transition);
+  }
+  .btn-primary:hover{background:var(--accent-dk);}
+
+  /* complaint card */
+  .complaint-list{display:flex;flex-direction:column;gap:12px;}
+  .complaint-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);
+    padding:20px 24px;display:flex;flex-direction:column;gap:10px;
+    transition:box-shadow var(--transition);
+  }
+  .complaint-card:hover{box-shadow:var(--shadow);}
+
+  .cc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .cc-subject{font-size:.95rem;font-weight:700;color:var(--ink);margin:0 0 4px;}
+  .cc-meta{font-size:.75rem;color:var(--ink-4);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .cc-meta span{display:inline-flex;align-items:center;gap:4px;}
+
+  .cc-desc{font-size:.845rem;color:var(--ink-2);line-height:1.6;margin:0;}
+
+  .chip{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:600;
+    white-space:nowrap;
+  }
+  .chip.open        {background:var(--red-dim);   color:var(--red);}
+  .chip.in_progress {background:var(--amber-dim); color:var(--amber);}
+  .chip.resolved    {background:var(--green-dim); color:var(--green);}
+  .chip.closed      {background:var(--surface-3); color:var(--ink-3);}
+
+  .cat-chip{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:2px 9px;border-radius:99px;font-size:.7rem;font-weight:500;
+    background:var(--accent-dim);color:var(--accent);
+  }
+
+  .cc-notes{
+    background:var(--amber-dim);border:1px solid #fde68a;
+    border-radius:var(--radius-sm);padding:10px 14px;
+    font-size:.82rem;color:#92400e;display:flex;gap:8px;align-items:flex-start;
+  }
+  .cc-notes i{flex-shrink:0;margin-top:2px;}
+
+  /* empty state */
+  .empty-state{
+    text-align:center;padding:64px 20px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);
+  }
+  .empty-state i{font-size:2.5rem;color:var(--ink-4);opacity:.4;margin-bottom:14px;}
+  .empty-state h3{font-size:1rem;font-weight:600;margin:0 0 8px;}
+  .empty-state p{font-size:.845rem;color:var(--ink-3);margin:0 0 20px;}
+</style>
+
+<div class="pg-wrap">
+
+  <div class="pg-header">
+    <div>
+      <h1><i class="fas fa-list-check" style="color:var(--teal);margin-right:8px;"></i>My Reports</h1>
+      <p>Track the status of complaints and reports you've submitted.</p>
+    </div>
+    <a href="{% url 'submit_complaint' %}" class="btn-primary">
+      <i class="fas fa-plus"></i> New Report
+    </a>
+  </div>
+
+  {% if complaints %}
+    <div class="complaint-list">
+      {% for c in complaints %}
+      <div class="complaint-card">
+        <div class="cc-top">
+          <div>
+            <p class="cc-subject">{{ c.subject }}</p>
+            <div class="cc-meta">
+              <span><i class="fas fa-clock"></i> {{ c.created_at|date:"j M Y, g:i A" }}</span>
+              {% if c.updated_at != c.created_at %}
+              <span><i class="fas fa-pen"></i> Updated {{ c.updated_at|date:"j M Y" }}</span>
+              {% endif %}
+              <span class="cat-chip"><i class="fas fa-tag"></i> {{ c.get_category_display }}</span>
+            </div>
+          </div>
+          <span class="chip {{ c.status }}">
+            {% if c.status == 'open' %}<i class="fas fa-circle-dot"></i>
+            {% elif c.status == 'in_progress' %}<i class="fas fa-spinner"></i>
+            {% elif c.status == 'resolved' %}<i class="fas fa-circle-check"></i>
+            {% elif c.status == 'closed' %}<i class="fas fa-circle-xmark"></i>
+            {% endif %}
+            {{ c.get_status_display }}
+          </span>
+        </div>
+
+        <p class="cc-desc">{{ c.description|truncatewords:40 }}</p>
+
+        {% if c.admin_notes %}
+        <div class="cc-notes">
+          <i class="fas fa-comment-dots"></i>
+          <div>
+            <strong style="display:block;margin-bottom:3px;">Admin Response:</strong>
+            {{ c.admin_notes }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div><i class="fas fa-flag"></i></div>
+      <h3>No reports submitted yet.</h3>
+      <p>If you have an issue or complaint, use the button below to submit a report.</p>
+      <a href="{% url 'submit_complaint' %}" class="btn-primary" style="display:inline-flex;">
+        <i class="fas fa-plus"></i> Submit a Report
+      </a>
+    </div>
+  {% endif %}
+
+  <div style="margin-top:28px;">
+    <a href="{% url 'dashboard' %}" style="font-size:.845rem;color:var(--ink-3);text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

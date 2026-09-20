@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Payment | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700&display=swap');
+
+  :root {
+    --ink:       #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface:   #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border:    #e5e7eb; --border-2: #d1d5db;
+    --green:     #16a34a; --green-dim:  #dcfce7; --green-dk: #15803d;
+    --red:       #dc2626; --red-dim:    #fee2e2; --red-dk:   #b91c1c;
+    --amber:     #d97706; --amber-dim:  #fef3c7;
+    --blue:      #1e6cf0; --blue-dim:   #dbeafe; --blue-dk:  #1d4ed8;
+    --teal:      #0d9488; --teal-dim:   #ccfbf1;
+    --purple:    #7c3aed; --purple-dim: #ede9fe;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 16px; --radius-xl: 20px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow:    0 4px 12px rgba(0,0,0,.08);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,.1);
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface-2); }
+  @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  .fade   { animation: fadein .35s ease both; }
+  .fade-1 { animation-delay:.05s; } .fade-2 { animation-delay:.1s; } .fade-3 { animation-delay:.15s; }
+
+  /* ── Page shell ─────────────────────────────────────────── */
+  .vp-wrap { max-width: 820px; margin: 0 auto; padding: 44px 24px 80px; }
+
+  /* Back link */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .82rem; font-weight: 600; color: var(--ink-3);
+    text-decoration: none; margin-bottom: 28px;
+    transition: color var(--transition);
+  }
+  .back-link:hover { color: var(--ink); }
+
+  /* Header */
+  .vp-header { margin-bottom: 32px; }
+  .vp-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--teal); background: var(--teal-dim);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 10px;
+  }
+  .vp-header h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -.4px; margin-bottom: 6px; }
+  .vp-header p  { font-size: .9rem; color: var(--ink-3); }
+
+  /* ── Search card ────────────────────────────────────────── */
+  .search-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);
+    padding: 28px; margin-bottom: 28px;
+  }
+  .search-label {
+    font-size: .78rem; font-weight: 700; color: var(--ink-2);
+    letter-spacing: .01em; margin-bottom: 10px; display: block;
+  }
+  .search-row { display: flex; gap: 10px; }
+  @media(max-width:560px){ .search-row { flex-direction: column; } }
+  .search-input-wrap { position: relative; flex: 1; }
+  .search-ico {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    font-size: .82rem; color: var(--ink-4); pointer-events: none;
+    transition: color var(--transition);
+  }
+  .search-input-wrap:focus-within .search-ico { color: var(--teal); }
+  #ref-input {
+    width: 100%;
+    padding: 12px 14px 12px 38px;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: 'DM Mono', monospace; font-size: .9rem; color: var(--ink);
+    background: var(--surface-2); outline: none; letter-spacing: .02em;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  #ref-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
+  #ref-input::placeholder { font-family: 'DM Sans', sans-serif; letter-spacing: 0; color: var(--ink-4); }
+  .btn-verify {
+    padding: 12px 24px;
+    background: var(--teal); color: white;
+    font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 600;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  }
+  .btn-verify:hover { background: #0f766e; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(13,148,136,.3); }
+
+  /* ── Error banner ────────────────────────────────────────── */
+  .err-banner {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--red-dim); border: 1px solid #fca5a5;
+    border-radius: var(--radius-lg); padding: 16px 20px;
+    margin-bottom: 24px; color: var(--red);
+    font-size: .875rem; line-height: 1.6;
+  }
+  .err-banner i { flex-shrink: 0; margin-top: 2px; font-size: .9rem; }
+
+  /* ── Result card ─────────────────────────────────────────── */
+  .result-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-xl); box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  /* Status banner at top of result */
+  .status-banner {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 28px;
+  }
+  .status-banner.valid   { background: var(--green-dim); border-bottom: 1px solid #bbf7d0; }
+  .status-banner.invalid { background: var(--red-dim);   border-bottom: 1px solid #fca5a5; }
+  .status-banner.expired { background: var(--amber-dim); border-bottom: 1px solid #fde68a; }
+
+  .status-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .valid   .status-icon { background: white; color: var(--green); box-shadow: 0 2px 8px rgba(22,163,74,.15); }
+  .invalid .status-icon { background: white; color: var(--red);   box-shadow: 0 2px 8px rgba(220,38,38,.15); }
+  .expired .status-icon { background: white; color: var(--amber); box-shadow: 0 2px 8px rgba(217,119,6,.15); }
+
+  .status-text-title {
+    font-size: 1.05rem; font-weight: 700;
+  }
+  .valid   .status-text-title { color: var(--green-dk); }
+  .invalid .status-text-title { color: var(--red-dk);   }
+  .expired .status-text-title { color: var(--amber); }
+  .status-text-sub { font-size: .82rem; color: var(--ink-3); margin-top: 2px; }
+
+  .status-ref {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace; font-size: .78rem;
+    padding: 5px 12px; border-radius: var(--radius-sm);
+    font-weight: 600; letter-spacing: .02em;
+    white-space: nowrap;
+  }
+  .valid   .status-ref { background: #bbf7d0; color: var(--green-dk); }
+  .invalid .status-ref { background: #fca5a5; color: var(--red-dk); }
+  .expired .status-ref { background: #fde68a; color: #92400e; }
+
+  /* Content body */
+  .result-body { padding: 28px; }
+
+  /* Section headers */
+  .sect-head {
+    font-size: .68rem; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--ink-4);
+    margin-bottom: 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Info grid */
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 28px;
+  }
+  @media(max-width:560px){ .info-grid { grid-template-columns: 1fr; } }
+  .info-cell { display: flex; flex-direction: column; gap: 3px; }
+  .info-key {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--ink-4);
+  }
+  .info-val {
+    font-size: .92rem; font-weight: 500; color: var(--ink);
+  }
+  .info-val.mono { font-family: 'DM Mono', monospace; font-size: .85rem; }
+  .info-val.green { color: var(--green); }
+  .info-val.red   { color: var(--red); }
+  .info-val.amber { color: var(--amber); }
+
+  /* Pill chips */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .72rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 99px; white-space: nowrap;
+  }
+  .chip.green  { background: var(--green-dim);  color: var(--green-dk); }
+  .chip.red    { background: var(--red-dim);    color: var(--red-dk); }
+  .chip.amber  { background: var(--amber-dim);  color: #92400e; }
+  .chip.blue   { background: var(--blue-dim);   color: var(--blue-dk); }
+  .chip.teal   { background: var(--teal-dim);   color: var(--teal); }
+  .chip.purple { background: var(--purple-dim); color: var(--purple); }
+
+  /* Divider */
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* Coverage table */
+  .coverage-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  .coverage-table th {
+    text-align: left; font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em; color: var(--ink-4);
+    padding: 0 12px 10px; border-bottom: 1px solid var(--border);
+  }
+  .coverage-table td {
+    padding: 12px; border-bottom: 1px solid var(--surface-3);
+    vertical-align: middle;
+  }
+  .coverage-table tr:last-child td { border-bottom: none; }
+  .coverage-table tr:hover td { background: var(--surface-2); }
+  .rate-name { font-weight: 600; color: var(--ink); }
+  .rate-type { font-size: .72rem; color: var(--ink-4); margin-top: 2px; }
+
+  /* Valid-until badge */
+  .validity-box {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .78rem; font-weight: 600;
+  }
+  .validity-box.ok   { color: var(--green-dk); }
+  .validity-box.warn { color: var(--amber); }
+  .validity-box.bad  { color: var(--red); }
+
+  /* Overall verdict box */
+  .verdict {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 20px; border-radius: var(--radius-lg);
+    margin-top: 24px;
+  }
+  .verdict.pass { background: var(--green-dim); border: 1px solid #bbf7d0; }
+  .verdict.fail { background: var(--red-dim);   border: 1px solid #fca5a5; }
+  .verdict-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .verdict.pass .verdict-icon { color: var(--green); }
+  .verdict.fail .verdict-icon { color: var(--red); }
+  .verdict-title { font-weight: 700; font-size: .95rem; }
+  .verdict.pass .verdict-title { color: var(--green-dk); }
+  .verdict.fail .verdict-title { color: var(--red-dk); }
+  .verdict-sub { font-size: .82rem; color: var(--ink-3); margin-top: 2px; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 56px 20px; color: var(--ink-4);
+  }
+  .empty-state i { font-size: 2.5rem; margin-bottom: 14px; display: block; opacity: .4; }
+  .empty-state p { font-size: .9rem; line-height: 1.7; }
+</style>
+
+<div class="vp-wrap">
+  <a href="{% url 'dashboard' %}" class="back-link fade">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+  </a>
+
+  <!-- Header -->
+  <div class="vp-header fade fade-1">
+    <div class="vp-badge"><i class="fas fa-magnifying-glass-dollar"></i> Staff Tool</div>
+    <h1>Verify Payment Receipt</h1>
+    <p>Enter a landlord's payment reference number to confirm whether the payment is genuine and currently valid.</p>
+  </div>
+
+  <!-- Search card -->
+  <div class="search-card fade fade-2">
+    <label class="search-label" for="ref-input">
+      <i class="fas fa-hashtag" style="margin-right:4px;color:var(--teal);"></i>
+      Receipt / Reference Number
+    </label>
+    <form method="POST" id="verify-form">
+      {% csrf_token %}
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <i class="fas fa-receipt search-ico"></i>
+          <input
+            type="text"
+            id="ref-input"
+            name="reference"
+            value="{{ ref }}"
+            placeholder="e.g. PSK-20241105-ABCDEF123"
+            autocomplete="off"
+            spellcheck="false"
+            autofocus
+          >
+        </div>
+        <button type="submit" class="btn-verify">
+          <i class="fas fa-magnifying-glass"></i> Verify
+        </button>
+      </div>
+    </form>
+    <p style="font-size:.75rem;color:var(--ink-4);margin-top:10px;">
+      <i class="fas fa-circle-info" style="margin-right:4px;"></i>
+      The reference number appears on the landlord's payment receipt or confirmation email.
+    </p>
+  </div>
+
+  {% if error %}
+  <!-- Error state -->
+  <div class="err-banner fade">
+    <i class="fas fa-circle-exclamation"></i>
+    <span>{{ error }}</span>
+  </div>
+  {% endif %}
+
+  {% if result %}
+  <!-- ── Result card ─────────────────────────────────────── -->
+  {% with payment=result.payment prop=result.property landlord=result.landlord %}
+
+  <div class="result-card fade fade-1">
+
+    <!-- Top status banner -->
+    {% if result.is_this_valid %}
+      <div class="status-banner valid">
+        <div class="status-icon"><i class="fas fa-circle-check"></i></div>
+        <div>
+          <div class="status-text-title">Payment Verified — Valid &amp; Active</div>
+          <div class="status-text-sub">This payment reference is authentic and has not expired.</div>
+        </div>
+        <div class="status-ref">{{ payment.reference }}</div>
+      </div>
+    {% elif payment.is_expired %}
+      <div class="status-banner expired">
+        <div class="status-icon"><i class="fas fa-clock-rotate-left"></i></div>
+        <div>
+          <div class="status-text-title">Payment Expired</div>
+          <div class="status-text-sub">This was a valid payment but its validity window has passed.</div>
+        </div>
+        <div class="status-ref">{{ payment.reference }}</div>
+      </div>
+    {% else %}
+      <div class="status-banner invalid">
+        <div class="status-icon"><i class="fas fa-circle-xmark"></i></div>
+        <div>
+          <div class="status-text-title">Payment Not Successful</div>
+          <div class="status-text-sub">This reference exists but the payment did not complete successfully.</div>
+        </div>
+        <div class="status-ref">{{ payment.reference }}</div>
+      </div>
+    {% endif %}
+
+    <div class="result-body">
+
+      <!-- ── Landlord ── -->
+      <div class="sect-head"><i class="fas fa-user-tie"></i> Landlord Information</div>
+      <div class="info-grid">
+        <div class="info-cell">
+          <span class="info-key">Full Name</span>
+          <span class="info-val">{{ landlord.get_full_name|default:landlord.username }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Username</span>
+          <span class="info-val mono">{{ landlord.username }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Email</span>
+          <span class="info-val">{{ landlord.email|default:"—" }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Phone</span>
+          <span class="info-val">{{ landlord.userprofile.phone_number|default:"—" }}</span>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- ── Property ── -->
+      <div class="sect-head"><i class="fas fa-building"></i> Property Details</div>
+      <div class="info-grid">
+        <div class="info-cell">
+          <span class="info-key">Property Name</span>
+          <span class="info-val">{{ prop.name }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Type</span>
+          <span class="info-val">
+            <span class="chip
+              {% if prop.property_type == 'residential' %}green
+              {% elif prop.property_type == 'commercial' %}blue
+              {% elif prop.property_type == 'industrial' %}amber
+              {% else %}teal{% endif %}">
+              {{ prop.get_property_type_display }}
+            </span>
+          </span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Address</span>
+          <span class="info-val">{{ prop.address }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">District</span>
+          <span class="info-val">{{ prop.district|capfirst }}</span>
+        </div>
+        {% if prop.property_type == 'residential' %}
+        <div class="info-cell">
+          <span class="info-key">Number of Flats</span>
+          <span class="info-val">{{ prop.num_flats }}</span>
+        </div>
+        {% endif %}
+        <div class="info-cell">
+          <span class="info-key">Units</span>
+          <span class="info-val">{{ prop.num_units }}</span>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- ── This payment ── -->
+      <div class="sect-head"><i class="fas fa-receipt"></i> This Payment Record</div>
+      <div class="info-grid">
+        <div class="info-cell">
+          <span class="info-key">Reference No.</span>
+          <span class="info-val mono">{{ payment.reference }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Status</span>
+          <span class="info-val">
+            <span class="chip {% if payment.status == 'success' %}green{% elif payment.status == 'pending' %}amber{% else %}red{% endif %}">
+              <i class="fas fa-{% if payment.status == 'success' %}check{% elif payment.status == 'pending' %}clock{% else %}xmark{% endif %}"></i>
+              {{ payment.get_status_display }}
+            </span>
+          </span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Amount Paid</span>
+          <span class="info-val" style="font-size:1.05rem;font-weight:700;">
+            ₦{{ payment.amount|floatformat:2 }}
+          </span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Rate Applied</span>
+          <span class="info-val">{{ payment.payment_rate.name|default:"—" }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Date Paid</span>
+          <span class="info-val">
+            {% if payment.paid_at %}
+              {{ payment.paid_at|date:"j F Y, g:i A" }}
+            {% else %}—{% endif %}
+          </span>
+        </div>
+        <div class="info-cell">
+          <span class="info-key">Valid Until</span>
+          <span class="info-val {% if payment.is_expired %}red{% elif payment.expires_at %}green{% endif %}">
+            {% if payment.expires_at %}
+              {{ payment.expires_at|date:"j F Y" }}
+              {% if payment.is_expired %}
+                <span class="chip red" style="margin-left:6px;font-size:.68rem;">Expired</span>
+              {% else %}
+                <span style="font-size:.78rem;color:var(--ink-4);margin-left:4px;">({{ payment.days_remaining }} day{{ payment.days_remaining|pluralize }} left)</span>
+              {% endif %}
+            {% else %}—{% endif %}
+          </span>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- ── Full property coverage ── -->
+      <div class="sect-head"><i class="fas fa-shield-halved"></i> Full Property Payment Coverage</div>
+      <p style="font-size:.82rem;color:var(--ink-3);margin-bottom:16px;">
+        Shows whether <em>all</em> active payment rates for this property type are currently covered by valid payments.
+      </p>
+
+      {% if result.coverage %}
+      <div style="overflow-x:auto;">
+        <table class="coverage-table">
+          <thead>
+            <tr>
+              <th>Rate</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Valid Until</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in result.coverage %}
+            <tr>
+              <td>
+                <div class="rate-name">{{ item.rate.name }}</div>
+                <div class="rate-type">
+                  {{ item.rate.get_property_type_display }}
+                  {% if item.rate.is_per_unit %} · per flat{% endif %}
+                </div>
+              </td>
+              <td>
+                {% if item.rate.is_per_unit and prop.property_type == 'residential' and prop.num_flats > 0 %}
+                  ₦{{ item.rate.amount|floatformat:2 }} × {{ prop.num_flats }} flat{{ prop.num_flats|pluralize }}
+                  <span style="font-size:.75rem;color:var(--ink-4);display:block;">
+                    = ₦{% widthratio item.rate.amount 1 prop.num_flats %}
+                  </span>
+                {% else %}
+                  ₦{{ item.rate.amount|floatformat:2 }}
+                {% endif %}
+              </td>
+              <td>
+                {% if item.covered %}
+                  <span class="chip green"><i class="fas fa-check"></i> Paid</span>
+                {% else %}
+                  <span class="chip red"><i class="fas fa-xmark"></i> Unpaid</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if item.payment %}
+                  {% if item.payment.expires_at %}
+                    <span class="validity-box {% if item.payment.days_remaining <= 30 %}warn{% else %}ok{% endif %}">
+                      <i class="fas fa-calendar-check"></i>
+                      {{ item.payment.expires_at|date:"j M Y" }}
+                      {% if item.payment.days_remaining <= 30 %}
+                        <span style="font-size:.72rem;">({{ item.payment.days_remaining }}d left)</span>
+                      {% endif %}
+                    </span>
+                  {% else %}
+                    <span class="validity-box ok"><i class="fas fa-infinity"></i> No expiry</span>
+                  {% endif %}
+                {% else %}
+                  <span class="validity-box bad"><i class="fas fa-minus"></i> No payment</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Overall verdict -->
+      {% if result.all_paid %}
+        <div class="verdict pass">
+          <div class="verdict-icon"><i class="fas fa-circle-check"></i></div>
+          <div>
+            <div class="verdict-title">All Obligations Met</div>
+            <div class="verdict-sub">This property has valid, active payments covering every current rate. The landlord is fully compliant.</div>
+          </div>
+        </div>
+      {% else %}
+        <div class="verdict fail">
+          <div class="verdict-icon"><i class="fas fa-triangle-exclamation"></i></div>
+          <div>
+            <div class="verdict-title">Outstanding Obligations</div>
+            <div class="verdict-sub">One or more active payment rates are not covered by a valid payment for this property. The landlord has outstanding dues.</div>
+          </div>
+        </div>
+      {% endif %}
+
+      {% else %}
+        <p style="color:var(--ink-4);font-size:.88rem;">No active payment rates are currently configured for this property type.</p>
+      {% endif %}
+
+    </div>{# /.result-body #}
+  </div>{# /.result-card #}
+
+  {% endwith %}
+
+  {% elif not error %}
+  <!-- No search yet -->
+  <div class="result-card fade fade-2">
+    <div class="empty-state">
+      <i class="fas fa-magnifying-glass-dollar"></i>
+      <p>Enter a receipt or payment reference number above<br>to look up and verify a landlord's payment.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // Auto-uppercase and trim the reference input as user types
+  document.getElementById('ref-input').addEventListener('input', function() {
+    const pos = this.selectionStart;
+    this.value = this.value.toUpperCase().replace(/\s+/g, '');
+    this.setSelectionRange(pos, pos);
+  });
+</script>
+{% endblock %}

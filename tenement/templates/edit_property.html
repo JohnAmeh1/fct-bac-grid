@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ property.name }} | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  .edit-property-wrap {
+    max-width: 980px; margin: 32px auto 60px; padding: 0 18px;
+  }
+  .edit-property-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15,17,23,.06); overflow: hidden;
+  }
+  .edit-property-header {
+    padding: 22px 24px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, #eefaf3, #f7f9ff);
+  }
+  .edit-property-header h1 {
+    margin: 0; font-size: 1.8rem; letter-spacing: -.02em;
+  }
+  .edit-property-body {
+    padding: 24px;
+  }
+  .property-form-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
+  }
+  @media (max-width: 768px) {
+    .property-form-grid { grid-template-columns: 1fr; }
+  }
+  .field-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .field-wrap.full { grid-column: 1 / -1; }
+  label {
+    font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #6b7280;
+  }
+  input, select, textarea {
+    width: 100%; border: 1.5px solid #d1d5db; border-radius: 10px; padding: 11px 12px; font: inherit; color: #111827; background: #fff;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+  textarea { min-height: 110px; resize: vertical; }
+  .field-error { color: #dc2626; font-size: .8rem; margin-top: 4px; }
+  .submit-row { margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+  .btn-primary, .btn-secondary {
+    display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; padding: 11px 18px; font-weight: 700; text-decoration: none; border: none; cursor: pointer;
+  }
+  .btn-primary { background: #16a34a; color: white; }
+  .btn-secondary { background: #f3f4f6; color: #111827; }
+  .help-text { font-size: .75rem; color: #6b7280; }
+</style>
+
+<div class="edit-property-wrap">
+  <div class="edit-property-card">
+    <div class="edit-property-header">
+      <h1>Edit Property</h1>
+    </div>
+
+    <div class="edit-property-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="property-form-grid">
+          <div class="field-wrap full">
+            <label for="id_name">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="field-error">{{ form.name.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap full">
+            <label for="id_address">{{ form.address.label }}</label>
+            {{ form.address }}
+            {% if form.address.errors %}<div class="field-error">{{ form.address.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_district">{{ form.district.label }}</label>
+            {{ form.district }}
+            {% if form.district.errors %}<div class="field-error">{{ form.district.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_property_type">{{ form.property_type.label }}</label>
+            {{ form.property_type }}
+            {% if form.property_type.errors %}<div class="field-error">{{ form.property_type.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_num_units">{{ form.num_units.label }}</label>
+            {{ form.num_units }}
+            {% if form.num_units.errors %}<div class="field-error">{{ form.num_units.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_num_flats">{{ form.num_flats.label }}</label>
+            {{ form.num_flats }}
+            {% if form.num_flats.errors %}<div class="field-error">{{ form.num_flats.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap full">
+            <label for="id_notes">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="field-error">{{ form.notes.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_main_image">{{ form.main_image.label }}</label>
+            {{ form.main_image }}
+            {% if form.main_image.errors %}<div class="field-error">{{ form.main_image.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_image_1">{{ form.image_1.label }}</label>
+            {{ form.image_1 }}
+            {% if form.image_1.errors %}<div class="field-error">{{ form.image_1.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_image_2">{{ form.image_2.label }}</label>
+            {{ form.image_2 }}
+            {% if form.image_2.errors %}<div class="field-error">{{ form.image_2.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_image_3">{{ form.image_3.label }}</label>
+            {{ form.image_3 }}
+            {% if form.image_3.errors %}<div class="field-error">{{ form.image_3.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_image_4">{{ form.image_4.label }}</label>
+            {{ form.image_4 }}
+            {% if form.image_4.errors %}<div class="field-error">{{ form.image_4.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_image_5">{{ form.image_5.label }}</label>
+            {{ form.image_5 }}
+            {% if form.image_5.errors %}<div class="field-error">{{ form.image_5.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field-wrap">
+            <label for="id_image_6">{{ form.image_6.label }}</label>
+            {{ form.image_6 }}
+            {% if form.image_6.errors %}<div class="field-error">{{ form.image_6.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+        <div class="submit-row">
+          <a href="{% url 'view_property' property.id %}" class="btn-secondary">Cancel</a>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Borehole Drilling &amp; Sale of Water — Bye-Law No. 26{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden;
+  }
+  .bylaw-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem,4vw,2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .rate-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+  .rate-card { background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 20px; text-align: center; }
+  .rate-card .rate-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #065f46; margin-bottom: 8px; }
+  .rate-card .rate-value { font-size: 1.4rem; font-weight: 800; color: #047857; margin-bottom: 4px; }
+  .rate-card .rate-desc { font-size: 0.78rem; color: #6b7280; }
+  .penalty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .penalty-item { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; }
+  .penalty-item label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #dc2626; margin-bottom: 4px; }
+  .penalty-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .notice-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+  .notice-box p { font-size: 0.88rem; color: #1e40af; margin: 0; line-height: 1.7; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } .penalty-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-droplet"></i>
+    Part XXVII — Bye-Law No. 26 — 16th May 2022
+  </div>
+  <h1>Borehole Drilling &amp; Sale of Water to the Public</h1>
+  <p>Collection of rates on borehole drilling operations and water sales within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XXVII — Borehole Drilling</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-droplet"></i></div>
+      <div>
+        <h2>Borehole Drilling &amp; Sale of Water — Bye-Law No. 26</h2>
+        <span>Part XXVII — Bwari Area Council FCT Abuja, Nigeria — 16th May 2022</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, Sections 55 and 56 of the Local Government Act, Laws of FCT Abuja 2006, and other enabling laws, the Bwari Area Council makes this Bye-Law governing rates on borehole drilling and the sale of water to the public.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 26</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XXVII</span></div>
+      <div class="bylaw-meta-item"><label>Commencement</label><span>16th May 2022</span></div>
+      <div class="bylaw-meta-item"><label>Jurisdiction</label><span>Magistrate Court, Any Grade</span></div>
+    </div>
+  </div>
+
+  <!-- Annual Rates -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-naira-sign"></i></div>
+      <div>
+        <h2>Annual Rates</h2>
+        <span>Rates payable by drilling companies, water producers, and water retailers</span>
+      </div>
+    </div>
+    <div class="rate-cards">
+      <div class="rate-card">
+        <div class="rate-label">Borehole Drilling Companies</div>
+        <div class="rate-value">₦500,000 – ₦1,000,000</div>
+        <div class="rate-desc">Annual rate depending on company size; payable by the drilling company</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-label">Bottled / Sachet Water Producers</div>
+        <div class="rate-value">₦30,000 – ₦50,000</div>
+        <div class="rate-desc">For persons/companies producing or distributing bottled/sachet water for public sale, annually</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-label">Water Retailers</div>
+        <div class="rate-value">₦9,000</div>
+        <div class="rate-desc">Annual rate for persons/companies selling borehole water to the public</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offences & Penalties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div>
+        <h2>Offences &amp; Penalties</h2>
+        <span>Consequences for non-compliance</span>
+      </div>
+    </div>
+    <p>Where it becomes evident that an individual or corporate body is unwilling or refuses to pay the rates specified, it shall be an offence under this Bye-Law. Any person who contravenes the provisions shall be guilty of an offence and liable as follows:</p>
+    <div class="penalty-grid">
+      <div class="penalty-item">
+        <label>Individual</label>
+        <span>Fine of ₦50,000 in addition to the actual amount owed</span>
+      </div>
+      <div class="penalty-item">
+        <label>Corporate Body</label>
+        <span>Fine of ₦150,000 in addition to the actual amount owed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Powers of Inspection -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-magnifying-glass"></i></div>
+      <div>
+        <h2>Inspection Powers &amp; Applicability</h2>
+        <span>Entry rights and scope of the Bye-Law</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>The provisions of this Bye-Law apply to <strong>all natural and artificial persons</strong> operating within the jurisdiction of the Bwari Area Council.</li>
+      <li>The appropriate officer or agent of the Bwari Area Council shall at <strong>all working hours of any day</strong> have the power to enter any premises — whether residential or commercial — for the purpose of inspection.</li>
+    </ul>
+    <h3>Definitions</h3>
+    <ul class="bylaw-func-list">
+      <li><strong>"Sale of water"</strong> includes manufacturing, producing and selling water to the public.</li>
+      <li><strong>"Drilling borehole"</strong> includes drilling of the soil mechanically via machines for the purpose of pumping water.</li>
+      <li><strong>"Council"</strong> includes Bwari Area Council.</li>
+    </ul>
+  </div>
+
+  <!-- Other bye-laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_preliminary' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Preliminary</strong><span>Part I — General Provisions</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-store"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Shops, Kiosks &amp; Trade License</strong><span>Part XV — Bye-Law No. 14</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_commercial_pos_operators' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-credit-card"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Commercial POS Operators</strong><span>Part XXIX — Bye-Law No. 28</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_community_tax' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Community Tax &amp; Development Levy</strong><span>Part XXVIII — Bye-Law No. 27</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

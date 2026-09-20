@@ -1,0 +1,937 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sanitation Levy — Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&display=swap');
+
+  :root {
+    --green:      #16a34a;
+    --green-dim:  #dcfce7;
+    --green-dk:   #15803d;
+    --ink:        #0f1117;
+    --ink-2:      #3b3f4a;
+    --ink-3:      #6b7280;
+    --border:     #e5e7eb;
+    --surface:    #ffffff;
+    --surface-2:  #f7f8fa;
+    --radius:     10px;
+    --radius-lg:  16px;
+    --radius-xl:  24px;
+  }
+
+  /* ── HERO ─────────────────────────────────────────────── */
+  .san-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 55%, #047857 100%);
+    padding: 88px 24px 72px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .san-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .san-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 999px;
+    padding: 7px 18px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .san-hero-badge .pulse-dot {
+    width: 7px; height: 7px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulse-ring 2s ease infinite;
+  }
+  @keyframes pulse-ring {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(1.4); }
+  }
+  .san-hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.15;
+    letter-spacing: -.03em;
+    margin: 0 0 16px;
+  }
+  .san-hero p {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 580px;
+    margin: 0 auto 36px;
+    line-height: 1.75;
+  }
+  .san-hero-cta {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .san-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    font-weight: 600;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all .18s ease;
+    white-space: nowrap;
+  }
+  .san-btn-white  { background: #fff; color: var(--green-dk); }
+  .san-btn-white:hover  { background: #dcfce7; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+  .san-btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.45); }
+  .san-btn-outline:hover { background: rgba(255,255,255,.1); border-color: #fff; }
+  .san-btn-primary { background: var(--green); color: #fff; }
+  .san-btn-primary:hover { background: var(--green-dk); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(22,163,74,.3); }
+  .san-btn-ghost { background: transparent; color: var(--green); border: 1.5px solid var(--green); }
+  .san-btn-ghost:hover { background: var(--green-dim); }
+
+  /* ── Hero stat pills ── */
+  .san-hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .san-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.85);
+  }
+  .san-stat-pill i { color: #4ade80; font-size: .75rem; }
+
+
+  /* ── SHARED LAYOUT ──────────────────────────────────── */
+  .san-container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+  @media(max-width:640px){ .san-container { padding: 0 16px; } }
+
+  .san-section { padding: 80px 0; }
+  .san-section.alt { background: var(--surface-2); }
+
+  .san-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--green);
+    background: var(--green-dim);
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .san-eyebrow .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
+  .san-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+    letter-spacing: -.03em;
+    margin-bottom: 14px;
+  }
+  .san-sub {
+    font-size: 1rem;
+    color: var(--ink-3);
+    line-height: 1.75;
+    max-width: 540px;
+  }
+  .san-center { text-align: center; }
+  .san-center .san-sub { margin: 0 auto; }
+
+  /* ── OVERVIEW GRID ──────────────────────────────────── */
+  .san-overview-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 56px;
+    align-items: start;
+  }
+  @media(max-width:900px){ .san-overview-grid { grid-template-columns: 1fr; gap: 36px; } }
+
+  .san-overview-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  }
+  .san-overview-card + .san-overview-card { margin-top: 20px; }
+
+  .san-card-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .san-card-ico {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .san-card-ico.green { background: var(--green-dim); color: var(--green); }
+  .san-card-ico.amber { background: #fef3c7; color: #d97706; }
+  .san-card-ico.red   { background: #fee2e2; color: #dc2626; }
+  .san-card-ico.blue  { background: #dbeafe; color: #2563eb; }
+  .san-card-head-text h3 { font-size: 1rem; font-weight: 700; color: var(--ink); margin: 0 0 3px; }
+  .san-card-head-text span { font-size: .8rem; color: var(--ink-3); }
+
+  .san-check-list {
+    list-style: none;
+    padding: 0; margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .san-check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: .88rem;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  .san-check-list li i { color: var(--green); font-size: .8rem; margin-top: 3px; flex-shrink: 0; }
+
+
+  /* ── HOW TO PAY STEPS ───────────────────────────────── */
+  .san-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 48px;
+  }
+  @media(max-width:900px){ .san-steps-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media(max-width:480px){ .san-steps-grid { grid-template-columns: 1fr; } }
+
+  .san-step-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 28px 22px;
+    text-align: center;
+    position: relative;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .san-step-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,.09); transform: translateY(-3px); }
+  .san-step-num {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #9ca3af;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .san-step-icon-wrap {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    margin: 0 auto 18px;
+  }
+  .san-step-icon-wrap.g { background: var(--green-dim); color: var(--green); }
+  .san-step-icon-wrap.b { background: #dbeafe; color: #2563eb; }
+  .san-step-icon-wrap.a { background: #fef3c7; color: #d97706; }
+  .san-step-icon-wrap.r { background: #fee2e2; color: #dc2626; }
+  .san-step-card h3 { font-size: .97rem; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .san-step-card p  { font-size: .83rem; color: var(--ink-3); line-height: 1.65; margin: 0; }
+
+  .san-step-connector {
+    position: absolute;
+    top: 44px;
+    right: -14px;
+    width: 28px; height: 2px;
+    background: #d1d5db;
+    z-index: 2;
+  }
+  .san-step-card:last-child .san-step-connector { display: none; }
+  @media(max-width:900px){ .san-step-connector { display: none; } }
+
+
+  /* ── RATES TABLE ────────────────────────────────────── */
+  .san-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    margin-top: 40px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .san-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+    min-width: 480px;
+  }
+  .san-table thead th {
+    background: #065f46;
+    color: #fff;
+    font-weight: 600;
+    font-size: .8rem;
+    letter-spacing: .03em;
+    padding: 12px 16px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .san-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+    vertical-align: middle;
+  }
+  .san-table tbody tr:last-child td { border-bottom: none; }
+  .san-table tbody tr:nth-child(even) td { background: #f9fafb; }
+  .san-table tbody tr:hover td { background: #f0fdf4; }
+  .san-rate-badge {
+    display: inline-block;
+    background: var(--green-dim);
+    color: var(--green-dk);
+    font-weight: 700;
+    font-size: .82rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+
+  /* ── TRASH PICKUP SECTION ───────────────────────────── */
+  .san-pickup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  @media(max-width:900px){ .san-pickup-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+  .san-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 28px;
+  }
+  .san-timeline::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: #e5e7eb;
+  }
+  .san-tl-item {
+    position: relative;
+    padding: 0 0 28px 24px;
+  }
+  .san-tl-item:last-child { padding-bottom: 0; }
+  .san-tl-dot {
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 22px; height: 22px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: .65rem;
+  }
+  .san-tl-title { font-weight: 700; font-size: .92rem; color: var(--ink); margin-bottom: 5px; }
+  .san-tl-desc  { font-size: .84rem; color: var(--ink-3); line-height: 1.65; }
+
+  .san-pickup-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  }
+  .san-pickup-card h3 { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin-bottom: 18px; }
+  .san-month-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  @media(max-width:400px){ .san-month-grid { grid-template-columns: repeat(3, 1fr); } }
+  .san-month-badge {
+    background: var(--green-dim);
+    color: var(--green-dk);
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: .72rem;
+    font-weight: 600;
+  }
+  .san-pickup-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: .83rem;
+    color: #166534;
+    line-height: 1.6;
+  }
+  .san-pickup-note i { flex-shrink: 0; margin-top: 2px; }
+
+  /* ── FAQ ─────────────────────────────────────────────── */
+  .san-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 40px;
+  }
+  .san-faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    transition: box-shadow .18s;
+  }
+  .san-faq-item[open] { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+  .san-faq-q {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    gap: 12px;
+  }
+  .san-faq-q::-webkit-details-marker { display: none; }
+  .san-faq-q:hover { background: var(--surface-2); }
+  .san-faq-icon { font-size: .75rem; color: var(--green); flex-shrink: 0; transition: transform .18s; }
+  .san-faq-item[open] .san-faq-icon { transform: rotate(45deg); }
+  .san-faq-a {
+    padding: 0 20px 16px;
+    font-size: .875rem;
+    color: var(--ink-3);
+    line-height: 1.75;
+  }
+
+  /* ── ALERT BANNER ───────────────────────────────────── */
+  .san-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #fff7ed;
+    border: 1.5px solid #fed7aa;
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    margin-top: 40px;
+  }
+  .san-alert-icon { color: #ea580c; font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+  .san-alert h4   { font-size: .92rem; font-weight: 700; color: #92400e; margin: 0 0 6px; }
+  .san-alert p    { font-size: .84rem; color: #78350f; line-height: 1.65; margin: 0; }
+
+  /* ── FINAL CTA ───────────────────────────────────────── */
+  .san-final-cta {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+    border-radius: var(--radius-xl);
+    padding: 56px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .san-final-cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .san-final-cta h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.03em;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .san-final-cta p  {
+    font-size: 1rem;
+    color: rgba(255,255,255,.7);
+    max-width: 480px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+    position: relative;
+  }
+  .san-final-cta .cta-btns-wrap {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  @media(max-width:480px){
+    .san-final-cta { padding: 40px 24px; }
+    .san-final-cta .cta-btns-wrap { flex-direction: column; align-items: center; }
+    .san-final-cta .cta-btns-wrap .san-btn { width: 100%; justify-content: center; }
+  }
+
+  /* ── RESPONSIVE ─────────────────────────────────────── */
+  @media(max-width:640px){
+    .san-hero { padding: 64px 20px 56px; }
+    .san-hero h1 { font-size: clamp(1.8rem, 8vw, 2.6rem); }
+    .san-hero-cta { flex-direction: column; align-items: center; }
+    .san-hero-cta .san-btn { width: 100%; justify-content: center; }
+    .san-section { padding: 56px 0; }
+    .san-step-card { padding: 22px 18px; }
+    .san-overview-card { padding: 22px 18px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════════ -->
+<section class="san-hero">
+  <div class="san-hero-badge">
+    <span class="pulse-dot"></span>
+    Bwari Area Council — Environmental Services
+  </div>
+  <h1>Sanitation Levy &amp;<br>Monthly Refuse Collection</h1>
+  <p>
+    Pay your environmental sanitation levy online, stay compliant with Bwari bye-laws, and enjoy
+    monthly doorstep refuse collection — all managed through your portal account.
+  </p>
+  <div class="san-hero-cta">
+    <a href="{% url 'signup' %}" class="san-btn san-btn-white"><i class="fas fa-leaf"></i> Pay Sanitation Levy Now</a>
+    <a href="{% url 'bylaw_environmental_sanitation' %}" class="san-btn san-btn-outline"><i class="fas fa-scale-balanced"></i> View Environmental Bye-Law</a>
+  </div>
+  <div class="san-hero-stats">
+    <div class="san-stat-pill"><i class="fas fa-check-circle"></i> 100% Online Payment</div>
+    <div class="san-stat-pill"><i class="fas fa-truck"></i> Monthly Doorstep Pickup</div>
+    <div class="san-stat-pill"><i class="fas fa-file-invoice"></i> Instant Receipt</div>
+    <div class="san-stat-pill"><i class="fas fa-shield-halved"></i> Paystack Secured</div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     WHAT IS THE SANITATION LEVY?
+══════════════════════════════════════════════════════════ -->
+<section class="san-section">
+  <div class="san-container">
+    <div class="san-overview-grid">
+
+      <!-- LEFT: Explanation -->
+      <div>
+        <div class="san-eyebrow"><span class="dot"></span>Overview</div>
+        <h2 class="san-title">What Is the Sanitation Levy?</h2>
+        <p style="font-size:1rem;color:#4b5563;line-height:1.8;margin-bottom:18px;">
+          The <strong style="color:#0f1117;">Bwari Area Council Environmental Sanitation Levy</strong> is a mandatory annual fee imposed
+          on all residential and commercial properties within the Bwari Area Council jurisdiction. It is
+          authorised under the <em>Environmental Sanitation Bye-Law (Bye-Law No. 4 of 2016)</em> and is
+          administered by the Council's Department of Environmental Health.
+        </p>
+        <p style="font-size:1rem;color:#4b5563;line-height:1.8;margin-bottom:18px;">
+          Revenue from the levy funds organised refuse collection, environmental inspections, drainage
+          maintenance, public toilet upkeep, and sanitation outreach across all Bwari districts including
+          Bwari, Byazhin, Ushafa, Kauran Mashi, Rubochi, and surrounding communities.
+        </p>
+        <p style="font-size:1rem;color:#4b5563;line-height:1.8;margin-bottom:32px;">
+          <strong style="color:#0f1117;">Every property owner and registered landlord</strong> in the Area Council is legally required
+          to pay the sanitation levy annually. Non-compliance attracts fines, prohibition notices, and
+          enforcement visits from the Environmental Health Officers.
+        </p>
+
+        <!-- Legal basis callout -->
+        <div style="display:flex;align-items:flex-start;gap:14px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:20px 22px;margin-bottom:28px;">
+          <i class="fas fa-scale-balanced" style="color:#16a34a;font-size:1.1rem;flex-shrink:0;margin-top:2px;"></i>
+          <div>
+            <strong style="display:block;font-size:.9rem;color:#166534;margin-bottom:5px;">Legal Authority</strong>
+            <p style="font-size:.84rem;color:#15803d;line-height:1.65;margin:0;">
+              The levy is backed by the <strong>Bwari Area Council Environmental Sanitation Bye-Law No. 4 of 2016</strong>,
+              Part V — which governs premises inspection, prohibition of indiscriminate refuse dumping, and
+              environmental health offences within the council area.
+              <a href="{% url 'bylaw_environmental_sanitation' %}" style="color:#15803d;font-weight:700;">Read the full bye-law →</a>
+            </p>
+          </div>
+        </div>
+
+        <a href="{% url 'signup' %}" class="san-btn san-btn-primary"><i class="fas fa-leaf"></i> Register &amp; Pay Now</a>
+      </div>
+
+      <!-- RIGHT: Benefit cards -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <div class="san-overview-card">
+          <div class="san-card-head">
+            <div class="san-card-ico green"><i class="fas fa-trash-can"></i></div>
+            <div class="san-card-head-text">
+              <h3>Monthly Doorstep Refuse Collection</h3>
+              <span>Included with your levy payment</span>
+            </div>
+          </div>
+          <ul class="san-check-list">
+            <li><i class="fas fa-check"></i>Council sanitation team visits your address every month</li>
+            <li><i class="fas fa-check"></i>Household and commercial waste collected at no extra cost</li>
+            <li><i class="fas fa-check"></i>12 scheduled pickups per levy year</li>
+            <li><i class="fas fa-check"></i>Covers residential compounds and commercial premises</li>
+          </ul>
+        </div>
+
+        <div class="san-overview-card">
+          <div class="san-card-head">
+            <div class="san-card-ico blue"><i class="fas fa-file-invoice"></i></div>
+            <div class="san-card-head-text">
+              <h3>Compliance Certificate Issued</h3>
+              <span>Download your receipt instantly</span>
+            </div>
+          </div>
+          <ul class="san-check-list">
+            <li><i class="fas fa-check"></i>Official receipt issued upon payment confirmation</li>
+            <li><i class="fas fa-check"></i>Serves as your environmental compliance proof</li>
+            <li><i class="fas fa-check"></i>Required for property transactions and inspections</li>
+            <li><i class="fas fa-check"></i>Verifiable online via the public receipt lookup tool</li>
+          </ul>
+        </div>
+
+        <div class="san-overview-card">
+          <div class="san-card-head">
+            <div class="san-card-ico amber"><i class="fas fa-shield-halved"></i></div>
+            <div class="san-card-head-text">
+              <h3>Environmental Health Inspections</h3>
+              <span>Compliant properties are fast-tracked</span>
+            </div>
+          </div>
+          <ul class="san-check-list">
+            <li><i class="fas fa-check"></i>Paid properties flagged as compliant in the system</li>
+            <li><i class="fas fa-check"></i>Inspection officers cross-reference the portal before visits</li>
+            <li><i class="fas fa-check"></i>Avoid surprise penalty visits and enforcement notices</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     HOW TO PAY
+══════════════════════════════════════════════════════════ -->
+<section class="san-section alt">
+  <div class="san-container">
+    <div class="san-center">
+      <div class="san-eyebrow"><span class="dot"></span>Payment Process</div>
+      <h2 class="san-title">How to Pay Your Sanitation Levy</h2>
+      <p class="san-sub">The entire payment process takes under five minutes and can be done from any device, anywhere.</p>
+    </div>
+
+    <div class="san-steps-grid">
+
+      <div class="san-step-card">
+        <div class="san-step-connector"></div>
+        <div class="san-step-num">Step 01</div>
+        <div class="san-step-icon-wrap g"><i class="fas fa-user-plus"></i></div>
+        <h3>Create Your Account</h3>
+        <p>Register on the portal as a property owner or business operator. Verify your email address to activate your account.</p>
+      </div>
+
+      <div class="san-step-card">
+        <div class="san-step-connector"></div>
+        <div class="san-step-num">Step 02</div>
+        <div class="san-step-icon-wrap b"><i class="fas fa-house"></i></div>
+        <h3>Add Your Property</h3>
+        <p>Register your residential or commercial property. Capture your property's GPS location for accurate council records and collection routing.</p>
+      </div>
+
+      <div class="san-step-card">
+        <div class="san-step-connector"></div>
+        <div class="san-step-num">Step 03</div>
+        <div class="san-step-icon-wrap a"><i class="fas fa-credit-card"></i></div>
+        <h3>Select &amp; Pay Levy</h3>
+        <p>Choose the Sanitation Levy from your payment dashboard. Pay securely via Paystack using debit card, bank transfer, or USSD — payment confirmed instantly.</p>
+      </div>
+
+      <div class="san-step-card">
+        <div class="san-step-num">Step 04</div>
+        <div class="san-step-icon-wrap r"><i class="fas fa-download"></i></div>
+        <h3>Get Receipt &amp; Pickup</h3>
+        <p>Download your official sanitation levy receipt immediately. Your property is enrolled in the monthly doorstep refuse collection programme the same day.</p>
+      </div>
+
+    </div>
+
+    <div class="san-alert">
+      <i class="fas fa-triangle-exclamation san-alert-icon"></i>
+      <div>
+        <h4>Non-Payment Penalty Notice</h4>
+        <p>
+          Under the Environmental Sanitation Bye-Law, properties that fail to pay the sanitation levy are subject to
+          enforcement action including fines of up to <strong>₦50,000</strong>, prohibition notices, and court proceedings.
+          Persistent defaulters may also lose access to council environmental services. Pay before the annual deadline to
+          remain fully compliant.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     RATES TABLE
+══════════════════════════════════════════════════════════ -->
+<section class="san-section">
+  <div class="san-container">
+    <div class="san-center">
+      <div class="san-eyebrow"><span class="dot"></span>Fee Schedule</div>
+      <h2 class="san-title">Sanitation Levy Rates</h2>
+      <p class="san-sub">Rates are set by the Bwari Area Council and apply to all premises within the council area. Rates are subject to annual review.</p>
+    </div>
+    <div class="san-table-wrap">
+      <table class="san-table">
+        <thead>
+          <tr>
+            <th>Property / Premises Category</th>
+            <th>Annual Levy Rate</th>
+            <th>Monthly Pickup</th>
+            <th>Compliance Certificate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Single-family residential (1–2 units)</td>
+            <td><span class="san-rate-badge">As set by Council</span></td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Included</td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Issued</td>
+          </tr>
+          <tr>
+            <td>Multi-unit residential (3+ units / blocks of flats)</td>
+            <td><span class="san-rate-badge">Per Unit Rate</span></td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Included</td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Issued</td>
+          </tr>
+          <tr>
+            <td>Commercial premises (shops, offices, clinics)</td>
+            <td><span class="san-rate-badge">Commercial Rate</span></td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Included</td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Issued</td>
+          </tr>
+          <tr>
+            <td>Market stalls &amp; trading premises</td>
+            <td><span class="san-rate-badge">Market Rate</span></td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Included</td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Issued</td>
+          </tr>
+          <tr>
+            <td>Industrial / large commercial premises</td>
+            <td><span class="san-rate-badge">Industrial Rate</span></td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Included</td>
+            <td><i class="fas fa-check-circle" style="color:#16a34a;"></i> Issued</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;font-size:.82rem;color:#9ca3af;text-align:center;">
+      * Exact levy amounts are displayed on your payment dashboard after property registration. Rates are determined by the Bwari Area Council revenue schedule and vary by property type, size, and district.
+    </p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MONTHLY TRASH PICKUP
+══════════════════════════════════════════════════════════ -->
+<section class="san-section alt">
+  <div class="san-container">
+    <div class="san-pickup-grid">
+
+      <!-- Left: Timeline -->
+      <div>
+        <div class="san-eyebrow"><span class="dot"></span>Doorstep Collection Programme</div>
+        <h2 class="san-title">Monthly Refuse Pickup — How It Works</h2>
+        <p style="font-size:1rem;color:#4b5563;line-height:1.8;margin-bottom:32px;">
+          When you pay your sanitation levy, your property address is automatically added to the council's
+          monthly refuse collection route. A designated sanitation crew will collect your waste from your
+          doorstep every calendar month for the duration of your levy year.
+        </p>
+
+        <div class="san-timeline">
+          <div class="san-tl-item">
+            <div class="san-tl-dot"><i class="fas fa-check"></i></div>
+            <div class="san-tl-title">Payment Confirmed</div>
+            <div class="san-tl-desc">Your levy payment is processed and recorded by the portal. Your receipt is available for immediate download.</div>
+          </div>
+          <div class="san-tl-item">
+            <div class="san-tl-dot"><i class="fas fa-map-pin"></i></div>
+            <div class="san-tl-title">Property Enrolled in Collection Route</div>
+            <div class="san-tl-desc">Your GPS-registered property address is added to the district sanitation crew's monthly route list within 48 hours of payment.</div>
+          </div>
+          <div class="san-tl-item">
+            <div class="san-tl-dot"><i class="fas fa-truck"></i></div>
+            <div class="san-tl-title">Monthly Doorstep Pickup Begins</div>
+            <div class="san-tl-desc">The sanitation crew visits your address each month to collect bagged household or commercial refuse. No extra fee is charged.</div>
+          </div>
+          <div class="san-tl-item">
+            <div class="san-tl-dot"><i class="fas fa-rotate"></i></div>
+            <div class="san-tl-title">12 Pickups Over Your Levy Year</div>
+            <div class="san-tl-desc">You receive 12 scheduled monthly collections from the levy start date. Renew your levy annually to continue uninterrupted service.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Calendar card -->
+      <div>
+        <div class="san-pickup-card">
+          <h3><i class="fas fa-calendar-days" style="color:#16a34a;margin-right:8px;"></i>Collection Schedule — All 12 Months</h3>
+          <div class="san-month-grid">
+            <div class="san-month-badge">January</div>
+            <div class="san-month-badge">February</div>
+            <div class="san-month-badge">March</div>
+            <div class="san-month-badge">April</div>
+            <div class="san-month-badge">May</div>
+            <div class="san-month-badge">June</div>
+            <div class="san-month-badge">July</div>
+            <div class="san-month-badge">August</div>
+            <div class="san-month-badge">September</div>
+            <div class="san-month-badge">October</div>
+            <div class="san-month-badge">November</div>
+            <div class="san-month-badge">December</div>
+          </div>
+          <div class="san-pickup-note">
+            <i class="fas fa-circle-info"></i>
+            <span>Exact pickup dates within each month are managed by the Environmental Health Department. Your registered GPS address ensures the sanitation crew locates your property accurately.</span>
+          </div>
+        </div>
+
+        <!-- What to prepare -->
+        <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-xl);padding:24px 22px;margin-top:20px;">
+          <h3 style="font-size:.97rem;font-weight:700;color:var(--ink);margin-bottom:14px;"><i class="fas fa-list-check" style="color:#16a34a;margin-right:8px;"></i>Preparing for Pickup Day</h3>
+          <ul class="san-check-list">
+            <li><i class="fas fa-check"></i>Bag all refuse securely before the crew arrives</li>
+            <li><i class="fas fa-check"></i>Place bags at your property entrance / gate</li>
+            <li><i class="fas fa-check"></i>Separate recyclables where possible (plastic, glass, paper)</li>
+            <li><i class="fas fa-check"></i>Do not leave waste out more than 24 hours before pickup</li>
+            <li><i class="fas fa-check"></i>Keep your portal receipt available as proof of levy payment</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     FREQUENTLY ASKED QUESTIONS
+══════════════════════════════════════════════════════════ -->
+<section class="san-section">
+  <div class="san-container" style="max-width:800px;">
+    <div class="san-center">
+      <div class="san-eyebrow"><span class="dot"></span>FAQs</div>
+      <h2 class="san-title">Frequently Asked Questions</h2>
+    </div>
+    <div class="san-faq-list">
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">Who is required to pay the Sanitation Levy? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">All property owners, landlords, and business operators within the Bwari Area Council jurisdiction are legally required to pay the annual sanitation levy. This includes residential property owners, tenement landlords, commercial business owners, and market traders.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">What payment methods are accepted? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">The portal processes payments via Paystack, which supports debit and credit cards (Visa, Mastercard), bank transfer, USSD (*737#, *822#), and mobile money. All transactions are encrypted and secure. You receive an instant payment confirmation and downloadable receipt.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">When does the monthly trash pickup start after payment? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">Your property is added to the monthly refuse collection route within 48 hours of successful payment confirmation. Your GPS-registered address is used to schedule the sanitation crew's route. You will receive your first pickup in the next scheduled monthly round for your district.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">Can I pay the levy for multiple properties? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">Yes. You can register multiple properties under a single portal account and pay the sanitation levy for each property individually. Each property will receive its own compliance receipt and will be enrolled in the monthly collection programme separately.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">What happens if the sanitation crew misses my pickup? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">If you experience a missed pickup, you may submit a complaint directly through your portal dashboard under the "Complaints" section. Your complaint will be routed to the Environmental Health Department for resolution, and a makeup collection will be scheduled.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">What happens if I do not pay the sanitation levy? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">Non-payment of the sanitation levy is an offence under the Bwari Environmental Sanitation Bye-Law. Defaulting properties are subject to fines, prohibition notices from Environmental Health Officers, and court summons. Properties without a valid levy receipt may also fail environmental compliance inspections required for business licence renewals and property transactions.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">Is the sanitation levy the same as the tenement rate? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">No. The tenement rate is a property-based annual tax levied on the occupation of premises. The sanitation levy is a separate environmental services fee that specifically funds refuse collection, drainage maintenance, and environmental health operations. Both must be paid independently. You can pay both through the same portal account.</p>
+      </details>
+
+      <details class="san-faq-item">
+        <summary class="san-faq-q">How do I download my sanitation levy receipt? <i class="fas fa-plus san-faq-icon"></i></summary>
+        <p class="san-faq-a">After a successful payment, your receipt is available immediately on your payments dashboard. Navigate to "Payments" in the sidebar, locate your sanitation levy transaction, and click "Download Receipt" to get a PDF copy. You can also use the public receipt verification tool on the homepage by entering your payment reference number.</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     FINAL CTA
+══════════════════════════════════════════════════════════ -->
+<section class="san-section alt">
+  <div class="san-container">
+    <div class="san-final-cta">
+      <h2>Pay Your Sanitation Levy Today</h2>
+      <p>Join thousands of compliant Bwari residents and businesses. Pay online in under five minutes, get your receipt instantly, and enjoy monthly doorstep refuse collection.</p>
+      <div class="cta-btns-wrap">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="san-btn san-btn-white"><i class="fas fa-tachometer-alt"></i> Go to Dashboard</a>
+        {% else %}
+          <a href="{% url 'signup' %}" class="san-btn san-btn-white"><i class="fas fa-user-plus"></i> Register &amp; Pay Now — It's Free</a>
+          <a href="{% url 'login' %}" class="san-btn san-btn-outline"><i class="fas fa-arrow-right-to-bracket"></i> Already Registered? Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

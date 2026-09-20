@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Landlord Account | Staff{% endblock %}
+
+{% block content %}
+<style>
+  .bw-staff-form-wrap {
+    max-width: 680px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .bw-staff-form-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+  }
+  .bw-staff-form-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f1117;
+    margin: 0 0 8px;
+  }
+  .bw-staff-form-header p {
+    color: #6b7280;
+    margin-bottom: 28px;
+  }
+  .bw-form-group {
+    margin-bottom: 20px;
+  }
+  .bw-form-group label {
+    display: block;
+    font-weight: 600;
+    color: #3b3f4a;
+    margin-bottom: 6px;
+  }
+  .bw-form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f7f8fa;
+    font-size: 0.95rem;
+  }
+  .bw-form-group input:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
+    background: #fff;
+    outline: none;
+  }
+  .errorlist {
+    color: #dc2626;
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+  .bw-form-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .bw-btn-submit {
+    background: #16a34a;
+    color: white;
+    font-weight: 600;
+    padding: 14px 32px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+  }
+  .bw-btn-cancel {
+    background: transparent;
+    border: 1.5px solid #e5e7eb;
+    color: #3b3f4a;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+  }
+</style>
+
+<div class="bw-staff-form-wrap">
+  <div class="bw-staff-form-card">
+    <div class="bw-staff-form-header">
+      <h2>Create Landlord Account</h2>
+      <p>Fill in the details to create a new landlord account on behalf of a property owner.</p>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      {% for field in form %}
+        <div class="bw-form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="errorlist">{{ field.errors }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="bw-form-actions">
+        <button type="submit" class="bw-btn-submit">
+          <i class="fas fa-user-plus"></i> Create Account
+        </button>
+        <a href="{% url 'dashboard' %}" class="bw-btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

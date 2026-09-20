@@ -1,0 +1,3040 @@
+<!-- settings -->
+
+"""
+Django settings for Digital_Tenement_Rate_Management_System project.
+...
+"""
+
+import os
+from pathlib import Path
+import dj_database_url
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = 'django-insecure-b)09@+xjhvhy#q4o_3a0vvoe(q3nry9xhu!9(qfi-47%-ail01'
+# SECRET_KEY = os.environ.get('SECRET_KEY')
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+# DEBUG = False
+
+ALLOWED_HOSTS = ['*']
+
+DEBUG = True
+
+# ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.ngrok-free.app']
+
+# Application definition
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'tenement',
+    'anymail',
+]
+
+ANYMAIL = {
+    "MAILJET_API_KEY": "c900bcf98fb135f1d2140746d4f05ab3",       # your API key
+    "MAILJET_SECRET_KEY": "b0f422008bc1efe43243202bd7dd8628",    # your Secret key
+}
+
+EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
+DEFAULT_FROM_EMAIL = 'Bwari Tenement <johnameh29@gmail.com>'
+# DEFAULT_FROM_EMAIL = 'Bwari Tenement <noreply@gmail.com>'
+
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+
+ROOT_URLCONF = 'Digital_Tenement_Rate_Management_System.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'tenement' / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'Digital_Tenement_Rate_Management_System.wsgi.application'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tenement_db',
+        'USER': 'postgres',
+        'PASSWORD': '221005',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+
+# DATABASE_URL = "postgresql://neondb_owner:npg_5NRoX0npJyKs@ep-steep-shape-am1gc0cs-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+# DATABASES = {
+#     "default": dj_database_url.parse(
+#         DATABASE_URL,
+#         conn_max_age=60,
+#     )
+# }
+
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
+
+PAYSTACK_SECRET_KEY = 'sk_test_17f3c3ed7cf5147fba18be087cf1a4192dfd67fe'
+PAYSTACK_PUBLIC_KEY = 'pk_test_fdeb97ce15dc119e28cc589fcb24fac669b14f81'
+PAYSTACK_CALLBACK_URL = 'http://yourdomain.com/payments/verify/'
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+# STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.DEBUG:   'debug',
+    messages.INFO:    'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR:   'error',
+}
+
+# ====================================================================
+# Email Configuration (development: console backend)
+# ====================================================================
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# For production, replace with:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'johnameh29@gmail.com'
+# EMAIL_HOST_PASSWORD = 'ofrf upxk mztz muns'
+# DEFAULT_FROM_EMAIL = 'Bwari Tenement <noreply@bwari-tenement.com>'
+
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'in-v3.mailjet.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
+# EMAIL_HOST_USER = 'c900bcf98fb135f1d2140746d4f05ab3'        # paste API Key here
+# EMAIL_HOST_PASSWORD = 'b0f422008bc1efe43243202bd7dd8628'  # paste Secret Key here
+# DEFAULT_FROM_EMAIL = 'Bwari Tenement <noreply@johnameh29@gmail.com>'
+
+
+
+<!-- views.py  -->
+import io
+import openpyxl
+import json
+import qrcode
+import base64
+from django.db.models import Sum
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from django.db.models import Q
+from django.db import models as django_models
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.utils import timezone
+from functools import wraps
+
+from .forms import (
+    SignupForm, LoginForm, ProfileUpdateForm, PropertyRegistrationForm,
+    ComplaintForm, AdminComplaintUpdateForm, SiteConfigurationForm, PaymentRateForm,
+    FixedResidentialRateForm, AnnouncementForm, StaffLandlordCreationForm,
+    StaffPropertyRegistrationForm, OTPVerificationForm,
+    ForgotPasswordForm, ForgotPasswordOTPForm, ResetPasswordForm,   # <-- added
+)
+from .models import (
+    UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment,
+    Announcement, UserAnnouncementRead, OTP,
+)
+from django.contrib.auth.hashers import make_password
+from io import BytesIO
+from django.conf import settings
+from django.urls import reverse
+from django.contrib.auth.decorators import user_passes_test
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+import requests
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.csrf import csrf_exempt
+
+# Helper: email sending
+from django.core.mail import send_mail
+
+def send_otp_email(user, otp_code):
+    subject = 'Email Verification – Bwari Tenement System'
+    message = (
+        f"Hello {user.first_name or user.username},\n\n"
+        f"Your verification code is:\n\n"
+        f"    {otp_code}\n\n"
+        f"It expires in 10 minutes. Please enter it on the verification page."
+    )
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Email error: {e}")
+        return False
+    # try:
+    #     send_mail(
+    #         subject,
+    #         message,
+    #         settings.DEFAULT_FROM_EMAIL,
+    #         [user.email],
+    #         fail_silently=False,
+    #     )
+    #     return True
+    # except Exception as e:
+    #     import traceback
+    #     traceback.print_exc()        # <-- prints full error to console
+    #     print(f"Email error: {e}")
+    #     return False
+
+# Decorator to require verified email for certain views
+def verified_email_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated and hasattr(request.user, 'userprofile'):
+            if request.user.userprofile.email_verified:
+                return view_func(request, *args, **kwargs)
+        return redirect('verify_email')
+    return wrapper
+
+
+# ── Property Payment helpers ─────────────────────────────────────────────────
+
+def is_property_fully_paid(property_obj):
+    active_rates = PaymentRate.objects.filter(
+        property_type=property_obj.property_type, is_active=True
+    )
+    if not active_rates.exists():
+        return True
+    now = timezone.now()
+    for rate in active_rates:
+        valid_payment = Payment.objects.filter(
+            landlord=property_obj.owner,
+            property=property_obj,
+            payment_rate=rate,
+            status='success',
+        ).filter(
+            django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+        ).exists()
+        if not valid_payment:
+            return False
+    return True
+
+def get_latest_valid_payment(property_obj, rate):
+    now = timezone.now()
+    return Payment.objects.filter(
+        landlord=property_obj.owner,
+        property=property_obj,
+        payment_rate=rate,
+        status='success',
+    ).filter(
+        django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+    ).order_by('-paid_at').first()
+
+def staff_or_admin_required(view_func):
+    def check_user(user):
+        return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.user_type in ['admin', 'staff']
+    return user_passes_test(check_user)(view_func)
+
+
+def send_forgot_password_email(user, otp_code):
+    subject = 'Password Reset – Bwari Tenement System'
+    message = (
+        f"Hello {user.first_name or user.username},\n\n"
+        f"We received a request to reset your password.\n\n"
+        f"Your verification code is:\n\n"
+        f"    {otp_code}\n\n"
+        f"It expires in 10 minutes. If you didn't request this, ignore this email."
+    )
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Forgot password email error: {e}")
+        return False
+
+# ── Public pages ──────────────────────────────────────────────────────────────
+def home(request):
+    return render(request, 'home.html')
+
+def about(request):
+    return render(request, 'about.html')
+
+def sanitation(request):
+    return render(request, 'sanitation.html')
+
+def contact(request):
+    return render(request, 'contact.html')
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            # This single call creates the User AND UserProfile (email_verified=False)
+            user = form.save()
+
+            # Log them in immediately
+            login(request, user)
+
+            # Generate OTP and send verification email
+            otp = OTP.create_otp(user)
+            if send_otp_email(user, otp.code):
+                messages.success(request, 'Account created! Check your email for the verification code.')
+                return redirect('verify_email')
+            else:
+                messages.error(request, 'Could not send verification email. Please try again later.')
+                otp.delete()
+                return redirect('signup')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = SignupForm()
+
+    return render(request, 'auth/signup.html', {'form': form})
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            remember = form.cleaned_data.get('remember_me', False)
+
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                if not remember:
+                    request.session.set_expiry(0)
+                messages.success(request, f"Welcome back, {user.username}!")
+                return redirect('dashboard')
+            else:
+                messages.error(request, "Invalid username or password.")
+    else:
+        form = LoginForm()
+
+    return render(request, 'auth/login.html', {'form': form})
+
+
+@login_required
+def logout_view(request):
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect('home')
+
+
+# ── Email Verification views ──────────────────────────────────────────────────
+@login_required
+def verify_email(request):
+    profile = request.user.userprofile
+    if profile.email_verified:
+        messages.info(request, 'Your email is already verified.')
+        return redirect('dashboard')
+
+    try:
+        user_otp = OTP.objects.get(user=request.user)
+    except OTP.DoesNotExist:
+        # Create a new OTP and send email
+        otp = OTP.create_otp(request.user)
+        send_otp_email(request.user, otp.code)
+        messages.info(request, 'A new verification code has been sent to your email.')
+        return redirect('verify_email')
+
+    if request.method == 'POST':
+        form = OTPVerificationForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['otp_code']
+            if not user_otp.is_valid():
+                messages.error(request, 'OTP expired. A new one has been sent.')
+                OTP.create_otp(request.user)
+                send_otp_email(request.user, OTP.objects.get(user=request.user).code)
+                return redirect('verify_email')
+
+            if user_otp.verify(code):
+                profile.email_verified = True
+                profile.save(update_fields=['email_verified'])
+                messages.success(request, 'Email verified! Welcome to the Bwari Tenement System.')
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'Invalid code. Please try again.')
+    else:
+        form = OTPVerificationForm()
+
+    return render(request, 'auth/verify_email.html', {
+        'form': form,
+        'user_email': request.user.email,
+    })
+
+
+@login_required
+def resend_otp(request):
+    user = request.user
+    otp = OTP.create_otp(user)
+    if send_otp_email(user, otp.code):
+        messages.success(request, f'A new code was sent to {user.email}.')
+    else:
+        messages.error(request, 'Failed to send email. Please try again.')
+    return redirect('verify_email')
+
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def dashboard(request):
+    profile = request.user.userprofile
+    context = {'user_type': profile.user_type}
+
+    if profile.user_type in ['admin', 'staff']:
+        residential_count = Property.objects.filter(property_type='residential').count()
+        commercial_count = Property.objects.filter(property_type='commercial').count()
+        industrial_count = Property.objects.filter(property_type='industrial').count()
+        land_count = Property.objects.filter(property_type='land').count()
+
+        # Sanitation payer counts — mirror the exact logic used in
+        # admin_sanitation_defaulters so the dashboard numbers always match
+        # the Sanitation Records page (per-user × per-rate records).
+        now = timezone.now()
+        sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+        eligible_users = User.objects.filter(
+            userprofile__user_type__in=['landlord', 'tenant'],
+            userprofile__email_verified=True,
+        ).select_related('userprofile')
+
+        _san_paid = 0
+        _san_unpaid = 0
+        for _u in eligible_users:
+            for _rate in sanitation_rates:
+                _has_paid = Payment.objects.filter(
+                    landlord=_u,
+                    payment_rate=_rate,
+                    status='success',
+                    property=None,
+                ).filter(
+                    django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+                ).exists()
+                if _has_paid:
+                    _san_paid += 1
+                else:
+                    _san_unpaid += 1
+
+        sanitation_payers_count   = _san_paid
+        sanitation_non_payers_count = _san_unpaid
+        total_sanitation_eligible = _san_paid + _san_unpaid
+
+        context.update({
+            'residential_count': residential_count,
+            'commercial_count': commercial_count,
+            'industrial_count': industrial_count,
+            'land_count': land_count,
+            'total_users':               UserProfile.objects.filter(email_verified=True).count(),
+            'total_landlords':           UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
+            'total_properties':          Property.objects.count(),
+            'open_complaints':           Complaint.objects.filter(status='open').count(),
+            'sanitation_payers_count':   sanitation_payers_count,
+            'sanitation_non_payers_count': sanitation_non_payers_count,
+            'total_sanitation_eligible': total_sanitation_eligible,
+        })
+    elif profile.user_type == 'landlord':
+        properties = Property.objects.filter(owner=request.user).order_by('-created_at')
+        my_complaints = Complaint.objects.filter(submitted_by=request.user)
+        properties_with_status = []
+        for prop in properties:
+            prop.paid = is_property_fully_paid(prop)
+            properties_with_status.append(prop)
+
+        total_paid = Payment.objects.filter(landlord=request.user, status='success').aggregate(total=Sum('amount'))['total'] or 0
+
+        outstanding_bills = 0
+        obligations_list = []
+        paid_coverage_list = []
+        for prop in properties:
+            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True):
+                valid_payment = get_latest_valid_payment(prop, rate)
+                if valid_payment:
+                    paid_coverage_list.append({'property': prop, 'rate': rate, 'payment': valid_payment})
+                else:
+                    if rate.is_per_unit and prop.property_type == 'residential' and prop.num_flats > 0:
+                        computed_amount = rate.amount * prop.num_flats
+                    else:
+                        computed_amount = rate.amount
+                    outstanding_bills += computed_amount
+                    obligations_list.append({
+                        'property': prop,
+                        'rate': rate,
+                        'computed_amount': computed_amount,
+                    })
+
+        # Include sanitation levy obligations for landlords as well
+        sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+        for rate in sanitation_rates:
+            valid_payment = Payment.objects.filter(
+                landlord=request.user,
+                payment_rate=rate,
+                property=None,
+                status='success',
+            ).filter(
+                django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=timezone.now())
+            ).first()
+            if valid_payment:
+                paid_coverage_list.append({'property': None, 'rate': rate, 'payment': valid_payment})
+            else:
+                outstanding_bills += rate.amount
+                obligations_list.append({
+                    'property': None,
+                    'rate': rate,
+                    'computed_amount': rate.amount,
+                })
+
+        context.update({
+            'properties': properties_with_status,
+            'total_properties': len(properties_with_status),
+            'total_paid': total_paid,
+            'outstanding_bills': outstanding_bills,
+            'obligations_list': obligations_list,
+            'paid_coverage_list': paid_coverage_list,
+            'total_complaints': my_complaints.count(),
+            'open_complaints': my_complaints.filter(status='open').count(),
+        })
+
+    elif profile.user_type == 'tenant':
+        my_complaints = Complaint.objects.filter(submitted_by=request.user)
+        # Add sanitation obligations to outstanding bills
+        sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+        now = timezone.now()
+        outstanding_bills = 0
+        obligations_list = []
+        paid_coverage_list = []
+        for rate in sanitation_rates:
+            valid_payment = Payment.objects.filter(
+                landlord=request.user,
+                payment_rate=rate,
+                status='success',
+                property=None,
+            ).filter(
+                django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+            ).first()
+            if valid_payment:
+                paid_coverage_list.append({'rate': rate, 'payment': valid_payment})
+            else:
+                outstanding_bills += rate.amount
+                obligations_list.append({
+                    'property': None,  # No property for sanitation
+                    'rate': rate,
+                    'computed_amount': rate.amount,
+                })
+
+        context.update({
+            'total_complaints': my_complaints.count(),
+            'open_complaints': my_complaints.filter(status='open').count(),
+            'outstanding_bills': outstanding_bills,
+            'obligations_list': obligations_list,
+            'paid_coverage_list': paid_coverage_list,
+        })
+
+    return render(request, 'dashboard.html', context)
+
+
+# ── Profile ───────────────────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def profile_view(request):
+    profile = request.user.userprofile
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=profile, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect('profile')
+    else:
+        form = ProfileUpdateForm(instance=profile, user=request.user)
+
+    return render(request, 'profile.html', {'form': form, 'user_type': profile.user_type})
+
+
+# ── Properties (landlord) ─────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def register_property(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'landlord':
+        messages.error(request, "Only landlords can register properties.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = PropertyRegistrationForm(request.POST, request.FILES)
+        if form.is_valid():
+            prop = form.save(owner=request.user)
+            messages.success(request, f'Property "{prop.name}" registered successfully!')
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = PropertyRegistrationForm()
+
+    return render(request, 'register_property.html', {'form': form})
+
+
+def view_property(request, property_id):
+    property_obj = get_object_or_404(Property, id=property_id, owner=request.user)
+    context = {
+        'property': property_obj,
+        'is_fully_paid': is_property_fully_paid(property_obj),
+        'owner': property_obj.owner,
+    }
+    return render(request, 'view_property.html', context)
+
+
+@login_required
+@verified_email_required
+def delete_property(request, property_id):
+    property_obj = get_object_or_404(Property, id=property_id, owner=request.user)
+    name = property_obj.name
+    property_obj.delete()
+    messages.success(request, f'Property "{name}" deleted successfully.')
+    return redirect('landlord_properties')
+
+
+@login_required
+@verified_email_required
+def landlord_properties(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'landlord':
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    properties = Property.objects.filter(owner=request.user).order_by('-created_at')
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        properties = properties.filter(
+            Q(name__icontains=search) | Q(address__icontains=search)
+        )
+
+    prop_type = request.GET.get('property_type', '')
+    if prop_type in ('residential', 'commercial', 'industrial', 'land'):
+        properties = properties.filter(property_type=prop_type)
+
+    district = request.GET.get('district', '')
+    if district:
+        properties = properties.filter(district=district)
+
+    paginator = Paginator(properties, 9)
+    page_number = request.GET.get('page')
+    properties_page = paginator.get_page(page_number)
+
+    for prop in properties_page:
+        prop.paid = is_property_fully_paid(prop)
+
+    context = {
+        'properties':   properties_page,
+        'total':        Property.objects.filter(owner=request.user).count(),
+        'search':       search,
+        'prop_type':    prop_type,
+        'district':     district,
+    }
+    return render(request, 'landlord/my_properties.html', context)
+
+
+# ── Complaints (landlord) ─────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def submit_complaint(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['landlord', 'tenant']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = ComplaintForm(request.POST)
+        if form.is_valid():
+            complaint = form.save(commit=False)
+            complaint.submitted_by = request.user
+            complaint.save()
+            messages.success(request, "Your complaint has been submitted. An admin will review it shortly.")
+            return redirect('my_complaints')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = ComplaintForm()
+
+    return render(request, 'landlord/submit_complaint.html', {'form': form})
+
+
+@login_required
+@verified_email_required
+def my_complaints(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['landlord', 'tenant']:
+        return redirect('dashboard')
+
+    complaints = Complaint.objects.filter(submitted_by=request.user)
+    return render(request, 'landlord/my_complaints.html', {'complaints': complaints})
+
+
+# ── Admin: Users ──────────────────────────────────────────────────────────────
+@staff_member_required
+def admin_manage_users(request):
+    users = User.objects.select_related('userprofile').filter(userprofile__email_verified=True)
+
+    user_type = request.GET.get('user_type')
+    if user_type:
+        users = users.filter(userprofile__user_type=user_type)
+
+    status = request.GET.get('status')
+    if status == 'active':
+        users = users.filter(is_active=True)
+    elif status == 'inactive':
+        users = users.filter(is_active=False)
+
+    search = request.GET.get('search')
+    if search:
+        users = users.filter(
+            Q(username__icontains=search) |
+            Q(email__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search)
+        )
+
+    paginator = Paginator(users, 20)
+    page_number = request.GET.get('page')
+    users_page = paginator.get_page(page_number)
+
+    context = {
+        'users':           users_page,
+        'total_users':     UserProfile.objects.filter(email_verified=True).count(),
+        'total_landlords': UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
+        'total_admins':    UserProfile.objects.filter(user_type='admin', email_verified=True).count(),
+        'total_tenants':   UserProfile.objects.filter(user_type='tenant', email_verified=True).count(),
+        'total_staff':     UserProfile.objects.filter(user_type='staff', email_verified=True).count(),
+    }
+    return render(request, 'admin/manage_users.html', context)
+
+
+@staff_member_required
+def admin_view_user(request, user_id):
+    user_obj = get_object_or_404(User.objects.select_related('userprofile'), id=user_id)
+    properties = Property.objects.filter(owner=user_obj)
+    complaints = Complaint.objects.filter(submitted_by=user_obj)
+    context = {
+        'user_obj':   user_obj,
+        'profile':    user_obj.userprofile,
+        'properties': properties,
+        'complaints': complaints,
+    }
+    return render(request, 'admin/view_user.html', context)
+
+
+@staff_member_required
+def admin_delete_user(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+    if user_obj != request.user:
+        username = user_obj.username
+        user_obj.delete()
+        messages.success(request, f'User "{username}" deleted successfully.')
+    else:
+        messages.error(request, 'You cannot delete your own account.')
+    return redirect('admin_manage_users')
+
+
+# ── Admin: Properties ─────────────────────────────────────────────────────────
+@staff_member_required
+def admin_manage_properties(request):
+    from .forms import DISTRICT_CHOICES
+    properties = Property.objects.select_related('owner').all()
+
+    prop_type = request.GET.get('property_type')
+    if prop_type in ('residential', 'commercial', 'industrial', 'land'):
+        properties = properties.filter(property_type=prop_type)
+
+    district = request.GET.get('district')
+    if district:
+        properties = properties.filter(district=district)
+
+    search = request.GET.get('search')
+    if search:
+        properties = properties.filter(
+            Q(name__icontains=search) |
+            Q(address__icontains=search) |
+            Q(owner__username__icontains=search)
+        )
+
+    paid_status = request.GET.get('paid_status', '')
+    props_list = list(properties)
+    if paid_status == 'paid':
+        props_list = [p for p in props_list if is_property_fully_paid(p)]
+    elif paid_status == 'unpaid':
+        props_list = [p for p in props_list if not is_property_fully_paid(p)]
+
+    total_properties  = Property.objects.count()
+    residential_count = Property.objects.filter(property_type='residential').count()
+    commercial_count  = Property.objects.filter(property_type='commercial').count()
+    industrial_count  = Property.objects.filter(property_type='industrial').count()
+    land_count        = Property.objects.filter(property_type='land').count()
+
+    district_counts = {
+        val: Property.objects.filter(district=val).count()
+        for val, _ in DISTRICT_CHOICES
+    }
+
+    paginator = Paginator(props_list, 12)
+    page_number = request.GET.get('page')
+    properties_page = paginator.get_page(page_number)
+
+    for prop in properties_page:
+        prop.paid = is_property_fully_paid(prop)
+
+    context = {
+        'properties':        properties_page,
+        'total_properties':  total_properties,
+        'residential_count': residential_count,
+        'commercial_count':  commercial_count,
+        'industrial_count':  industrial_count,
+        'land_count':        land_count,
+        'district_choices':  DISTRICT_CHOICES,
+        'district_counts':   district_counts,
+        'paid_status':       paid_status,
+    }
+    return render(request, 'admin/manage_properties.html', context)
+
+
+@staff_member_required
+def admin_view_property(request, property_id):
+    property_obj = get_object_or_404(Property, id=property_id)
+    context = {
+        'property': property_obj,
+        'is_fully_paid': is_property_fully_paid(property_obj),
+    }
+    return render(request, 'admin/view_property.html', context)
+
+
+@staff_member_required
+def admin_delete_property(request, property_id):
+    property_obj = get_object_or_404(Property, id=property_id)
+    name = property_obj.name
+    property_obj.delete()
+    messages.success(request, f'Property "{name}" deleted successfully.')
+    return redirect('admin_manage_properties')
+
+
+# ── Admin: Complaints ─────────────────────────────────────────────────────────
+@staff_member_required
+def admin_manage_complaints(request):
+    complaints = Complaint.objects.select_related('submitted_by').all()
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        complaints = complaints.filter(status=status_filter)
+
+    category_filter = request.GET.get('category', '')
+    if category_filter:
+        complaints = complaints.filter(category=category_filter)
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        complaints = complaints.filter(
+            Q(subject__icontains=search) |
+            Q(submitted_by__username__icontains=search) |
+            Q(submitted_by__first_name__icontains=search) |
+            Q(submitted_by__last_name__icontains=search)
+        )
+
+    total_complaints    = Complaint.objects.count()
+    open_count          = Complaint.objects.filter(status='open').count()
+    in_review_count     = Complaint.objects.filter(status='in_review').count()
+    resolved_count      = Complaint.objects.filter(status='resolved').count()
+
+    paginator = Paginator(complaints, 15)
+    page_number = request.GET.get('page')
+    complaints_page = paginator.get_page(page_number)
+
+    from .models import COMPLAINT_STATUS_CHOICES, COMPLAINT_CATEGORY_CHOICES
+
+    context = {
+        'complaints':        complaints_page,
+        'total_complaints':  total_complaints,
+        'open_count':        open_count,
+        'in_review_count':   in_review_count,
+        'resolved_count':    resolved_count,
+        'status_choices':    COMPLAINT_STATUS_CHOICES,
+        'category_choices':  COMPLAINT_CATEGORY_CHOICES,
+        'status_filter':     status_filter,
+        'category_filter':   category_filter,
+        'search':            search,
+    }
+    return render(request, 'admin/manage_complaints.html', context)
+
+
+@staff_member_required
+def admin_view_complaint(request, complaint_id):
+    complaint = get_object_or_404(Complaint, id=complaint_id)
+
+    if request.method == 'POST':
+        form = AdminComplaintUpdateForm(request.POST, instance=complaint)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Complaint updated successfully.")
+            return redirect('admin_view_complaint', complaint_id=complaint_id)
+    else:
+        form = AdminComplaintUpdateForm(instance=complaint)
+
+    return render(request, 'admin/view_complaint.html', {
+        'complaint': complaint,
+        'form':      form,
+    })
+
+
+# ── Admin: Site Configuration ─────────────────────────────────────────────────
+@staff_member_required
+def admin_site_configuration(request):
+    config = SiteConfiguration.get_config()
+
+    if request.method == 'POST':
+        form = SiteConfigurationForm(request.POST, instance=config)
+        if form.is_valid():
+            cfg = form.save(commit=False)
+            cfg.updated_by = request.user
+            cfg.save()
+            messages.success(request, "Site configuration saved successfully.")
+            return redirect('admin_site_configuration')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = SiteConfigurationForm(instance=config)
+
+    return render(request, 'admin/site_configuration.html', {
+        'form':   form,
+        'config': config,
+    })
+
+
+# ── Admin: Export Data ────────────────────────────────────────────────────────
+@staff_member_required
+def admin_export_landlords(request):
+    """Kept for backward-compat — redirects to the unified user export."""
+    return admin_export_users(request)
+
+
+@staff_member_required
+def admin_export_users(request):
+    """Export all non-admin, non-staff user accounts (landlords, tenants, etc.)."""
+    user_profiles = (
+        UserProfile.objects
+        .exclude(user_type__in=['admin', 'staff'])
+        .filter(email_verified=True)
+        .select_related('user')
+        .order_by('user__date_joined')
+    )
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "User Directory"
+
+    header_fill  = PatternFill("solid", fgColor="1E6CF0")
+    header_font  = Font(bold=True, color="FFFFFF", name="Calibri", size=11)
+    header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    title_font   = Font(bold=True, name="Calibri", size=14, color="0F1117")
+    sub_font     = Font(name="Calibri", size=10, color="6B7280")
+    cell_align   = Alignment(vertical="center")
+    alt_fill     = PatternFill("solid", fgColor="F7F8FA")
+    thin_border  = Border(
+        left=Side(style='thin', color='E5E7EB'),
+        right=Side(style='thin', color='E5E7EB'),
+        top=Side(style='thin', color='E5E7EB'),
+        bottom=Side(style='thin', color='E5E7EB'),
+    )
+
+    # Title row
+    ws.merge_cells('A1:K1')
+    title_cell = ws['A1']
+    title_cell.value = "Bwari Tenement System — User Directory"
+    title_cell.font  = title_font
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 30
+
+    # Subtitle row
+    ws.merge_cells('A2:K2')
+    sub_cell = ws['A2']
+    sub_cell.value = f"Exported on {timezone.now().strftime('%d %B %Y at %H:%M')} UTC  |  Excludes admin & staff accounts"
+    sub_cell.font  = sub_font
+    sub_cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[2].height = 18
+    ws.row_dimensions[3].height = 8  # spacer
+
+    HEADERS = [
+        ('#',               8),
+        ('Username',        18),
+        ('First Name',      18),
+        ('Last Name',       18),
+        ('Email',           30),
+        ('User Type',       14),
+        ('Phone Number',    18),
+        ('Address',         30),
+        ('Account Status',  16),
+        ('Properties',      14),
+        ('Date Joined',     20),
+    ]
+
+    for col_idx, (header, width) in enumerate(HEADERS, start=1):
+        cell = ws.cell(row=4, column=col_idx, value=header)
+        cell.font      = header_font
+        cell.fill      = header_fill
+        cell.alignment = header_align
+        cell.border    = thin_border
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    ws.row_dimensions[4].height = 22
+
+    # User-type colour map for the "User Type" column
+    TYPE_COLORS = {
+        'landlord': '15803D',   # green
+        'tenant':   '1558C8',   # blue
+    }
+
+    for row_num, profile in enumerate(user_profiles, start=1):
+        u         = profile.user
+        excel_row = row_num + 4
+        row_fill  = alt_fill if row_num % 2 == 0 else None
+        prop_count = u.properties.count() if hasattr(u, 'properties') else 0
+
+        row_data = [
+            row_num,
+            u.username,
+            u.first_name,
+            u.last_name,
+            u.email,
+            profile.get_user_type_display(),
+            profile.phone_number or '—',
+            profile.address or '—',
+            'Active' if u.is_active else 'Inactive',
+            prop_count,
+            u.date_joined.strftime('%d %b %Y %H:%M'),
+        ]
+
+        for col_idx, value in enumerate(row_data, start=1):
+            cell = ws.cell(row=excel_row, column=col_idx, value=value)
+            cell.border    = thin_border
+            cell.alignment = cell_align
+            if row_fill:
+                cell.fill = row_fill
+            # Colour-code "User Type" column (col 6)
+            if col_idx == 6:
+                color = TYPE_COLORS.get(profile.user_type, '3B3F4A')
+                cell.font = Font(color=color, bold=True, name="Calibri")
+            # Colour-code "Account Status" column (col 9)
+            if col_idx == 9:
+                if value == 'Active':
+                    cell.font = Font(color="16A34A", bold=True, name="Calibri")
+                else:
+                    cell.font = Font(color="DC2626", bold=True, name="Calibri")
+
+        ws.row_dimensions[excel_row].height = 18
+
+    # Summary footer
+    summary_row = user_profiles.count() + 5
+    ws.merge_cells(f'A{summary_row}:I{summary_row}')
+    summary_cell = ws[f'A{summary_row}']
+    summary_cell.value = (
+        f"Total users exported: {user_profiles.count()}  |  "
+        f"Landlords: {user_profiles.filter(user_type='landlord').count()}  |  "
+        f"Tenants: {user_profiles.filter(user_type='tenant').count()}"
+    )
+    summary_cell.font      = Font(bold=True, name="Calibri", size=10, color="1E6CF0")
+    summary_cell.alignment = Alignment(horizontal="right", vertical="center")
+
+    ws.freeze_panes = 'A5'
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename = f"users_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+def page_not_found(request, exception=None):
+    return render(request, '404.html', {'request': request}, status=404)
+
+@staff_member_required
+def admin_sanitation_defaulters(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+    all_records = []
+    now = timezone.now()
+
+    # All verified users (landlords + tenants) are subject to sanitation levy
+    users = User.objects.filter(
+        userprofile__user_type__in=['landlord', 'tenant'],
+        userprofile__email_verified=True,
+    ).select_related('userprofile')
+    for user in users:
+        for rate in sanitation_rates:
+            valid_payment = Payment.objects.filter(
+                landlord=user,
+                payment_rate=rate,
+                status='success',
+                property=None,
+            ).filter(
+                django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+            ).order_by('-paid_at').first()
+
+            has_paid = valid_payment is not None
+            all_records.append({
+                'user': user,
+                'profile': user.userprofile,
+                'rate': rate,
+                'amount': rate.amount,
+                'has_paid': has_paid,
+                'payment': valid_payment,
+            })
+
+    defaulters_count = sum(1 for r in all_records if not r['has_paid'])
+    paid_count = sum(1 for r in all_records if r['has_paid'])
+
+    return render(request, 'admin/sanitation_defaulters.html', {
+        'all_records': all_records,
+        'defaulters_count': defaulters_count,
+        'paid_count': paid_count,
+        # keep legacy 'defaulters' context for the export URL in template
+        'defaulters': [r for r in all_records if not r['has_paid']],
+    })
+
+@staff_member_required
+def admin_export_sanitation_defaulters(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    export_mode = request.GET.get('mode', 'defaulters')  # 'all' or 'defaulters'
+    export_all = export_mode == 'all'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'All Sanitation Records' if export_all else 'Sanitation Defaulters'
+
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_fill = PatternFill('solid', fgColor='1E3A5F')
+    header_align = Alignment(horizontal='center', vertical='center')
+    thin = Side(border_style='thin', color='D1D5DB')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    headers = [
+        'Username', 'Full Name', 'Email', 'Phone', 'Address', 'User Type',
+        'Sanitation Rate', 'Amount (₦)', 'Payment Status',
+        'Paid On', 'Expires On',
+    ]
+    widths = [18, 22, 28, 16, 36, 14, 32, 18, 16, 20, 20]
+
+    for i, (label, width) in enumerate(zip(headers, widths), 1):
+        cell = ws.cell(row=1, column=i, value=label)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = border
+        ws.column_dimensions[get_column_letter(i)].width = width
+    ws.row_dimensions[1].height = 24
+
+    sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+    users = User.objects.filter(
+        userprofile__user_type__in=['landlord', 'tenant'],
+        userprofile__email_verified=True,
+    ).select_related('userprofile')
+    row_num = 2
+    alt_fill = PatternFill('solid', fgColor='F7F8FA')
+    paid_fill = PatternFill('solid', fgColor='DCFCE7')
+    now = timezone.now()
+
+    for user in users:
+        for rate in sanitation_rates:
+            valid_payment = Payment.objects.filter(
+                landlord=user,
+                payment_rate=rate,
+                status='success',
+                property=None,
+            ).filter(
+                django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+            ).order_by('-paid_at').first()
+
+            has_paid = valid_payment is not None
+
+            if not export_all and has_paid:
+                continue  # skip paid users when exporting defaulters only
+
+            row_fill = paid_fill if has_paid else (alt_fill if row_num % 2 == 0 else PatternFill('solid', fgColor='FFFFFF'))
+            row_data = [
+                user.username,
+                user.get_full_name() or '—',
+                user.email,
+                getattr(user.userprofile, 'phone_number', '') or '—',
+                getattr(user.userprofile, 'address', '') or '—',
+                user.userprofile.get_user_type_display(),
+                rate.name,
+                float(rate.amount),
+                'Paid' if has_paid else 'Outstanding',
+                valid_payment.paid_at.strftime('%Y-%m-%d') if has_paid and valid_payment.paid_at else '—',
+                valid_payment.expires_at.strftime('%Y-%m-%d') if has_paid and valid_payment.expires_at else '—',
+            ]
+            for col, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_num, column=col, value=value)
+                cell.border = border
+                cell.fill = row_fill
+                cell.alignment = Alignment(vertical='center')
+                if col == 8:   # Amount (₦) — now column 8
+                    cell.number_format = '#,##0.00'
+                if col == 9:   # Payment Status — now column 9
+                    cell.font = Font(
+                        bold=True,
+                        color='15803D' if has_paid else 'DC2626',
+                    )
+            row_num += 1
+
+    if row_num == 2:
+        ws.cell(row=2, column=1, value='No records found.')
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename_prefix = 'sanitation_all_users' if export_all else 'sanitation_defaulters'
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{timezone.now().strftime("%Y%m%d")}.xlsx"'
+    return response
+
+# ── Admin: Payment Rates ─────────────────────────────────────────────────────
+@staff_member_required
+def admin_fixed_rate(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'admin':
+        messages.error(request, "Only admins can manage fixed rates.")
+        return redirect('dashboard')
+
+    fixed_rates = PaymentRate.objects.filter(property_type='residential', is_per_unit=True).order_by('-created_at')
+
+    if request.method == 'POST':
+        form = FixedResidentialRateForm(request.POST)
+        if form.is_valid():
+            rate = form.save(commit=False)
+            rate.property_type = 'residential'
+            rate.is_per_unit = True
+            rate.created_by = request.user
+            rate.save()
+            messages.success(request, f'Fixed residential rate "{rate.name}" created successfully.')
+            return redirect('admin_fixed_rate')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = FixedResidentialRateForm()
+
+    return render(request, 'admin/fixed_rate.html', {
+        'form': form,
+        'fixed_rates': fixed_rates,
+    })
+
+
+@staff_member_required
+def admin_payment_rates(request):
+    rates = PaymentRate.objects.all().order_by('-created_at')
+    context = {'rates': rates}
+    return render(request, 'admin/payment_rates.html', context)
+
+
+@staff_member_required
+def admin_create_payment_rate(request):
+    if request.method == 'POST':
+        form = PaymentRateForm(request.POST)
+        if form.is_valid():
+            rate = form.save(commit=False)
+            rate.created_by = request.user
+            rate.save()
+            messages.success(request, f'Payment rate "{rate.name}" created successfully.')
+            return redirect('admin_payment_rates')
+    else:
+        form = PaymentRateForm()
+    return render(request, 'admin/create_payment_rate.html', {'form': form})
+
+
+@staff_member_required
+def admin_delete_payment_rate(request, rate_id):
+    rate = get_object_or_404(PaymentRate, id=rate_id)
+    name = rate.name
+    rate.delete()
+    messages.success(request, f'Payment rate "{name}" deleted.')
+    return redirect('admin_payment_rates')
+
+
+@staff_member_required
+def admin_toggle_payment_rate(request, rate_id):
+    rate = get_object_or_404(PaymentRate, id=rate_id)
+    rate.is_active = not rate.is_active
+    rate.save()
+    status = "activated" if rate.is_active else "deactivated"
+    messages.success(request, f'Payment rate "{rate.name}" {status}.')
+    return redirect('admin_payment_rates')
+
+@staff_member_required
+def admin_all_payments(request):
+    """Admin: full paginated payment history with search + filter."""
+    qs = Payment.objects.select_related(
+        'landlord', 'landlord__userprofile', 'property', 'payment_rate'
+    ).order_by('-created_at')
+
+    # ── Filters ──────────────────────────────────────────────
+    q             = request.GET.get('q', '').strip()
+    status        = request.GET.get('status', '').strip()
+    property_type = request.GET.get('property_type', '').strip()
+    date_from     = request.GET.get('date_from', '').strip()
+    date_to       = request.GET.get('date_to', '').strip()
+
+    if q:
+        qs = qs.filter(
+            Q(reference__icontains=q) |
+            Q(landlord__username__icontains=q) |
+            Q(landlord__first_name__icontains=q) |
+            Q(landlord__last_name__icontains=q) |
+            Q(landlord__email__icontains=q) |
+            Q(property__name__icontains=q)
+        )
+    if status:
+        qs = qs.filter(status=status)
+    if property_type:
+        qs = qs.filter(property__property_type=property_type)
+    if date_from:
+        qs = qs.filter(paid_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(paid_at__date__lte=date_to)
+
+    # ── Summary counts (always on the full unfiltered set) ───
+    all_payments    = Payment.objects.all()
+    success_count   = all_payments.filter(status='success').count()
+    pending_count   = all_payments.filter(status='pending').count()
+    failed_count    = all_payments.filter(status='failed').count()
+    total_collected = all_payments.filter(status='success').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+
+    # ── Pagination ───────────────────────────────────────────
+    paginator = Paginator(qs, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin/all_payments.html', {
+        'page_obj':        page_obj,
+        'success_count':   success_count,
+        'pending_count':   pending_count,
+        'failed_count':    failed_count,
+        'total_collected': total_collected,
+    })
+
+
+# ── Landlord: Payments ───────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def landlord_payments(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'landlord':
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    properties = Property.objects.filter(owner=request.user)
+    property_types = properties.values_list('property_type', flat=True).distinct()
+    active_rates = PaymentRate.objects.filter(property_type__in=property_types, is_active=True)
+
+    obligations = []
+    paid_coverage = []
+    for prop in properties:
+        for rate in active_rates.filter(property_type=prop.property_type):
+            valid_payment = get_latest_valid_payment(prop, rate)
+            if valid_payment:
+                paid_coverage.append({'property': prop, 'rate': rate, 'payment': valid_payment})
+            else:
+                if rate.is_per_unit and prop.property_type == 'residential' and prop.num_flats > 0:
+                    computed_amount = rate.amount * prop.num_flats
+                else:
+                    computed_amount = rate.amount
+                obligations.append({'property': prop, 'rate': rate, 'computed_amount': computed_amount})
+
+    payments = Payment.objects.filter(landlord=request.user).select_related('property', 'payment_rate').order_by('-created_at')
+    successful_payments_count = payments.filter(status='success').count()
+
+    context = {
+        'obligations': obligations,
+        'paid_coverage': paid_coverage,
+        'payments': payments,
+        'successful_payments_count': successful_payments_count,
+    }
+    return render(request, 'landlord/payments.html', context)
+
+
+# @login_required
+# def initiate_payment(request, property_id, rate_id):
+#     profile = request.user.userprofile
+#     if profile.user_type != 'landlord':
+#         messages.error(request, "Access denied.")
+#         return redirect('dashboard')
+
+#     property_obj = get_object_or_404(Property, id=property_id, owner=request.user)
+#     rate = get_object_or_404(PaymentRate, id=rate_id, is_active=True)
+
+#     if Payment.objects.filter(landlord=request.user, property=property_obj, payment_rate=rate, status='success').exists():
+#         messages.info(request, "This payment has already been made.")
+#         return redirect('landlord_payments')
+
+#     if rate.is_per_unit and property_obj.property_type == 'residential' and property_obj.num_flats > 0:
+#         final_amount = rate.amount * property_obj.num_flats
+#     else:
+#         final_amount = rate.amount
+
+#     reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
+
+#     payment = Payment.objects.create(
+#         landlord=request.user,
+#         property=property_obj,
+#         payment_rate=rate,
+#         amount=final_amount,
+#         reference=reference,
+#         status='pending'
+#     )
+
+#     paystack_url = "https://api.paystack.co/transaction/initialize"
+#     headers = {
+#         "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+#         "Content-Type": "application/json",
+#     }
+#     data = {
+#         "email": request.user.email,
+#         "amount": int(final_amount * 100),
+#         "reference": reference,
+#         "callback_url": request.build_absolute_uri(reverse('verify_payment', args=[reference])),
+#         "metadata": {
+#             "landlord_id": request.user.id,
+#             "property_id": property_obj.id,
+#             "rate_id": rate.id,
+#         }
+#     }
+
+#     response = requests.post(paystack_url, headers=headers, json=data)
+#     if response.status_code == 200:
+#         resp_data = response.json()
+#         if resp_data['status']:
+#             return redirect(resp_data['data']['authorization_url'])
+#         else:
+#             messages.error(request, f"Payment initialization failed: {resp_data.get('message', 'Unknown error')}")
+#     else:
+#         messages.error(request, "Could not connect to payment gateway. Please try again later.")
+
+#     payment.status = 'failed'
+#     payment.save()
+#     return redirect('landlord_payments')
+
+
+@login_required
+def initiate_payment(request, property_id, rate_id):
+    profile = request.user.userprofile
+    if profile.user_type not in ['landlord', 'tenant']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    rate = get_object_or_404(PaymentRate, id=rate_id, is_active=True)
+    
+    # Handle sanitation rate (property_id = 0)
+    if property_id == 0:
+        if not rate.is_sanitation:
+            messages.error(request, "Invalid rate for this action.")
+            return redirect('dashboard')
+        property_obj = None
+        # Check for existing valid payment
+        existing = Payment.objects.filter(
+            landlord=request.user,
+            payment_rate=rate,
+            status='success',
+            property=None,
+        ).filter(
+            django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=timezone.now())
+        ).exists()
+        if existing:
+            messages.info(request, "You already have an active sanitation levy payment.")
+            return redirect('tenant_payments')
+    else:
+        if profile.user_type != 'landlord':
+            messages.error(request, "Only landlords can pay property rates.")
+            return redirect('dashboard')
+        property_obj = get_object_or_404(Property, id=property_id, owner=request.user)
+        # Check already paid
+        if Payment.objects.filter(landlord=request.user, property=property_obj, payment_rate=rate, status='success').exists():
+            messages.info(request, "This payment has already been made.")
+            return redirect('landlord_payments')
+
+    reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
+    payment = Payment.objects.create(
+        landlord=request.user,
+        property=property_obj,
+        payment_rate=rate,
+        amount=rate.amount,
+        reference=reference,
+        status='pending'
+    )
+
+    paystack_url = "https://api.paystack.co/transaction/initialize"
+    headers = {
+        "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "email": request.user.email,
+        "amount": int(rate.amount * 100),
+        "reference": reference,
+        "callback_url": request.build_absolute_uri(reverse('verify_payment', args=[reference])),
+        "metadata": {
+            "landlord_id": request.user.id,
+            "property_id": property_id if property_obj else None,
+            "rate_id": rate.id,
+        }
+    }
+
+    response = requests.post(paystack_url, headers=headers, json=data)
+    if response.status_code == 200:
+        resp_data = response.json()
+        if resp_data['status']:
+            return redirect(resp_data['data']['authorization_url'])
+        else:
+            messages.error(request, f"Payment initialization failed: {resp_data.get('message', 'Unknown error')}")
+    else:
+        messages.error(request, "Could not connect to payment gateway. Please try again later.")
+
+    payment.status = 'failed'
+    payment.save()
+    return redirect('tenant_payments' if property_obj is None else 'landlord_payments')
+
+
+@login_required
+def verify_payment(request, reference):
+    payment = get_object_or_404(Payment, reference=reference, landlord=request.user)
+
+    if payment.status == 'success':
+        messages.info(request, "Payment already verified.")
+        return redirect('payment_receipt', payment_id=payment.id)
+
+    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        resp_data = response.json()
+        if resp_data['status'] and resp_data['data']['status'] == 'success':
+            paid_at = timezone.now()
+            validity_days = 30 if payment.payment_rate and payment.payment_rate.is_sanitation else 365
+            payment.status = 'success'
+            payment.paid_at = paid_at
+            payment.expires_at = paid_at + timezone.timedelta(days=validity_days)
+            payment.paystack_response = resp_data['data']
+            payment.save()
+            messages.success(request, "Payment successful! Thank you.")
+            return redirect('payment_receipt', payment_id=payment.id)
+        else:
+            payment.status = 'failed'
+            payment.paystack_response = resp_data
+            payment.save()
+            messages.error(request, f"Payment verification failed: {resp_data.get('message', 'Unknown error')}")
+    else:
+        messages.error(request, "Could not verify payment at this time. Please contact support.")
+
+    return redirect('landlord_payments')
+
+
+@login_required
+def payment_receipt(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id, landlord=request.user, status='success')
+    qr_data = f"Payment Ref: {payment.reference}\nAmount: ₦{payment.amount}\nProperty: {payment.property.name if payment.property else 'Environmental Sanitation Levy'}\nPaid by: {payment.landlord.get_full_name()}\nValid Until: {payment.expires_at.strftime('%d %B %Y') if payment.expires_at else 'N/A'}"
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    context = {
+        'payment': payment,
+        'qr_code_base64': qr_base64,
+    }
+    return render(request, 'landlord/receipt.html', context)
+
+
+@login_required
+def download_receipt_pdf(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id, landlord=request.user, status='success')
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    import os
+
+    font_path = None
+    possible_paths = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+        'C:/Windows/Fonts/DejaVuSans.ttf',
+        os.path.join(settings.BASE_DIR, 'static/fonts/DejaVuSans.ttf')
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            font_path = path
+            break
+
+    if font_path:
+        pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+        title_font = 'DejaVu'
+        body_font = 'DejaVu'
+        naira_symbol = '₦'
+    else:
+        title_font = 'Helvetica-Bold'
+        body_font = 'Helvetica'
+        naira_symbol = 'NGN '
+
+    p.setFont(title_font, 20)
+    p.drawString(50, height - 50, "Bwari Tenement System")
+    p.setFont(body_font, 12)
+    p.drawString(50, height - 70, "Official Payment Receipt")
+    p.line(50, height - 80, width - 50, height - 80)
+
+    y = height - 110
+    p.setFont(body_font, 12)
+    p.drawString(50, y, "Receipt No:")
+    p.drawString(150, y, payment.reference)
+
+    y -= 20
+    p.drawString(50, y, "Date:")
+    p.drawString(150, y, payment.paid_at.strftime("%d %B %Y, %I:%M %p"))
+
+    y -= 30
+    p.setFont(title_font, 14)
+    p.drawString(50, y, "Landlord Information")
+    y -= 20
+    p.setFont(body_font, 12)
+    p.drawString(50, y, f"Name: {payment.landlord.get_full_name()}")
+    y -= 20
+    p.drawString(50, y, f"Email: {payment.landlord.email}")
+    if payment.landlord.userprofile.phone_number:
+        y -= 20
+        p.drawString(50, y, f"Phone: {payment.landlord.userprofile.phone_number}")
+
+    y -= 30
+    p.setFont(title_font, 14)
+    p.drawString(50, y, "Property Details")
+    y -= 20
+    p.setFont(body_font, 12)
+    if payment.property:
+        p.drawString(50, y, f"Property Name: {payment.property.name}")
+        y -= 20
+        p.drawString(50, y, f"Address: {payment.property.address}")
+        y -= 20
+        p.drawString(50, y, f"Type: {payment.property.get_property_type_display()}")
+    else:
+        p.drawString(50, y, "Property: Environmental Sanitation Levy")
+        y -= 20
+        p.drawString(50, y, "Type: Monthly Sanitation Payment")
+
+    y -= 30
+    p.setFont(title_font, 14)
+    p.drawString(50, y, "Payment Details")
+    y -= 20
+    p.setFont(body_font, 12)
+    p.drawString(50, y, f"Rate: {payment.payment_rate.name if payment.payment_rate else 'N/A'}")
+    y -= 20
+    amount_str = f"{naira_symbol}{payment.amount:,.2f}"
+    p.drawString(50, y, f"Amount Paid: {amount_str}")
+    y -= 20
+    p.drawString(50, y, f"Status: {payment.get_status_display()}")
+    y -= 20
+    if payment.expires_at:
+        p.drawString(50, y, f"Valid Until: {payment.expires_at.strftime('%d %B %Y')}")
+    else:
+        if payment.payment_rate and payment.payment_rate.is_sanitation:
+            p.drawString(50, y, "Valid Until: 30 days from payment date")
+        else:
+            p.drawString(50, y, "Valid Until: 1 year from payment date")
+
+    # QR Code
+    qr_data = f"Payment Ref: {payment.reference}\nAmount: {naira_symbol}{payment.amount}\nProperty: {payment.property.name if payment.property else 'Environmental Sanitation Levy'}\nPaid by: {payment.landlord.get_full_name()}\nValid Until: {payment.expires_at.strftime('%d %B %Y') if payment.expires_at else 'N/A'}"
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    qr_buffer = BytesIO()
+    img.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+    qr_image = ImageReader(qr_buffer)
+    p.drawImage(qr_image, width - 150, height - 250, width=100, height=100)
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    qr_buffer = BytesIO()
+    img.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+    qr_image = ImageReader(qr_buffer)
+    p.drawImage(qr_image, width - 150, height - 250, width=100, height=100)
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="receipt_{payment.reference}.pdf"'
+    return response
+
+
+@login_required
+@require_GET
+def get_paystack_access_code(request, property_id, rate_id):
+    profile = request.user.userprofile
+    if profile.user_type != 'landlord':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    property_obj = get_object_or_404(Property, id=property_id, owner=request.user)
+    rate = get_object_or_404(PaymentRate, id=rate_id, is_active=True)
+
+    if Payment.objects.filter(landlord=request.user, property=property_obj, payment_rate=rate, status='success').exists():
+        return JsonResponse({'error': 'Already paid'}, status=400)
+
+    reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
+    payment = Payment.objects.create(
+        landlord=request.user,
+        property=property_obj,
+        payment_rate=rate,
+        amount=rate.amount,
+        reference=reference,
+        status='pending'
+    )
+
+    paystack_url = "https://api.paystack.co/transaction/initialize"
+    headers = {
+        "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "email": request.user.email,
+        "amount": int(rate.amount * 100),
+        "reference": reference,
+        "callback_url": request.build_absolute_uri(reverse('verify_payment', args=[reference])),
+        "metadata": {
+            "landlord_id": request.user.id,
+            "property_id": property_obj.id,
+            "rate_id": rate.id,
+        }
+    }
+
+    response = requests.post(paystack_url, headers=headers, json=data)
+    if response.status_code == 200:
+        resp_data = response.json()
+        if resp_data['status']:
+            return JsonResponse({
+                'access_code': resp_data['data']['access_code'],
+                'reference': reference,
+            })
+        else:
+            payment.status = 'failed'
+            payment.save()
+            return JsonResponse({'error': resp_data.get('message', 'Initialization failed')}, status=400)
+    else:
+        payment.status = 'failed'
+        payment.save()
+        return JsonResponse({'error': 'Gateway error'}, status=500)
+
+
+@staff_member_required
+def admin_manage_announcements(request):
+    announcements = Announcement.objects.all().order_by('-created_at')
+    return render(request, 'admin/announcements.html', {'announcements': announcements})
+
+@staff_member_required
+def admin_create_announcement(request):
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST)
+        if form.is_valid():
+            announcement = form.save(commit=False)
+            announcement.created_by = request.user
+            announcement.save()
+            messages.success(request, f'Announcement "{announcement.title}" created.')
+            return redirect('admin_manage_announcements')
+    else:
+        form = AnnouncementForm()
+    return render(request, 'admin/create_announcement.html', {'form': form})
+
+@staff_member_required
+def admin_delete_announcement(request, announcement_id):
+    announcement = get_object_or_404(Announcement, id=announcement_id)
+    title = announcement.title
+    announcement.delete()
+    messages.success(request, f'Announcement "{title}" deleted.')
+    return redirect('admin_manage_announcements')
+
+@login_required
+def get_announcements(request):
+    announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')[:20]
+    data = []
+    for ann in announcements:
+        read = UserAnnouncementRead.objects.filter(user=request.user, announcement=ann).exists()
+        data.append({
+            'id': ann.id,
+            'title': ann.title,
+            'message': ann.message,
+            'created_at': ann.created_at.strftime('%b %d, %Y %H:%M'),
+            'read': read,
+        })
+    unread_count = sum(1 for item in data if not item['read'])
+    return JsonResponse({'announcements': data, 'unread_count': unread_count})
+
+@login_required
+@require_POST
+def mark_announcement_read(request, announcement_id):
+    announcement = get_object_or_404(Announcement, id=announcement_id, is_active=True)
+    UserAnnouncementRead.objects.get_or_create(user=request.user, announcement=announcement)
+    return JsonResponse({'status': 'ok'})
+
+
+# ── Staff ─────────────────────────────────────────────────────────────────────
+@staff_or_admin_required
+def staff_create_landlord(request):
+    if request.method == 'POST':
+        form = StaffLandlordCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = True
+            user.save()
+            UserProfile.objects.create(
+                user=user,
+                user_type='landlord',
+                phone_number=form.cleaned_data.get('phone_number', ''),
+                address=form.cleaned_data.get('address', ''),
+                email_verified=False,
+            )
+            # Send verification email
+            otp = OTP.create_otp(user)
+            send_otp_email(user, otp.code)
+            messages.success(request, f"Landlord account for {user.username} created. They must verify their email.")
+            return redirect('staff_create_landlord')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = StaffLandlordCreationForm()
+
+    return render(request, 'staff/create_landlord.html', {'form': form})
+
+
+@staff_or_admin_required
+def staff_register_property(request):
+    if request.method == 'POST':
+        form = StaffPropertyRegistrationForm(request.POST, request.FILES)
+        if form.is_valid():
+            prop = form.save()
+            messages.success(request, f'Property "{prop.name}" registered for {prop.owner.username}.')
+            return redirect('staff_register_property')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = StaffPropertyRegistrationForm()
+
+    return render(request, 'staff/register_property.html', {'form': form})
+
+
+@staff_or_admin_required
+def search_landlords(request):
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+
+    landlords = User.objects.filter(
+        userprofile__user_type='landlord'
+    ).filter(
+        Q(username__icontains=query) |
+        Q(email__icontains=query) |
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query)
+    ).select_related('userprofile')[:10]
+
+    results = []
+    for landlord in landlords:
+        full_name = landlord.get_full_name() or landlord.username
+        results.append({
+            'id': landlord.id,
+            'text': f"{full_name} ({landlord.email})",
+            'username': landlord.username,
+            'email': landlord.email,
+        })
+    return JsonResponse({'results': results})
+
+
+# ── Admin: Create Staff/Admin User ────────────────────────────────────────────
+@staff_member_required
+def admin_create_user(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'admin':
+        messages.error(request, "Only admins can create staff users.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = StaffLandlordCreationForm(request.POST)
+        user_type = request.POST.get('user_type', 'staff')
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = True
+            user.save()
+            UserProfile.objects.create(
+                user=user,
+                user_type=user_type,
+                phone_number=form.cleaned_data.get('phone_number', ''),
+                address=form.cleaned_data.get('address', ''),
+                email_verified=False,
+            )
+            # Send OTP for email verification
+            otp = OTP.create_otp(user)
+            send_otp_email(user, otp.code)
+            messages.success(request, f'User "{user.username}" ({user_type}) created. They must verify their email.')
+            return redirect('admin_manage_users')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = StaffLandlordCreationForm()
+
+    return render(request, 'admin/create_user.html', {'form': form})
+
+
+# ── Admin: Pay Bypass ─────────────────────────────────────────────────────────
+@staff_member_required
+def admin_pay_bypass(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'admin':
+        messages.error(request, "Only admins can use the pay bypass tool.")
+        return redirect('dashboard')
+
+    search_user = None
+    user_payments = []        # property-based outstanding payments
+    sanitation_payments = []  # sanitation (property=None) outstanding payments
+    search_query = request.GET.get('q', '').strip()
+
+    if search_query:
+        try:
+            search_user = User.objects.select_related('userprofile').get(
+                Q(username__iexact=search_query) | Q(email__iexact=search_query)
+            )
+            now = timezone.now()
+
+            # ── Property-based payments ──────────────────────────────────────
+            for prop in Property.objects.filter(owner=search_user):
+                for rate in PaymentRate.objects.filter(
+                    property_type=prop.property_type, is_active=True, is_sanitation=False
+                ):
+                    payment = Payment.objects.filter(
+                        landlord=search_user, property=prop, payment_rate=rate
+                    ).filter(
+                        django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+                    ).filter(status='success').first()
+                    if not payment:
+                        pending = Payment.objects.filter(
+                            landlord=search_user, property=prop, payment_rate=rate, status='pending'
+                        ).first()
+                        user_payments.append({
+                            'property': prop,
+                            'rate': rate,
+                            'payment': pending,
+                        })
+
+            # ── Sanitation payments (apply to landlords AND tenants) ─────────
+            user_type = search_user.userprofile.user_type
+            if user_type in ['landlord', 'tenant']:
+                for rate in PaymentRate.objects.filter(is_sanitation=True, is_active=True):
+                    payment = Payment.objects.filter(
+                        landlord=search_user, property=None, payment_rate=rate, status='success',
+                    ).filter(
+                        django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+                    ).first()
+                    if not payment:
+                        pending = Payment.objects.filter(
+                            landlord=search_user, property=None, payment_rate=rate, status='pending'
+                        ).first()
+                        sanitation_payments.append({
+                            'rate': rate,
+                            'payment': pending,
+                        })
+
+        except User.DoesNotExist:
+            messages.error(request, f'No user found with username or email "{search_query}".')
+
+    return render(request, 'admin/pay_bypass.html', {
+        'search_query': search_query,
+        'search_user': search_user,
+        'user_payments': user_payments,
+        'sanitation_payments': sanitation_payments,
+    })
+
+
+@staff_member_required
+def admin_pay_bypass_update(request, property_id, rate_id):
+    profile = request.user.userprofile
+    if profile.user_type != 'admin':
+        messages.error(request, "Only admins can use the pay bypass tool.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        rate        = get_object_or_404(PaymentRate, id=rate_id)
+        redirect_q  = request.POST.get('q', '')
+        paid_at     = timezone.now()
+
+        # property_id == 0 signals a sanitation payment (no property)
+        if property_id == 0:
+            landlord_id = request.POST.get('landlord_id')
+            if not landlord_id:
+                messages.error(request, "Landlord not identified for sanitation bypass.")
+                return redirect(f'/management/pay-bypass/?q={redirect_q}')
+            landlord = get_object_or_404(User, id=landlord_id)
+            validity_days = 30
+            existing = Payment.objects.filter(landlord=landlord, property=None, payment_rate=rate)
+            if existing.exists():
+                existing.update(
+                    status='success',
+                    paid_at=paid_at,
+                    expires_at=paid_at + timezone.timedelta(days=validity_days),
+                )
+            else:
+                Payment.objects.create(
+                    landlord=landlord,
+                    property=None,
+                    payment_rate=rate,
+                    amount=rate.amount,
+                    reference=f'BYPASS-SAN-{timezone.now().strftime("%Y%m%d%H%M%S")}-{landlord.id}-{rate.id}',
+                    status='success',
+                    paid_at=paid_at,
+                    expires_at=paid_at + timezone.timedelta(days=validity_days),
+                )
+            messages.success(request, f'Sanitation payment "{rate.name}" for {landlord.username} marked as paid.')
+        else:
+            prop     = get_object_or_404(Property, id=property_id)
+            landlord = prop.owner
+            validity_days = 30 if rate.is_sanitation else 365
+            existing = Payment.objects.filter(landlord=landlord, property=prop, payment_rate=rate)
+            if existing.exists():
+                existing.update(
+                    status='success',
+                    paid_at=paid_at,
+                    expires_at=paid_at + timezone.timedelta(days=validity_days),
+                )
+            else:
+                Payment.objects.create(
+                    landlord=landlord,
+                    property=prop,
+                    payment_rate=rate,
+                    amount=rate.amount,
+                    reference=f'BYPASS-{timezone.now().strftime("%Y%m%d%H%M%S")}-{prop.id}-{rate.id}',
+                    status='success',
+                    paid_at=paid_at,
+                    expires_at=paid_at + timezone.timedelta(days=validity_days),
+                )
+            messages.success(request, f'Payment for "{prop.name}" / "{rate.name}" marked as paid.')
+
+        return redirect(f'/management/pay-bypass/?q={redirect_q}')
+
+    return redirect('admin_pay_bypass')
+
+
+# ── Admin: Defaulters ───────────────────────────────────────────────────────
+@staff_member_required
+def admin_defaulters_list(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    defaulters = []
+    landlords = User.objects.filter(userprofile__user_type='landlord').select_related('userprofile')
+    now = timezone.now()
+
+    for landlord in landlords:
+        for prop in Property.objects.filter(owner=landlord):
+            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True):
+                valid = Payment.objects.filter(
+                    landlord=landlord, property=prop, payment_rate=rate, status='success',
+                ).filter(
+                    django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+                ).exists()
+                if not valid:
+                    defaulters.append({
+                        'landlord': landlord,
+                        'property': prop,
+                        'rate': rate,
+                    })
+
+    return render(request, 'admin/defaulters_list.html', {'defaulters': defaulters})
+
+
+@staff_member_required
+def admin_export_defaulters(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Defaulters"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill("solid", fgColor="1E3A5F")
+    header_align = Alignment(horizontal="center", vertical="center")
+    thin = Side(border_style="thin", color="D1D5DB")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    headers = [
+        "Landlord Username", "Full Name", "Email", "Phone",
+        "Property Name", "Address", "District", "Property Type",
+        "No. of Units", "Rate Name", "Amount Due (₦)", "Property Registered"
+    ]
+    col_widths = [20, 22, 28, 16, 25, 32, 14, 16, 12, 28, 18, 22]
+
+    for i, (h, w) in enumerate(zip(headers, col_widths), 1):
+        cell = ws.cell(row=1, column=i, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = border
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    ws.row_dimensions[1].height = 22
+
+    landlords = User.objects.filter(userprofile__user_type='landlord').select_related('userprofile')
+    row_num = 2
+    alt_fill = PatternFill("solid", fgColor="F7F8FA")
+    now = timezone.now()
+
+    for landlord in landlords:
+        for prop in Property.objects.filter(owner=landlord):
+            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True):
+                valid = Payment.objects.filter(
+                    landlord=landlord, property=prop, payment_rate=rate, status='success',
+                ).filter(
+                    django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+                ).exists()
+                if not valid:
+                    row_fill = alt_fill if row_num % 2 == 0 else PatternFill("solid", fgColor="FFFFFF")
+                    row_data = [
+                        landlord.username,
+                        landlord.get_full_name() or '—',
+                        landlord.email,
+                        getattr(landlord.userprofile, 'phone_number', '') or '—',
+                        prop.name,
+                        prop.address,
+                        prop.district.title(),
+                        prop.get_property_type_display(),
+                        prop.num_units,
+                        rate.name,
+                        float(rate.amount),
+                        prop.created_at.strftime("%Y-%m-%d") if prop.created_at else '—',
+                    ]
+                    for col, value in enumerate(row_data, 1):
+                        cell = ws.cell(row=row_num, column=col, value=value)
+                        cell.border = border
+                        cell.fill = row_fill
+                        cell.alignment = Alignment(vertical="center")
+                        if col == 11:
+                            cell.number_format = '#,##0.00'
+                    row_num += 1
+
+    if row_num == 2:
+        ws.cell(row=2, column=1, value="No defaulters found.")
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="defaulters_enforcement_{timezone.now().strftime("%Y%m%d")}.xlsx"'
+    return response
+
+
+# ── Forgot Password views ────────────────────────────────────────────────────
+def forgot_password(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            user = User.objects.filter(email=email).first()   # <- use filter().first()
+
+            if user is not None:
+                otp = OTP.create_otp(user)
+                if send_forgot_password_email(user, otp.code):
+                    request.session['password_reset_user_id'] = user.id
+                    messages.success(request, f'An OTP has been sent to {email}. Please check your email.')
+                    return redirect('verify_forgot_password_otp')
+                else:
+                    messages.error(request, 'Failed to send email. Please try again.')
+                    otp.delete()
+            else:
+                # Don't reveal that email doesn't exist
+                messages.info(request, 'If that email is registered, an OTP has been sent.')
+                return redirect('login')
+    else:
+        form = ForgotPasswordForm()
+
+    return render(request, 'auth/forgot_password.html', {'form': form})
+
+def verify_forgot_password_otp(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    user_id = request.session.get('password_reset_user_id')
+    if not user_id:
+        messages.error(request, 'Password reset session expired. Please try again.')
+        return redirect('forgot_password')
+
+    user = get_object_or_404(User, id=user_id)
+
+    try:
+        user_otp = OTP.objects.get(user=user)
+    except OTP.DoesNotExist:
+        messages.error(request, 'OTP not found. Please request a new one.')
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        form = ForgotPasswordOTPForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['otp_code']
+            if not user_otp.is_valid():
+                messages.error(request, 'OTP expired. A new one has been sent.')
+                OTP.create_otp(user)
+                send_forgot_password_email(user, OTP.objects.get(user=user).code)
+                return redirect('verify_forgot_password_otp')
+
+            if user_otp.verify(code):
+                request.session['password_reset_verified'] = True
+                messages.success(request, 'OTP verified. Please set your new password.')
+                return redirect('reset_password')
+            else:
+                messages.error(request, 'Invalid OTP code. Please try again.')
+    else:
+        form = ForgotPasswordOTPForm()
+
+    return render(request, 'auth/verify_forgot_password_otp.html', {
+        'form': form,
+        'user_email': user.email,
+    })
+
+
+def reset_password(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if not request.session.get('password_reset_verified'):
+        messages.error(request, 'Please verify your OTP first.')
+        return redirect('forgot_password')
+
+    user_id = request.session.get('password_reset_user_id')
+    if not user_id:
+        messages.error(request, 'Password reset session expired. Please try again.')
+        return redirect('login')
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == 'POST':
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['password']
+            user.set_password(new_password)
+            user.save()
+
+            # Clear session
+            request.session.pop('password_reset_user_id', None)
+            request.session.pop('password_reset_verified', None)
+
+            messages.success(request, 'Password reset successfully! You can now login with your new password.')
+            return redirect('login')
+    else:
+        form = ResetPasswordForm()
+
+    return render(request, 'auth/reset_password.html', {
+        'form': form,
+        'user_email': user.email,
+    })
+
+
+def resend_forgot_password_otp(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    user_id = request.session.get('password_reset_user_id')
+    if not user_id:
+        messages.error(request, 'Session expired. Please start over.')
+        return redirect('forgot_password')
+
+    user = get_object_or_404(User, id=user_id)
+    otp = OTP.create_otp(user)
+    if send_forgot_password_email(user, otp.code):
+        messages.success(request, f'A new code has been sent to {user.email}.')
+    else:
+        messages.error(request, 'Failed to send email. Please try again.')
+    return redirect('verify_forgot_password_otp')
+
+
+# ── ADD THIS TO views.py ──────────────────────────────────────────────────────
+# Place this function anywhere after the existing staff_register_property view.
+# It requires no new imports beyond what views.py already has.
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def staff_verify_payment(request):
+    """
+    Staff / Admin tool: look up a payment by its reference number and display
+    full verification details — landlord, property, amount, validity, and
+    whether every active rate for that property is currently paid.
+    """
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    result   = None   # Payment object if found
+    error    = None   # Human-readable error string
+    ref      = ''     # The submitted reference value
+
+    if request.method == 'POST':
+        ref = request.POST.get('reference', '').strip()
+
+        if not ref:
+            error = 'Please enter a receipt / reference number.'
+        else:
+            try:
+                payment = (
+                    Payment.objects
+                    .select_related('landlord', 'landlord__userprofile', 'property', 'payment_rate')
+                    .get(reference=ref)
+                )
+
+                # Build a full picture of this property's payment status
+                prop        = payment.property
+                active_rates = PaymentRate.objects.filter(
+                    property_type=prop.property_type, is_active=True
+                )
+
+                coverage = []
+                all_paid = True
+                for rate in active_rates:
+                    vp = get_latest_valid_payment(prop, rate)
+                    covered = vp is not None
+                    if not covered:
+                        all_paid = False
+                    coverage.append({
+                        'rate':    rate,
+                        'payment': vp,
+                        'covered': covered,
+                    })
+
+                result = {
+                    'payment':       payment,
+                    'property':      prop,
+                    'landlord':      payment.landlord,
+                    'coverage':      coverage,
+                    'all_paid':      all_paid,
+                    'is_this_valid': payment.status == 'success' and not payment.is_expired,
+                }
+
+            except Payment.DoesNotExist:
+                error = f'No payment record found for reference "{ref}". Please check and try again.'
+
+    return render(request, 'staff/verify_payment.html', {
+        'result': result,
+        'error':  error,
+        'ref':    ref,
+    })
+
+# ── Public Receipt Lookup (no login required) ─────────────────────────────────
+@require_GET
+def public_lookup_receipt(request):
+    """
+    AJAX endpoint — publicly accessible, no login required.
+    Accepts ?ref=<receipt_reference> and returns JSON with payment details.
+    Only surfaces successfully paid, non-expired receipts.
+    """
+    ref = request.GET.get('ref', '').strip()
+    if not ref:
+        return JsonResponse({'found': False, 'error': 'Please enter a receipt / reference number.'})
+
+    try:
+        payment = Payment.objects.select_related(
+            'landlord', 'property', 'payment_rate'
+        ).get(reference=ref, status='success')
+
+        expired = payment.is_expired
+        days_remaining = payment.days_remaining
+
+        data = {
+            'found':          True,
+            'valid':          not expired,
+            'reference':      payment.reference,
+            'amount':         str(payment.amount),
+            'property_name':  payment.property.name if payment.property else 'Environmental Sanitation Levy',
+            'property_type':  payment.property.get_property_type_display() if payment.property else 'Sanitation',
+            'property_address': payment.property.address if payment.property else 'N/A',
+            'district':       payment.property.get_district_display() if payment.property and hasattr(payment.property, 'get_district_display') else (payment.property.district if payment.property else 'N/A'),
+            'landlord_name':  payment.landlord.get_full_name() or payment.landlord.username,
+            'rate_name':      payment.payment_rate.name if payment.payment_rate else '—',
+            'paid_at':        payment.paid_at.strftime('%d %B %Y, %I:%M %p') if payment.paid_at else '—',
+            'expires_at':     payment.expires_at.strftime('%d %B %Y') if payment.expires_at else '—',
+            'days_remaining': days_remaining,
+            'expired':        expired,
+        }
+    except Payment.DoesNotExist:
+        data = {'found': False, 'error': f'No successful payment found for reference "{ref}". Please check and try again.'}
+
+    return JsonResponse(data)
+
+@login_required
+@verified_email_required
+def tenant_payments(request):
+    profile = request.user.userprofile
+    if profile.user_type != 'tenant':
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    # Only sanitation rates
+    sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+    now = timezone.now()
+
+    obligations = []
+    paid_items = []
+    for rate in sanitation_rates:
+        # Check for a valid (non-expired) successful payment by this tenant for that rate
+        valid_payment = Payment.objects.filter(
+            landlord=request.user,
+            payment_rate=rate,
+            status='success',
+            property=None,          # sanitation payments have no property
+        ).filter(
+            django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
+        ).first()
+
+        if valid_payment:
+            paid_items.append({'rate': rate, 'payment': valid_payment})
+        else:
+            obligations.append({'rate': rate, 'amount': rate.amount})
+
+    # Full payment history for tenant
+    payments = Payment.objects.filter(
+        landlord=request.user, property=None
+    ).select_related('payment_rate').order_by('-created_at')
+
+    context = {
+        'obligations': obligations,
+        'paid_coverage': paid_items,
+        'payments': payments,
+        'successful_payments_count': payments.filter(status='success').count(),
+    }
+    return render(request, 'tenant/payments.html', context)
+
+
+# ── Bye-Law Pages ─────────────────────────────────────────────────────────────
+
+def bylaw_preliminary(request):
+    return render(request, 'by_laws/prelimenary.html')
+
+def bylaw_enabling_law(request):
+    return render(request, 'by_laws/enabling_law.html')
+
+def bylaw_marriages(request):
+    return render(request, 'by_laws/Registrition_of_marriages.html')
+
+def bylaw_motor_parks(request):
+    return render(request, 'by_laws/motor_parks.html')
+
+def bylaw_environmental_sanitation(request):
+    return render(request, 'by_laws/environmental_sanitation.html')
+
+def bylaw_allied_matters(request):
+    return render(request, 'by_laws/allied_matters.html')
+
+def bylaw_borehole_drilling(request):
+    return render(request, 'by_laws/borehole_drilling.html')
+
+def bylaw_commercial_pos_operators(request):
+    return render(request, 'by_laws/commercial_pos_operators.html')
+
+def bylaw_community_tax(request):
+    return render(request, 'by_laws/community_tax.html')
+
+def bylaw_construction_permits(request):
+    return render(request, 'by_laws/construction_permits.html')
+
+def bylaw_contractors(request):
+    return render(request, 'by_laws/contractors.html')
+
+def bylaw_control_of_advertisement(request):
+    return render(request, 'by_laws/control_of_advertisement.html')
+
+
+
+def bylaw_cutting_road_tar(request):
+    return render(request, 'by_laws/cutting_of_road_tar.html')
+
+def bylaw_foodstuff_regulation(request):
+    return render(request, 'by_laws/foodstuff_regulation.html')
+
+def bylaw_house_numbering(request):
+    return render(request, 'by_laws/house_numbering.html')
+
+def bylaw_liquor_licensing(request):
+    return render(request, 'by_laws/liquor_licensing.html')
+
+def bylaw_market_regulation(request):
+    return render(request, 'by_laws/market_regulation.html')
+
+def bylaw_mobile_advertisement(request):
+    return render(request, 'by_laws/mobile_advertisement.html')
+
+def bylaw_motorcycle_uses(request):
+    return render(request, 'by_laws/motorcycle_uses.html')
+
+def bylaw_movement_keeping_dogs(request):
+    return render(request, 'by_laws/movement_and_keeping_of_dogs.html')
+
+def bylaw_parking_traffic_control(request):
+    return render(request, 'by_laws/parking_and_traffic_control.html')
+
+def bylaw_pest_control(request):
+    return render(request, 'by_laws/pest_control.html')
+
+def bylaw_public_toilet(request):
+    return render(request, 'by_laws/public_toilet.html')
+
+def bylaw_refuse_operation(request):
+    return render(request, 'by_laws/refuse_operation.html')
+
+def bylaw_laundry_registration(request):
+    return render(request, 'by_laws/registration_of_laundry_houses.html')
+
+def bylaw_regulated_premises(request):
+    return render(request, 'by_laws/regulated_premises.html')
+
+def bylaw_tenement_rate(request):
+    return render(request, 'by_laws/tenement_rate.html')
+
+def bylaw_tv_license(request):
+    return render(request, 'by_laws/tv_license.html')
+
+def bylaw_wrong_parking(request):
+    return render(request, 'by_laws/wrong_parking.html')
+
+
+    <!-- forms.py   -->
+     from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement
+
+
+USER_TYPE_CHOICES = (
+    ('landlord', 'Landlord / Property Owner'),
+)
+
+class SignupForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    phone_number = forms.CharField(max_length=15, required=False)
+    address = forms.CharField(max_length=255, required=False)
+    user_type = forms.ChoiceField(choices=USER_TYPE_CHOICES, required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'password1', 'password2')
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
+        if commit:
+            user.save()
+            UserProfile.objects.create(
+                user=user,
+                user_type=self.cleaned_data['user_type'],
+                phone_number=self.cleaned_data.get('phone_number', ''),
+                address=self.cleaned_data.get('address', ''),
+                email_verified=False,          # <-- new default
+            )
+        return user
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput)
+    remember_me = forms.BooleanField(required=False)
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=True)
+    last_name = forms.CharField(max_length=30, required=True)
+    email = forms.EmailField(required=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ['phone_number', 'address', 'bio']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if self.user:
+            self.fields['first_name'].initial = self.user.first_name
+            self.fields['last_name'].initial = self.user.last_name
+            self.fields['email'].initial = self.user.email
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if self.user:
+            self.user.first_name = self.cleaned_data['first_name']
+            self.user.last_name = self.cleaned_data['last_name']
+            self.user.email = self.cleaned_data['email']
+            self.user.save()
+        if commit:
+            profile.save()
+        return profile
+
+
+PROPERTY_TYPE_CHOICES = (
+    ('residential', 'Residential'),
+    ('commercial',  'Commercial'),
+    ('industrial',  'Industrial'),
+    ('land',        'Land'),
+)
+
+DISTRICT_CHOICES = (
+    ('bwari',   'Bwari'),
+    ('dutse',   'Dutse'),
+    ('kawu',    'Kawu'),
+    ('rubochi', 'Rubochi'),
+    ('shere',   'Shere'),
+    ('other',   'Other'),
+)
+
+
+class PropertyRegistrationForm(forms.Form):
+    name          = forms.CharField(max_length=255, label='Property Name')
+    address       = forms.CharField(max_length=500, label='Address')
+    district      = forms.ChoiceField(choices=DISTRICT_CHOICES, label='District / Area')
+    property_type = forms.ChoiceField(choices=PROPERTY_TYPE_CHOICES, label='Property Type')
+    num_units     = forms.IntegerField(
+        min_value=1, required=False, label='Number of Units',
+        widget=forms.NumberInput(attrs={'placeholder': 'e.g. 4'})
+    )
+    latitude  = forms.DecimalField(max_digits=9, decimal_places=6, required=False, widget=forms.HiddenInput())
+    longitude = forms.DecimalField(max_digits=9, decimal_places=6, required=False, widget=forms.HiddenInput())
+    main_image = forms.ImageField(required=True, label='Main Property Image')
+    image_1    = forms.ImageField(required=True, label='Additional Image 1')
+    image_2    = forms.ImageField(required=True, label='Additional Image 2')
+    image_3    = forms.ImageField(required=True, label='Additional Image 3')
+    image_4    = forms.ImageField(required=False, label='Additional Image 4 (Optional)')
+    image_5    = forms.ImageField(required=False, label='Additional Image 5 (Optional)')
+    image_6    = forms.ImageField(required=False, label='Additional Image 6 (Optional)')
+    num_flats = forms.IntegerField(
+        min_value=0, required=False, label='Number of Flats',
+        widget=forms.NumberInput(attrs={'placeholder': 'e.g. 4'}),
+        help_text='For residential properties only. Used to calculate fixed per-unit rates.'
+    )
+    notes     = forms.CharField(
+        required=False, label='Notes',
+        widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Any additional details…'})
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        prop_type = cleaned_data.get('property_type')
+        num_flats = cleaned_data.get('num_flats')
+        if prop_type == 'residential' and not num_flats:
+            self.add_error('num_flats', 'Number of flats is required for residential properties.')
+        return cleaned_data
+
+    def save(self, owner):
+        return Property.objects.create(
+            owner=owner,
+            name=self.cleaned_data['name'],
+            address=self.cleaned_data['address'],
+            district=self.cleaned_data['district'],
+            property_type=self.cleaned_data['property_type'],
+            num_units=self.cleaned_data.get('num_units') or 1,
+            num_flats=self.cleaned_data.get('num_flats') or 0,
+            latitude=self.cleaned_data.get('latitude') or None,
+            longitude=self.cleaned_data.get('longitude') or None,
+            main_image=self.cleaned_data['main_image'],
+            image_1=self.cleaned_data['image_1'],
+            image_2=self.cleaned_data['image_2'],
+            image_3=self.cleaned_data['image_3'],
+            image_4=self.cleaned_data['image_4'],
+            image_5=self.cleaned_data['image_5'],
+            image_6=self.cleaned_data['image_6'],
+            notes=self.cleaned_data.get('notes', ''),
+        )
+
+
+COMPLAINT_CATEGORY_CHOICES = (
+    ('billing',   'Billing Issue'),
+    ('property',  'Property Issue'),
+    ('technical', 'Technical Problem'),
+    ('general',   'General Enquiry'),
+    ('other',     'Other'),
+)
+
+
+class ComplaintForm(forms.ModelForm):
+    class Meta:
+        model = Complaint
+        fields = ['category', 'subject', 'description']
+        widgets = {
+            'description': forms.Textarea(attrs={
+                'rows': 5,
+                'placeholder': 'Please describe your complaint or enquiry in as much detail as possible…'
+            }),
+        }
+        labels = {
+            'category':    'Category',
+            'subject':     'Subject',
+            'description': 'Description',
+        }
+
+
+class AdminComplaintUpdateForm(forms.ModelForm):
+    """Admin-only form to update complaint status and add notes."""
+    class Meta:
+        model = Complaint
+        fields = ['status', 'admin_notes']
+        widgets = {
+            'admin_notes': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Add internal notes about this complaint (only visible to admins)…'
+            }),
+        }
+
+
+class SiteConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = SiteConfiguration
+        fields = [
+            'site_tagline',
+            'welcome_message',
+            'contact_email',
+            'contact_phone',
+            'contact_address',
+            'allow_registration',
+            'maintenance_mode',
+            'enable_email_notifications',
+            'max_properties_per_landlord',
+            'default_pagination_size',
+            'system_email',
+        ]
+        widgets = {
+            'contact_address': forms.Textarea(attrs={'rows': 2}),
+            'welcome_message': forms.Textarea(attrs={'rows': 3}),
+        }
+        help_texts = {
+            'allow_registration':          'When unchecked, the signup page will be disabled.',
+            'maintenance_mode':            'When checked, a maintenance banner is shown site‑wide.',
+            'max_properties_per_landlord': 'Set to 0 for no limit.',
+            'default_pagination_size':     'Default number of items per page across the system.',
+        }
+
+
+class PaymentRateForm(forms.ModelForm):
+    property_type = forms.ChoiceField(
+        choices=PaymentRate._meta.get_field('property_type').choices,
+        required=False,
+        label='Property Type',
+        help_text='Required for property-specific rates. Leave blank for sanitation rates.'
+    )
+
+    class Meta:
+        model = PaymentRate
+        fields = ['property_type', 'name', 'description', 'amount', 'is_active', 'is_per_unit', 'is_sanitation']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_sanitation = cleaned_data.get('is_sanitation')
+        property_type = cleaned_data.get('property_type')
+
+        if is_sanitation:
+            cleaned_data['property_type'] = None
+        elif not property_type:
+            raise forms.ValidationError('Please select a property type unless this is a sanitation rate.')
+
+        return cleaned_data
+
+class FixedResidentialRateForm(forms.ModelForm):
+    """Form specifically for creating per-flat residential rates."""
+    class Meta:
+        model = PaymentRate
+        fields = ['name', 'description', 'amount', 'is_active']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 2}),
+        }
+        labels = {
+            'amount': 'Amount per Flat (₦)',
+        }
+        help_texts = {
+            'amount': 'This amount will be multiplied by the number of flats in each residential property.',
+        }
+
+class AnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = Announcement
+        fields = ['title', 'message', 'is_active']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 4}),
+        }
+
+class StaffLandlordCreationForm(forms.ModelForm):
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'placeholder': 'Enter password'}))
+    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput(attrs={'placeholder': 'Confirm password'}))
+    phone_number = forms.CharField(max_length=15, required=False)
+    address = forms.CharField(max_length=255, required=False)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+
+    def clean_password2(self):
+        p1 = self.cleaned_data.get('password1')
+        p2 = self.cleaned_data.get('password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("Passwords do not match.")
+        return p2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        if commit:
+            user.save()
+        return user
+
+
+class StaffPropertyRegistrationForm(forms.ModelForm):
+    owner = forms.ModelChoiceField(
+        queryset=User.objects.filter(userprofile__user_type='landlord'),
+        widget=forms.HiddenInput()
+    )
+    landlord_search = forms.CharField(
+        label='Landlord',
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Type landlord name, username, or email...',
+            'autocomplete': 'off',
+            'class': 'landlord-search-input'
+        }),
+        required=True
+    )
+
+    class Meta:
+        model = Property
+        fields = [
+            'owner', 'name', 'address', 'district', 'property_type',
+            'num_units', 'num_flats', 'latitude', 'longitude',
+            'main_image', 'image_1', 'image_2', 'image_3',
+            'image_4', 'image_5', 'image_6', 'notes'
+        ]
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 3}),
+            'latitude': forms.HiddenInput(),
+            'longitude': forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['owner'].required = True
+        self.fields['landlord_search'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('owner'):
+            raise forms.ValidationError("Please select a valid landlord.")
+        prop_type = cleaned_data.get('property_type')
+        num_flats = cleaned_data.get('num_flats')
+        if prop_type == 'residential' and not num_flats:
+            self.add_error('num_flats', 'Number of flats is required for residential properties.')
+        return cleaned_data
+
+
+# ====================================================================
+# NEW: OTP verification form
+# ====================================================================
+class OTPVerificationForm(forms.Form):
+    otp_code = forms.CharField(
+        max_length=6, min_length=6, required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': '000000',
+            'inputmode': 'numeric',
+            'maxlength': '6',
+        }),
+        label='OTP Code'
+    )
+
+    def clean_otp_code(self):
+        code = self.cleaned_data.get('otp_code', '').strip()
+        if not code.isdigit():
+            raise forms.ValidationError('Must contain only digits.')
+        return code
+    
+    # ====================================================================
+# NEW: Forgot Password forms
+# ====================================================================
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Enter your email address',
+            'autocomplete': 'email',
+        }),
+        label='Email Address'
+    )
+
+
+class ForgotPasswordOTPForm(forms.Form):
+    otp_code = forms.CharField(
+        max_length=6, min_length=6, required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': '000000',
+            'inputmode': 'numeric',
+            'maxlength': '6',
+        }),
+        label='Enter OTP Code'
+    )
+
+    def clean_otp_code(self):
+        code = self.cleaned_data.get('otp_code', '').strip()
+        if not code.isdigit():
+            raise forms.ValidationError('Must contain only digits.')
+        return code
+
+
+class ResetPasswordForm(forms.Form):
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Enter new password',
+            'autocomplete': 'new-password',
+        }),
+        label='New Password',
+        help_text='At least 8 characters with uppercase, lowercase, and numbers.'
+    )
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Confirm new password',
+            'autocomplete': 'new-password',
+        }),
+        label='Confirm Password'
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        password_confirm = cleaned_data.get('password_confirm')
+        if password and password_confirm and password != password_confirm:
+            self.add_error('password_confirm', 'Passwords do not match.')
+        from django.contrib.auth.password_validation import validate_password
+        if password:
+            try:
+                validate_password(password)
+            except forms.ValidationError as e:
+                self.add_error('password', e)
+        return cleaned_data

@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Defaulters Enforcement List | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#ffffff;--surface-2:#f7f8fa;--border:#e5e7eb;--border-2:#d1d5db;
+    --green:#16a34a;--green-dim:#dcfce7;--green-dk:#15803d;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;--red-dk:#b91c1c;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --teal:#0d9488;--teal-dim:#ccfbf1;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--radius-xl:20px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.08);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface-2);}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .fade{animation:fadein .35s ease both;}
+  .fade-1{animation-delay:.05s;}.fade-2{animation-delay:.1s;}.fade-3{animation-delay:.15s;}
+
+  .dl-wrap{max-width:1280px;margin:0 auto;padding:44px 28px 72px;}
+  @media(max-width:640px){.dl-wrap{padding:24px 16px 48px;}}
+
+  .back-link{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;margin-bottom:28px;transition:color var(--transition);}
+  .back-link:hover{color:var(--ink);}
+
+  /* Header */
+  .dl-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;}
+  .dl-header-left{}
+  .dl-badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--red);background:var(--red-dim);padding:3px 10px;border-radius:99px;margin-bottom:12px;}
+  .dl-header h1{font-size:1.7rem;font-weight:700;letter-spacing:-.4px;margin-bottom:4px;}
+  .dl-header p{font-size:.88rem;color:var(--ink-3);}
+
+  .btn-export{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:11px 22px;background:var(--green);color:white;
+    border:none;border-radius:var(--radius);cursor:pointer;
+    font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:600;text-decoration:none;
+    transition:background var(--transition),transform var(--transition),box-shadow var(--transition);
+    white-space:nowrap;
+  }
+  .btn-export:hover{background:var(--green-dk);transform:translateY(-1px);box-shadow:0 4px 14px rgba(22,163,74,.3);}
+
+  /* Stat strip */
+  .stat-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+  @media(max-width:600px){.stat-strip{grid-template-columns:1fr;}}
+  .stat-pill{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+    padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;
+  }
+  .stat-pill::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+  .sp-red::before{background:var(--red);}
+  .sp-amber::before{background:var(--amber);}
+  .sp-purple::before{background:var(--purple);}
+  .stat-ico{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+  .sp-red .stat-ico{background:var(--red-dim);color:var(--red);}
+  .sp-amber .stat-ico{background:var(--amber-dim);color:var(--amber);}
+  .sp-purple .stat-ico{background:var(--purple-dim);color:var(--purple);}
+  .stat-num{font-size:1.8rem;font-weight:700;line-height:1;letter-spacing:-.8px;}
+  .stat-lbl{font-size:.72rem;color:var(--ink-3);font-weight:500;margin-top:3px;}
+
+  /* Table card */
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .table-card-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .tch-title{font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .tch-count{background:var(--red-dim);color:var(--red);font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;}
+
+  /* Search within table */
+  .tbl-search-wrap{position:relative;}
+  .tbl-search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.75rem;color:var(--ink-4);}
+  .tbl-search{padding:8px 12px 8px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.845rem;color:var(--ink);background:var(--surface-2);outline:none;width:220px;transition:border-color var(--transition),box-shadow var(--transition);}
+  .tbl-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,108,240,.1);}
+
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--surface-2);padding:11px 14px;text-align:left;font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-4);border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#fafafa;}
+  td{padding:12px 14px;font-size:.845rem;vertical-align:middle;}
+
+  .landlord-cell{display:flex;align-items:center;gap:10px;}
+  .landlord-avatar{width:32px;height:32px;border-radius:50%;background:var(--red-dim);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--red);flex-shrink:0;}
+  .landlord-name{font-weight:600;font-size:.865rem;}
+  .landlord-meta{font-size:.73rem;color:var(--ink-3);}
+
+  .prop-name{font-weight:600;}
+  .prop-addr{font-size:.73rem;color:var(--ink-3);margin-top:1px;}
+
+  .chip{display:inline-flex;align-items:center;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:capitalize;}
+  .chip.residential{background:#dbeafe;color:#1e40af;}
+  .chip.commercial{background:#fef3c7;color:#92400e;}
+  .chip.industrial{background:#f3f4f6;color:#374151;}
+  .chip.land{background:#d1fae5;color:#065f46;}
+
+  .amount{font-family:'DM Mono',monospace;font-size:.85rem;color:var(--red);font-weight:700;}
+
+  .row-num{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--ink-4);text-align:center;}
+
+  /* Empty state */
+  .empty-state{text-align:center;padding:64px 24px;}
+  .empty-state .checkmark{width:64px;height:64px;background:var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5rem;color:var(--green);}
+  .empty-state h3{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+  .empty-state p{font-size:.875rem;color:var(--ink-3);}
+
+  /* Print note */
+  .print-note{font-size:.78rem;color:var(--ink-4);display:flex;align-items:center;gap:6px;}
+</style>
+
+<div class="dl-wrap">
+  <a href="{% url 'dashboard' %}" class="back-link fade">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+  </a>
+
+  <div class="dl-header fade fade-1">
+    <div class="dl-header-left">
+      <div class="dl-badge"><i class="fas fa-triangle-exclamation"></i> Enforcement</div>
+      <h1>Defaulters Enforcement List</h1>
+      <p>All landlords with outstanding unpaid tenement rates, sorted by property.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="print-note"><i class="fas fa-info-circle"></i> {{ defaulters|length }} outstanding record{{ defaulters|length|pluralize }}</span>
+      <a href="{% url 'admin_export_defaulters' %}" class="btn-export">
+        <i class="fas fa-file-excel"></i> Export to Excel
+      </a>
+    </div>
+  </div>
+
+  <!-- Stat strip -->
+  {% with total=defaulters|length %}
+  <div class="stat-strip fade fade-2">
+    <div class="stat-pill sp-red">
+      <div class="stat-ico"><i class="fas fa-exclamation-circle"></i></div>
+      <div>
+        <div class="stat-num">{{ total }}</div>
+        <div class="stat-lbl">Outstanding Records</div>
+      </div>
+    </div>
+    <div class="stat-pill sp-amber">
+      <div class="stat-ico"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="stat-num" id="uniqueLandlordsCount">—</div>
+        <div class="stat-lbl">Unique Defaulters</div>
+      </div>
+    </div>
+    <div class="stat-pill sp-purple">
+      <div class="stat-ico"><i class="fas fa-naira-sign"></i></div>
+      <div>
+        <div class="stat-num" id="totalAmountDue">—</div>
+        <div class="stat-lbl">Total Amount Due (₦)</div>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+
+  <!-- Table -->
+  <div class="table-card fade fade-3">
+    <div class="table-card-head">
+      <div class="tch-title">
+        <i class="fas fa-list-check" style="color:var(--red);"></i>
+        Defaulters Table
+        {% if defaulters %}
+        <span class="tch-count">{{ defaulters|length }}</span>
+        {% endif %}
+      </div>
+      <div class="tbl-search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" class="tbl-search" id="tableSearch" placeholder="Filter table…" oninput="filterTable()">
+      </div>
+    </div>
+
+    {% if defaulters %}
+    <div class="tbl-wrap">
+      <table id="defaultersTable">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Landlord</th>
+            <th>Contact</th>
+            <th>Property Name</th>
+            <th>Address</th>
+            <th>District</th>
+            <th>Type</th>
+            <th>Units</th>
+            <th>Rate</th>
+            <th>Amount Due</th>
+            <th>Registered</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for item in defaulters %}
+          <tr>
+            <td class="row-num">{{ forloop.counter }}</td>
+            <td>
+              <div class="landlord-cell">
+                <div class="landlord-avatar">{{ item.landlord.username|first|upper }}</div>
+                <div>
+                  <div class="landlord-name">{{ item.landlord.get_full_name|default:item.landlord.username }}</div>
+                  <div class="landlord-meta">@{{ item.landlord.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-size:.78rem;">{{ item.landlord.email }}</div>
+              <div style="font-size:.75rem;color:var(--ink-3);">{{ item.landlord.userprofile.phone_number|default:"—" }}</div>
+            </td>
+            <td>
+              <div class="prop-name">{{ item.property.name }}</div>
+            </td>
+            <td>
+              <div class="prop-addr">{{ item.property.address }}</div>
+            </td>
+            <td>{{ item.property.district|title }}</td>
+            <td>
+              <span class="chip {{ item.property.property_type }}">{{ item.property.get_property_type_display }}</span>
+            </td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-size:.82rem;">{{ item.property.num_units }}</td>
+            <td style="font-size:.78rem;color:var(--ink-2);">{{ item.rate.name }}</td>
+            <td class="amount">₦{{ item.rate.amount|floatformat:2 }}</td>
+            <td style="font-size:.78rem;color:var(--ink-3);white-space:nowrap;">{{ item.property.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="checkmark"><i class="fas fa-check"></i></div>
+      <h3>No defaulters found</h3>
+      <p>All registered landlords are up to date with their tenement rate payments.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  // Count unique landlords & total amount
+  document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('#tableBody tr');
+    const landlords = new Set();
+    let total = 0;
+
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length > 1) {
+        // Username from meta text
+        const meta = cells[1].querySelector('.landlord-meta');
+        if (meta) landlords.add(meta.textContent.trim());
+
+        // Amount
+        const amountCell = cells[9];
+        if (amountCell) {
+          const raw = amountCell.textContent.replace(/[₦,]/g, '').trim();
+          const num = parseFloat(raw);
+          if (!isNaN(num)) total += num;
+        }
+      }
+    });
+
+    document.getElementById('uniqueLandlordsCount').textContent = landlords.size;
+    document.getElementById('totalAmountDue').textContent = total.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  });
+
+  // Filter table
+  function filterTable() {
+    const q = document.getElementById('tableSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

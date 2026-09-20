@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Motorcycle/Tricycle Commercial Uses Bye-Law | Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 10px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .alert-box { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; margin: 16px 0; }
+  .alert-box i { color: #d97706; margin-top: 2px; flex-shrink: 0; }
+  .alert-box p { margin: 0; font-size: 0.88rem; color: #78350f; line-height: 1.6; }
+  .fee-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; }
+  .fee-card { background: #f0fdf4; border: 1px solid #6ee7b7; border-radius: 12px; padding: 20px; text-align: center; }
+  .fee-card .fee-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #059669; margin-bottom: 8px; }
+  .fee-card .fee-amount { font-size: 1.4rem; font-weight: 800; color: #065f46; }
+  .fee-card .fee-sub { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .stamp-block { text-align: center; padding: 28px; background: #f0fdf4; border: 1px dashed #6ee7b7; border-radius: 12px; margin-top: 8px; }
+  .stamp-block p { margin: 0; font-size: 0.9rem; font-weight: 600; color: #065f46; letter-spacing: 0.03em; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-motorcycle"></i>
+    Part XVII — Bye-Law No. 16 of 2016
+  </div>
+  <h1>Tricycle (Keke) Motorcycle Commercial Uses Bye-Law 2016</h1>
+  <p>Regulation and control of commercial motorcycle and tricycle operations within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XVII — Motorcycle/Tricycle</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-motorcycle"></i></div>
+      <div>
+        <h2>Tricycle (Keke) Motorcycle Commercial Uses Bye-Law — No. 16 of 2016</h2>
+        <span>Part XVII — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant Sections of the Local Government Act, Laws of the FCT Abuja 2006 and all other laws enabling it in that behalf, the Bwari Area Council makes the following Bye-Law.</p>
+    <p>As from the commencement of this Bye-Law, it shall be an offence for any person to operate a Tricycle popularly called <strong>"Keke"</strong> or a motorcycle for commercial purposes within the territorial jurisdiction of Bwari Area Council except in strict adherence and compliance with the provisions of this Bye-Law.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 16 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XVII</span></div>
+      <div class="bylaw-meta-item"><label>Effective Date</label><span>5th January, 2016</span></div>
+      <div class="bylaw-meta-item"><label>Contravention Fine</label><span>₦3,000</span></div>
+    </div>
+  </div>
+
+  <!-- Registration & Fees -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-clipboard-check"></i></div>
+      <div>
+        <h2>Registration Requirements &amp; Fees</h2>
+        <span>Sections 2–5 — Registration, Annual Fees and Daily Operations</span>
+      </div>
+    </div>
+
+    <h3>Registration Requirement</h3>
+    <p>Any person who seeks to operate or who operates a motorcycle or a tricycle for commercial purposes within Bwari Area Council shall <strong>register it within the Area Council</strong> to ply designated routes. Registration shall be the basis for lawful commercial operation.</p>
+
+    <h3>Definition of Tricycle (Keke)</h3>
+    <p>A Tricycle (Keke) for the purposes of this Bye-Law means a <strong>three-wheeled, motor-driven contraption</strong> intended to carry two or more passengers.</p>
+
+    <div class="fee-cards">
+      <div class="fee-card">
+        <div class="fee-label">Annual Registration Fee</div>
+        <div class="fee-amount">₦5,000</div>
+        <div class="fee-sub">Per Tricycle or Motorcycle</div>
+      </div>
+      <div class="fee-card">
+        <div class="fee-label">Daily Operation Fee</div>
+        <div class="fee-amount">₦100</div>
+        <div class="fee-sub">Per commercial vehicle, daily</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety Requirements -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-helmet-safety"></i></div>
+      <div>
+        <h2>Safety Requirements</h2>
+        <span>Section 6 — Equipment and Roadworthiness</span>
+      </div>
+    </div>
+    <p>All Tricycles and motorcycles used for commercial purposes must:</p>
+    <ul class="bylaw-func-list">
+      <li>Possess all <strong>safety equipment</strong> including helmets.</li>
+      <li>Be in <strong>good operating condition</strong> at all times.</li>
+    </ul>
+  </div>
+
+  <!-- Penalty -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Offences &amp; Penalties</h2>
+        <span>Sections 7–8 — Fines, Imprisonment and Jurisdiction</span>
+      </div>
+    </div>
+    <div class="alert-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Penalty for Contravention:</strong> Any person who contravenes the provisions of this Bye-Law shall be guilty of an offence, tried summarily, and on conviction be liable to a fine of <strong>₦3,000 (Three Thousand Naira)</strong> or imprisonment for <strong>three (3) months</strong> or both.</p>
+    </div>
+    <p style="margin-top:16px;">The <strong>Magistrates Court established under the law of FCT Abuja</strong> shall have jurisdiction for the trial of offences under this Bye-Law.</p>
+  </div>
+
+  <!-- Citation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-stamp"></i></div>
+      <div>
+        <h2>Citation &amp; Commencement</h2>
+        <span>Operational Date — 5th January, 2016</span>
+      </div>
+    </div>
+    <p>This Bye-Law may be referred to as <strong>Tricycle (Keke) Motorcycle Commercial Use Regulation and Control Bye-Law 2016</strong>, and shall become operational with effect from the <strong>5th day of January, 2016</strong>.</p>
+    <div class="stamp-block">
+      <p><i class="fas fa-gavel" style="margin-right:8px;"></i>DULY passed by the Bwari Area Council Legislative Arm.</p>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_parking_traffic_control' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-parking"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Parking &amp; Traffic Control</strong><span>Part IX — Bye-Law No. 8</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_mobile_advertisement' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-rectangle-ad"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Mobile Advertisement</strong><span>Part VII — Bye-Law No. 6</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_movement_keeping_dogs' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-dog"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Movement &amp; Keeping of Dogs</strong><span>Part XI — Bye-Law No. 10</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_house_numbering' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-house-chimney"></i></div>
+      <div class="bylaw-nav-card-text"><strong>House Numbering</strong><span>Part XII — Bye-Law No. 11</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

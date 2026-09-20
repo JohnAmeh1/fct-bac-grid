@@ -1,0 +1,2507 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bwari Area Council — Pay Your Tenement Rate Online{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
+
+  :root {
+    --ink:        #0f1117;
+    --ink-2:      #3b3f4a;
+    --ink-3:      #6b7280;
+    --ink-4:      #9ca3af;
+    --surface:    #ffffff;
+    --surface-2:  #f7f8fa;
+    --surface-3:  #f0f2f5;
+    --border:     #e5e7eb;
+    --accent:     #1e6cf0;
+    --accent-dim: #dbeafe;
+    --accent-dk:  #1558c8;
+    --green:      #16a34a;
+    --green-dim:  #dcfce7;
+    --green-dk:   #15803d;
+    --amber:      #d97706;
+    --amber-dim:  #fef3c7;
+    --red:        #dc2626;
+    --red-dim:    #fee2e2;
+    --radius-sm:  6px;
+    --radius:     10px;
+    --radius-lg:  16px;
+    --radius-xl:  24px;
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); }
+
+  /* ── Animations ──────────────────────────────────────── */
+  @keyframes fadein { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes shimmer{ 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
+  .fade   { animation: fadein .5s ease both; }
+  .fade-1 { animation-delay:.08s; }
+  .fade-2 { animation-delay:.16s; }
+  .fade-3 { animation-delay:.24s; }
+  .fade-4 { animation-delay:.32s; }
+
+  /* ── Shared Layout ────────────────────────────────────── */
+  .pg-section { padding: 96px 0; }
+  .pg-section.alt { background: var(--surface-2); }
+  .pg-container { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+  @media(max-width:640px){ .pg-container{ padding:0 16px; } }
+
+  .sec-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--green);
+    background: var(--green-dim);
+    padding: 4px 12px;
+    border-radius: 99px;
+    margin-bottom: 16px;
+  }
+  .sec-eyebrow .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: shimmer 2s ease infinite; }
+  .sec-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.15;
+    letter-spacing: -.03em;
+    margin-bottom: 16px;
+  }
+  .sec-sub {
+    font-size: 1.05rem;
+    color: var(--ink-3);
+    line-height: 1.7;
+    max-width: 560px;
+  }
+  .sec-center { text-align: center; }
+  .sec-center .sec-sub { margin: 0 auto; }
+
+  /* ── Buttons ──────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .btn-primary  { background: var(--green); color: white; }
+  .btn-primary:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(22,163,74,.3); }
+  .btn-outline  { background: transparent; color: var(--green); border: 1.5px solid var(--green); }
+  .btn-outline:hover  { background: var(--green-dim); }
+  .btn-ghost    { background: #ffffff; color: var(--ink-3); }
+  .btn-ghost:hover    { color: var(--ink); }
+  .btn-white    { background: white; color: var(--green-dk); }
+  .btn-white:hover    { background: var(--green-dim); }
+  .btn-outline-white  { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,.5); }
+  .btn-outline-white:hover { background: rgba(255,255,255,.1); border-color: white; }
+  .btn-lg { padding: 14px 28px; font-size: .95rem; }
+  .btn-full { width: 100%; justify-content: center; }
+
+
+  /* ════════════════════════════════════════════════════════
+     HERO — city photo with dark-tinted overlay
+  ════════════════════════════════════════════════════════ */
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 72px 0 64px;
+    background: url("{% static 'images/city_gate2.jpg' %}") no-repeat center center;
+    background-size: cover;
+    background-attachment: scroll;
+  }
+
+  /*
+   * Two-layer overlay:
+   * Layer 1 (::before) — directional dark tint:
+   *   left side slightly lighter so green text pops,
+   *   right side darker so the city image/card contrasts nicely.
+   * Layer 2 (::after) — soft green glow bottom-left for warmth.
+   background: linear-gradient(
+      110deg,
+      rgba(5, 20, 10, 0.72) 0%,
+      rgba(5, 20, 10, 0.65) 45%,
+      rgba(5, 20, 10, 0.58) 100%
+    );
+   */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      110deg,
+      rgba(62, 82, 69, 0.72) 0%,
+      rgba(75, 85, 79, 0.65) 45%,
+      rgba(171, 187, 176, 0.58) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at 8% 75%,
+      rgba(22, 163, 74, 0.20),
+      transparent 55%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .hero-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 64px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  @media(max-width:900px){ .hero-inner{ grid-template-columns:1fr; gap:40px; } }
+  @media(max-width:640px){ .hero-inner{ padding:0 16px; } }
+
+  /* Eyebrow pill — subtle white on dark */
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 5px 14px;
+    border-radius: 99px;
+    margin-bottom: 20px;
+  }
+  .hero-eyebrow .e-dot {
+    width: 6px; height: 6px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: shimmer 2s ease infinite;
+  }
+
+  /* Title — white with bright green accent */
+  .hero-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.12;
+    letter-spacing: -.03em;
+    margin-bottom: 12px;
+  }
+
+  .hero-title-accent { color: #4ade80; }
+
+  /* Green underline bar beneath the heading */
+  .hero-title-underline {
+    display: block;
+    width: 44px;
+    height: 3px;
+    background: var(--green);
+    border-radius: 2px;
+    margin: 14px 0 20px;
+  }
+
+  /* Description — soft white */
+  .hero-desc {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.75;
+    margin-bottom: 28px;
+    max-width: 480px;
+  }
+
+  /* Search bar — white background stays clean */
+  .hero-search-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid rgba(255,255,255,0.9);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    max-width: 560px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    transition: box-shadow .2s;
+  }
+  .hero-search-wrap:focus-within {
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.35), 0 4px 20px rgba(0,0,0,0.25);
+  }
+  .hero-search-icon {
+    flex-shrink: 0;
+    width: 44px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3);
+    font-size: .88rem;
+  }
+  .hero-search-input {
+    flex: 1;
+    border: none; outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .875rem;
+    color: var(--ink);
+    padding: 13px 0;
+    background: transparent;
+    min-width: 0;
+  }
+  .hero-search-input::placeholder { color: var(--ink-4); }
+  .hero-search-btn {
+    flex-shrink: 0;
+    background: var(--green);
+    color: white;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .875rem;
+    font-weight: 700;
+    padding: 0 22px;
+    height: 100%;
+    min-height: 50px;
+    cursor: pointer;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .hero-search-btn:hover { background: var(--green-dk); }
+
+  /* CTA buttons */
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    max-width: 560px;
+  }
+  .hero-cta .btn {
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+    font-size: .95rem;
+    padding: 14px 20px;
+  }
+
+  /* Trust chips — glass style on dark */
+  .hero-trust {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .trust-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .75rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.80);
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 5px 10px;
+    border-radius: 99px;
+  }
+  .trust-chip i { color: #4ade80; font-size: .7rem; }
+
+  /* ── Hero Visual ─────────────────────────────────────── */
+  .hero-visual { position: relative; }
+  .hero-card-stack { position: relative; }
+  .mockup-card {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .primary-card { animation: float 6s ease-in-out infinite; }
+  .mockup-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .mockup-dots { display: flex; gap: 5px; }
+  .mockup-dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,.15);
+  }
+  .mockup-title { font-size: .78rem; color: rgba(255,255,255,.5); font-weight: 500; margin-left: 4px; }
+  .mockup-status { margin-left: auto; font-size: .7rem; font-weight: 600; color: #4ade80; }
+  .mockup-body { padding: 20px 18px; }
+  .mockup-welcome { font-size: .85rem; color: rgba(255,255,255,.7); margin-bottom: 18px; }
+  .mockup-stats-row { display: flex; gap: 12px; margin-bottom: 18px; }
+  .mockup-stat { flex: 1; background: rgba(255,255,255,.05); border-radius: var(--radius); padding: 12px; }
+  .mockup-stat-val { font-size: 1.1rem; font-weight: 700; margin-bottom: 3px; }
+  .mockup-stat-val.green { color: #4ade80; }
+  .mockup-stat-val.blue  { color: #60a5fa; }
+  .mockup-stat-val.amber { color: #fbbf24; }
+  .mockup-stat-label { font-size: .68rem; color: rgba(255,255,255,.4); }
+  .mockup-bars { display: flex; align-items: flex-end; gap: 5px; height: 56px; margin-bottom: 16px; }
+  .mockup-bars .bar {
+    flex: 1;
+    background: rgba(255,255,255,.1);
+    border-radius: 3px 3px 0 0;
+    transition: background var(--transition);
+  }
+  .mockup-bars .bar.hi { background: var(--green); }
+  .mockup-btns { display: flex; gap: 8px; }
+  .mockup-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+    border-radius: var(--radius-sm);
+    font-size: .75rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  .mockup-btn.green-btn { background: rgba(22,163,74,.2); color: #4ade80; }
+  .mockup-btn.blue-btn  { background: rgba(30,108,240,.2); color: #60a5fa; }
+
+  .float-card {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    min-width: 180px;
+  }
+  .float-card-1 { bottom: -20px; left: -32px; animation: float 5s 1s ease-in-out infinite; }
+  .float-card-2 { top: 32px; right: -28px; animation: float 5.5s 0.5s ease-in-out infinite; }
+  .float-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: .9rem; flex-shrink: 0; }
+  .float-icon.green { background: rgba(22,163,74,.2); color: #4ade80; }
+  .float-icon.blue  { background: rgba(30,108,240,.2); color: #60a5fa; }
+  .float-label { font-size: .7rem; color: rgba(255,255,255,.5); margin-bottom: 2px; }
+  .float-val   { font-size: .95rem; font-weight: 700; color: white; }
+  .trend-up { color: #4ade80; font-size: .8rem; }
+
+
+  /* ════════════════════════════════════════════════════════
+     STATS BANNER
+  ════════════════════════════════════════════════════════ */
+  .stats-banner {
+    background: var(--green-dk);
+    padding: 36px 0;
+  }
+  .stats-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .stat-block {
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+    padding: 12px 24px;
+  }
+  .stat-block-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -.04em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-block-label { font-size: .78rem; color: rgba(255,255,255,.65); font-weight: 500; }
+  .stat-block-sep { width: 1px; height: 48px; background: rgba(255,255,255,.2); flex-shrink: 0; }
+  @media(max-width:640px){ .stat-block-sep{display:none;} .stat-block{min-width:50%;} }
+
+
+  /* ════════════════════════════════════════════════════════
+     HOW IT WORKS
+  ════════════════════════════════════════════════════════ */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+    margin-top: 48px;
+  }
+  @media(max-width:900px){ .steps-grid{ grid-template-columns:repeat(2,1fr); gap:24px; } }
+  @media(max-width:540px){ .steps-grid{ grid-template-columns:1fr; } }
+
+  .step-card {
+    padding: 32px 28px;
+    position: relative;
+    text-align: center;
+  }
+  .step-card:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 52px; right: 0;
+    width: 1px; height: 48px;
+    background: var(--border);
+  }
+  @media(max-width:900px){ .step-card::after{ display:none; } }
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    font-weight: 500;
+    color: var(--ink-4);
+    letter-spacing: .08em;
+    margin-bottom: 16px;
+  }
+  .step-icon {
+    width: 56px; height: 56px;
+    border-radius: var(--radius-lg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    margin: 0 auto 20px;
+  }
+  .step-icon.green  { background: var(--green-dim);  color: var(--green); }
+  .step-icon.blue   { background: var(--accent-dim); color: var(--accent); }
+  .step-icon.amber  { background: var(--amber-dim);  color: var(--amber); }
+  .step-icon.red    { background: var(--red-dim);    color: var(--red); }
+  .step-title { font-weight: 700; font-size: 1rem; color: var(--ink); margin-bottom: 10px; }
+  .step-desc  { font-size: .855rem; color: var(--ink-3); line-height: 1.65; margin-bottom: 16px; }
+  .step-link  { font-size: .82rem; font-weight: 600; color: var(--green); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+  .step-link:hover { color: var(--green-dk); }
+
+
+  /* ════════════════════════════════════════════════════════
+     FEATURES
+  ════════════════════════════════════════════════════════ */
+  .feat-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+  .feat-header-desc { font-size: .95rem; color: var(--ink-3); line-height: 1.7; max-width: 360px; }
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media(max-width:900px){ .feat-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:540px){ .feat-grid{ grid-template-columns:1fr; } }
+  .feat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+  }
+  .feat-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.09); transform: translateY(-2px); border-color: var(--border-2,#d1d5db); }
+  .feat-card.featured {
+    background: var(--ink);
+    border-color: transparent;
+    color: white;
+  }
+  .feat-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 18px;
+    background: var(--green-dim);
+    color: var(--green);
+  }
+  .feat-card.featured .feat-icon { background: rgba(22,163,74,.2); color: #4ade80; }
+  .feat-title { font-weight: 700; font-size: .95rem; color: var(--ink); margin-bottom: 8px; }
+  .feat-card.featured .feat-title { color: white; }
+  .feat-desc { font-size: .845rem; color: var(--ink-3); line-height: 1.65; margin-bottom: 14px; }
+  .feat-card.featured .feat-desc { color: rgba(255,255,255,.55); }
+  .feat-tag {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: var(--surface-3);
+    color: var(--ink-3);
+  }
+  .feat-card.featured .feat-tag { background: rgba(255,255,255,.1); color: rgba(255,255,255,.5); }
+
+
+  /* ════════════════════════════════════════════════════════
+     USER TYPES
+  ════════════════════════════════════════════════════════ */
+  .usertype-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 48px;
+    max-width: 820px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media(max-width:640px){ .usertype-grid{ grid-template-columns:1fr; } }
+  .usertype-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 36px 28px;
+    position: relative;
+    transition: box-shadow var(--transition), transform var(--transition);
+  }
+  .usertype-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .usertype-card.featured-type { border-color: var(--amber); }
+  .usertype-badge {
+    position: absolute;
+    top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--amber);
+    color: white;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 12px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .usertype-icon {
+    width: 56px; height: 56px;
+    border-radius: var(--radius-lg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+  }
+  .usertype-icon.green { background: var(--green-dim); color: var(--green); }
+  .usertype-icon.amber { background: var(--amber-dim); color: var(--amber); }
+  .usertype-title { font-weight: 700; font-size: 1.05rem; color: var(--ink); margin-bottom: 10px; }
+  .usertype-desc  { font-size: .855rem; color: var(--ink-3); line-height: 1.65; margin-bottom: 20px; }
+  .usertype-list  { list-style: none; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+  .usertype-list li { font-size: .845rem; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+  .usertype-list li i { color: var(--green); font-size: .8rem; }
+
+
+  /* ════════════════════════════════════════════════════════
+     TRUST STRIP
+  ════════════════════════════════════════════════════════ */
+  .trust-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .trust-chip-lg {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 32px;
+    flex: 1;
+    min-width: 200px;
+    border-right: 1px solid var(--border);
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  .trust-chip-lg:last-child { border-right: none; }
+  .trust-chip-lg i { color: var(--green); font-size: 1rem; flex-shrink: 0; }
+  .trust-brand { font-weight: 800; font-size: 1rem; color: var(--ink); }
+  @media(max-width:640px){ .trust-chip-lg{ border-right:none; border-bottom:1px solid var(--border); } }
+
+
+  /* ════════════════════════════════════════════════════════
+     CTA SECTION
+  ════════════════════════════════════════════════════════ */
+  .cta-section {
+    background: linear-gradient(135deg, var(--green-dk) 0%, #166534 100%);
+    padding: 80px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .cta-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-title { font-family: 'Fraunces', serif; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; color: white; letter-spacing: -.03em; margin-bottom: 10px; }
+  .cta-desc  { font-size: .95rem; color: rgba(255,255,255,.65); max-width: 480px; line-height: 1.7; }
+  .cta-btns  { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+
+  /* ── Testimonials ──────────────────────────────────── */
+  .testi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 48px;
+  }
+  @media(max-width:900px){ .testi-grid{ grid-template-columns:1fr; } }
+  .testi-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: box-shadow var(--transition), transform var(--transition);
+  }
+  .testi-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.09); transform: translateY(-2px); }
+  .testi-card.featured-testi { background: var(--ink); border-color: transparent; }
+  .testi-stars { display: flex; gap: 3px; color: #f59e0b; font-size: .8rem; }
+  .testi-body { font-size: .9rem; line-height: 1.75; color: var(--ink-2); flex: 1; }
+  .featured-testi .testi-body { color: rgba(255,255,255,.7); }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--green-dim); color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700; flex-shrink: 0;
+  }
+  .featured-testi .testi-avatar { background: rgba(255,255,255,.1); color: white; }
+  .testi-name { font-weight: 700; font-size: .88rem; color: var(--ink); }
+  .featured-testi .testi-name { color: white; }
+  .testi-role { font-size: .77rem; color: var(--ink-3); }
+  .featured-testi .testi-role { color: rgba(255,255,255,.45); }
+
+  /* ── FAQ ───────────────────────────────────────────── */
+  .faq-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 80px;
+    align-items: start;
+  }
+  @media(max-width:900px){ .faq-layout{ grid-template-columns:1fr; gap:40px; } }
+  .faq-list { display: flex; flex-direction: column; gap: 4px; }
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: box-shadow var(--transition);
+  }
+  .faq-item[open] { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+  .faq-q {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    gap: 12px;
+    background: var(--surface);
+  }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q:hover { background: var(--surface-2); }
+  .faq-icon { font-size: .75rem; color: var(--green); flex-shrink: 0; transition: transform var(--transition); }
+  .faq-item[open] .faq-icon { transform: rotate(45deg); }
+  .faq-a {
+    padding: 0 20px 16px;
+    font-size: .875rem;
+    color: var(--ink-3);
+    line-height: 1.75;
+    background: var(--surface);
+  }
+
+  /* ── Notices ───────────────────────────────────────── */
+  .notices-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 20px;
+    margin-top: 48px;
+    align-items: start;
+  }
+  @media(max-width:900px){ .notices-grid{ grid-template-columns:1fr; } }
+  .notice-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    transition: box-shadow var(--transition), transform var(--transition);
+  }
+  .notice-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); transform: translateY(-2px); }
+  .notice-card.urgent { border-color: #fca5a5; background: #fff8f8; }
+  .notice-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .notice-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 99px;
+  }
+  .notice-tag.red   { background: var(--red-dim);   color: var(--red); }
+  .notice-tag.amber { background: var(--amber-dim); color: var(--amber); }
+  .notice-tag.green { background: var(--green-dim); color: var(--green); }
+  .notice-date { font-size: .76rem; color: var(--ink-4); font-weight: 500; }
+  .notice-title { font-size: .97rem; font-weight: 700; color: var(--ink); margin-bottom: 10px; line-height: 1.4; }
+  .notice-body  { font-size: .855rem; color: var(--ink-3); line-height: 1.7; }
+
+
+  /* ── BWARI UNIQUE HERO VISUAL (ENLARGED) ── */
+/* ── Hero Right Card — clean white ── */
+.bwari-hero-visual {
+  position: relative;
+  display: flex !important;
+  visibility: visible !important;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.bwari-fade { animation: bwari-fadein .5s ease both; }
+.bwari-fade-2 { animation-delay: .16s; }
+@keyframes bwari-fadein {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bwari-hero-card-stack { position: relative; width: 100%; }
+
+.bwari-mockup-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.04),
+    0 12px 32px rgba(0,0,0,0.10);
+}
+
+.bwari-primary-card { animation: bwari-float 6s ease-in-out infinite; }
+@keyframes bwari-float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+/* Card header — light grey strip */
+.bwari-mockup-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* macOS-style dots */
+.bwari-mockup-dots { display: flex; gap: 6px; }
+.bwari-mockup-dots span {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+}
+.bwari-mockup-dots span:nth-child(1) { background: #f87171; }
+.bwari-mockup-dots span:nth-child(2) { background: #fbbf24; }
+.bwari-mockup-dots span:nth-child(3) { background: #4ade80; }
+
+.bwari-mockup-title {
+  font-size: .875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.bwari-mockup-status {
+  margin-left: auto;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.bwari-mockup-status::before {
+  content: '';
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: bwari-pulse 1.8s ease infinite;
+}
+@keyframes bwari-pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+/* Card body */
+.bwari-mockup-body { padding: 24px 22px; }
+
+.bwari-mockup-welcome {
+  font-size: .8rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 16px;
+}
+
+.bwari-mockup-stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* Stat tiles — tinted green background */
+.bwari-mockup-stat {
+  flex: 1;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 12px;
+}
+
+.bwari-mockup-stat-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 3px;
+  line-height: 1;
+}
+.bwari-mockup-stat-val.bwari-green { color: #16a34a; }
+.bwari-mockup-stat-val.bwari-blue  { color: #1d4ed8; }
+.bwari-mockup-stat-val.bwari-amber { color: #d97706; }
+
+.bwari-mockup-stat-label {
+  font-size: .72rem;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+/* Action buttons */
+.bwari-mockup-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.bwari-mockup-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 0;
+  border-radius: 9px;
+  font-size: .84rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter .15s;
+}
+.bwari-mockup-btn:hover { filter: brightness(.93); }
+
+.bwari-green-btn { background: #16a34a; color: #ffffff; }
+.bwari-blue-btn  { background: #1d4ed8; color: #ffffff; }
+
+/* Mobile overrides */
+@media (max-width: 768px) {
+  .bwari-hero-visual { max-width: 480px; }
+  .bwari-mockup-card-header { padding: 14px 18px; }
+  .bwari-mockup-body { padding: 20px 18px; }
+  .bwari-mockup-stat-val { font-size: 1.2rem; } 
+  .btn-outline  { background: var(--green); color: white; border: 1.5px solid var(--green); }
+  .btn-ghost    { background: white; color: var(--ink-3); }
+
+  .hero { 
+  
+    background-size: cover; 
+    background-attachment: scroll; 
+  } 
+}
+
+
+
+/* ── BWARI HOW IT WORKS (UNIQUE CLASSES) ── */
+.bwari-pg-section {
+  padding: 96px 0;
+  background: var(--surface, #ffffff);
+}
+.bwari-pg-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+@media (max-width: 640px) {
+  .bwari-pg-container { padding: 0 16px; }
+}
+
+.bwari-sec-center {
+  text-align: center;
+}
+.bwari-sec-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 4px 12px;
+  border-radius: 99px;
+  margin-bottom: 16px;
+}
+.bwari-dot {
+  width: 6px;
+  height: 6px;
+  background: #16a34a;
+  border-radius: 50%;
+  animation: bwari-shimmer 2s ease infinite;
+}
+@keyframes bwari-shimmer {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.bwari-sec-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #0f1117;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+}
+.bwari-sec-sub {
+  font-size: 1.05rem;
+  color: #6b7280;
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Steps Grid */
+.bwari-steps-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  position: relative;
+  margin-top: 48px;
+}
+@media (max-width: 900px) {
+  .bwari-steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 540px) {
+  .bwari-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bwari-step-card {
+  padding: 32px 28px;
+  position: relative;
+  text-align: center;
+  background: transparent;
+  border: none;
+}
+.bwari-step-card:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 1px;
+  height: 48px;
+  background: #e5e7eb;
+}
+@media (max-width: 900px) {
+  .bwari-step-card::after { display: none; }
+}
+
+.bwari-step-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #9ca3af;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+
+.bwari-step-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin: 0 auto 20px;
+}
+.bwari-step-icon.bwari-green { background: #dcfce7; color: #16a34a; }
+.bwari-step-icon.bwari-blue  { background: #dbeafe; color: #1e6cf0; }
+.bwari-step-icon.bwari-amber { background: #fef3c7; color: #d97706; }
+.bwari-step-icon.bwari-red   { background: #fee2e2; color: #dc2626; }
+
+.bwari-step-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #0f1117;
+  margin-bottom: 10px;
+}
+.bwari-step-desc {
+  font-size: 0.855rem;
+  color: #6b7280;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+.bwari-step-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #16a34a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.bwari-step-link:hover {
+  color: #15803d;
+}
+
+
+/* ── BWARI WHO IS IT FOR (UNIQUE CLASSES) ── */
+.bwari-usertype-grid {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  margin-top: 48px;
+  width: 100%;
+}
+
+.bwari-usertype-card {
+  background: var(--surface, #ffffff);
+  border: 1.5px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  position: relative;
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+.bwari-usertype-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  border-color: #16a34a;
+}
+.bwari-usertype-card.purple-type:hover {
+  border-color: #7c3aed;
+}
+
+.bwari-usertype-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 24px;
+}
+.bwari-usertype-icon.bwari-green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.bwari-usertype-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #0f1117;
+  margin-bottom: 16px;
+}
+
+.bwari-usertype-desc {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.bwari-usertype-list {
+  list-style: none;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+.bwari-usertype-list li {
+  font-size: 1rem;
+  color: #3b3f4a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bwari-usertype-list li i {
+  color: #16a34a;
+  font-size: 0.9rem;
+}
+
+/* Unique button styles */
+.bwari-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.bwari-btn-primary {
+  background: #16a34a;
+  color: white;
+}
+.bwari-btn-primary:hover {
+  background: #15803d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.3);
+}
+.bwari-btn-full {
+  width: 100%;
+}
+
+/* Responsive adjustments handled in grid block */
+
+/* ════════════════════════════════════════════════════════
+   VERIFY PAYMENT ACTION ITEM
+   — styled to match the hero's dark glass aesthetic
+════════════════════════════════════════════════════════ */
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .88rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.action-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--transition);
+  background: rgba(255,255,255,.06);
+  border-radius: inherit;
+}
+.action-item:hover::before { opacity: 1; }
+.action-item:hover { transform: translateY(-2px); }
+
+.action-item.teal {
+  background: rgba(20, 184, 166, 0.10);
+  border-color: rgba(20, 184, 166, 0.22);
+  color: #5eead4;
+  backdrop-filter: blur(8px);
+}
+.action-item.teal:hover {
+  background: rgba(20, 184, 166, 0.18);
+  border-color: rgba(20, 184, 166, 0.42);
+  box-shadow: 0 4px 24px rgba(20, 184, 166, .16);
+}
+
+.ai-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(20, 184, 166, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  color: #2dd4bf;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.action-item:hover .ai-icon {
+  background: rgba(20, 184, 166, 0.28);
+}
+
+.ai-arrow {
+  margin-left: auto;
+  font-size: .75rem;
+  opacity: .5;
+  transition: transform var(--transition), opacity var(--transition);
+  flex-shrink: 0;
+}
+.action-item:hover .ai-arrow {
+  transform: translateX(4px);
+  opacity: 1;
+}
+
+/* ── Receipt Lookup Bar ──────────────────────────────── */
+.receipt-lookup-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(20,184,166,.3);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
+  max-width: 480px;
+}
+.receipt-lookup-wrap:focus-within {
+  border-color: rgba(20,184,166,.65);
+  box-shadow: 0 0 0 3px rgba(20,184,166,.12);
+}
+.rl-icon {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2dd4bf;
+  font-size: .85rem;
+}
+.rl-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .85rem;
+  font-weight: 500;
+  color: white;
+  padding: 13px 0;
+  min-width: 0;
+}
+.rl-input::placeholder { color: rgba(255,255,255,.35); font-weight: 400; }
+.rl-btn {
+  flex-shrink: 0;
+  background: rgba(20,184,166,.18);
+  border: none;
+  border-left: 1px solid rgba(20,184,166,.25);
+  color: #5eead4;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  padding: 0 18px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+  min-height: 48px;
+}
+.rl-btn:hover { background: rgba(20,184,166,.3); color: #fff; }
+@media(max-width:640px){
+  .receipt-lookup-wrap { max-width: 100%; }
+  .rl-input { font-size: .8rem; }
+}
+
+/* ── Receipt Lookup Modal ────────────────────────────── */
+.rl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.rl-modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.rl-modal {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.22);
+  overflow: hidden;
+  transform: translateY(20px) scale(.97);
+  transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .22s ease;
+  opacity: 0;
+}
+.rl-modal-overlay.open .rl-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.rl-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.rl-modal-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rl-modal-title i { color: var(--green); }
+.rl-modal-close {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--surface-3);
+  color: var(--ink-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  transition: background var(--transition), color var(--transition);
+}
+.rl-modal-close:hover { background: var(--red-dim); color: var(--red); }
+.rl-modal-body { padding: 24px; }
+
+/* Status badge */
+.rl-status-valid {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green-dim);
+  color: var(--green-dk);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+}
+.rl-status-expired {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--red-dim);
+  color: var(--red);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+}
+.rl-ref-display {
+  font-family: 'DM Mono', monospace;
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  background: var(--surface-3);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  display: inline-block;
+}
+.rl-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media(max-width:480px){ .rl-row-grid{ grid-template-columns:1fr; } }
+.rl-field {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.rl-field.full { grid-column: 1 / -1; }
+.rl-field-label {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-bottom: 4px;
+}
+.rl-field-value {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.rl-error-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--red-dim);
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius);
+  padding: 16px;
+  color: var(--red);
+  font-size: .88rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.rl-error-box i { margin-top: 2px; flex-shrink: 0; }
+
+/* Hero right column wrapper — stacks visual card + verify link */
+.hero-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+/* ════════════════════════════════════════════════════════
+   GLOBAL RESPONSIVENESS FIXES
+════════════════════════════════════════════════════════ */
+
+/* ── Hero ── */
+@media (max-width: 900px) {
+  .hero { padding: 64px 0 52px; }
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-right-col { max-width: 520px; margin: 0 auto; width: 100%; }
+  .bwari-hero-visual { max-width: 100%; }
+  .hero-desc { max-width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .hero { padding: 48px 0 44px; }
+  .hero-inner { padding: 0 16px; gap: 32px; }
+  .hero-title { font-size: clamp(1.9rem, 7.5vw, 2.6rem); }
+  .hero-desc { font-size: .95rem; margin-bottom: 24px; }
+  .hero-search-wrap { max-width: 100%; }
+  .hero-cta { flex-direction: row; gap: 10px; margin-bottom: 20px; max-width: 100%; }
+  .hero-cta .btn { font-size: .85rem; padding: 13px 12px; }
+  .hero-trust { gap: 6px; }
+  .bwari-hero-visual { max-width: 100%; }
+  .bwari-mockup-card-header { padding: 14px 18px; }
+  .bwari-mockup-body { padding: 18px 16px; }
+  .bwari-mockup-stat-val { font-size: 1.1rem; }
+  .bwari-mockup-btn { font-size: .8rem; padding: 10px 0; }
+  .action-item { font-size: .82rem; padding: 12px 16px; }
+  .ai-icon { width: 32px; height: 32px; font-size: .78rem; }
+}
+
+/* ── Stats Banner ── */
+@media (max-width: 480px) {
+  .stats-banner { padding: 24px 0; }
+  .stat-block { min-width: 50%; padding: 12px 16px; }
+  .stat-block-num { font-size: 1.7rem; }
+  .stat-block-sep { display: none; }
+}
+
+/* ── How It Works ── */
+@media (max-width: 540px) {
+  .bwari-pg-section { padding: 64px 0; }
+  .bwari-step-card { padding: 24px 20px; }
+}
+
+/* ── Features ── */
+@media (max-width: 900px) {
+  .feat-grid { grid-template-columns: repeat(2, 1fr); }
+  .feat-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .feat-header-desc { max-width: 100%; }
+}
+@media (max-width: 540px) {
+  .feat-grid { grid-template-columns: 1fr; }
+  .feat-card { padding: 22px 20px; }
+}
+
+/* ── CTA ── */
+@media (max-width: 640px) {
+  .cta-section { padding: 56px 0; }
+  .cta-inner { flex-direction: column; align-items: flex-start; gap: 24px; padding: 0 20px; }
+  .cta-btns { flex-direction: column; width: 100%; }
+  .cta-btns .btn { width: 100%; justify-content: center; }
+}
+
+/* ── Testimonials ── */
+@media (max-width: 900px) {
+  .testi-grid { grid-template-columns: 1fr; max-width: 520px; margin-left: auto; margin-right: auto; }
+}
+
+/* ── Notices ── */
+@media (max-width: 900px) {
+  .notices-grid { grid-template-columns: 1fr; }
+}
+
+/* ── FAQ ── */
+@media (max-width: 640px) {
+  .faq-layout { gap: 28px; }
+  .faq-q { font-size: .875rem; padding: 14px 16px; }
+  .faq-a { padding: 0 16px 14px; }
+}
+
+/* ── Trust Strip ── */
+@media (max-width: 480px) {
+  .trust-chip-lg {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    font-size: .8rem;
+    min-width: 100%;
+  }
+  .trust-chip-lg:last-child { border-bottom: none; }
+}
+
+/* ── Usertype Card — handled in grid block above ── */
+  /* ── Service Cards Grid ── */
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media(max-width:900px){ .service-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:480px){ .service-grid{ grid-template-columns:1fr; } }
+
+  .service-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 20px;
+    transition: box-shadow var(--transition), transform var(--transition);
+    cursor: default;
+  }
+  .service-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.09); transform: translateY(-2px); }
+  .service-card.featured-svc { background: var(--ink); border-color: transparent; }
+
+  .svc-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+  }
+  .svc-title { font-weight: 700; font-size: .9rem; color: var(--ink); margin-bottom: 6px; }
+  .service-card.featured-svc .svc-title { color: white; }
+  .svc-desc { font-size: .8rem; color: var(--ink-3); line-height: 1.6; margin-bottom: 14px; }
+  .service-card.featured-svc .svc-desc { color: rgba(255,255,255,.55); }
+  .svc-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: .7rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 99px;
+  }
+
+  /* ── Services CTA strip ── */
+  .svc-cta-strip {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .svc-cta-info { display: flex; align-items: center; gap: 14px; }
+  .svc-cta-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius);
+    background: var(--green-dim); color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .svc-cta-title { font-weight: 700; font-size: .9rem; color: var(--ink); margin-bottom: 2px; }
+  .svc-cta-sub { font-size: .8rem; color: var(--ink-3); }
+  .svc-cta-btns { display: flex; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
+  @media(max-width:640px){
+    .svc-cta-strip { flex-direction: column; align-items: flex-start; }
+    .svc-cta-btns { width: 100%; }
+    .svc-cta-btns .btn { flex: 1; justify-content: center; }
+  }
+
+  /* ── Who Is It For — proper two-column grid ── */
+  .usertype-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 960px;
+    margin: 48px auto 0;
+    align-items: stretch;
+  }
+  @media(max-width:768px){ .usertype-grid-2{ grid-template-columns: 1fr; max-width: 520px; } }
+
+  .bwari-usertype-card.purple-type { border-color: #c4b5fd; }
+  .ut-badge-purple {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: #7c3aed; color: white;
+    font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 12px; border-radius: 99px; white-space: nowrap;
+  }
+  .bwari-usertype-icon.purple-icon { background: #ede9fe; color: #7c3aed; }
+  .bwari-btn-purple {
+    background: #7c3aed; color: white;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 14px 28px; border-radius: 12px;
+    font-size: 1rem; font-weight: 600; text-decoration: none;
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+    border: none; cursor: pointer; width: 100%;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .bwari-btn-purple:hover { background: #6d28d9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,.3); }
+
+  /* Card padding at tablet */
+  @media(max-width:900px){
+    .bwari-usertype-card { padding: 40px 32px; }
+    .bwari-usertype-title { font-size: 1.3rem; }
+    .bwari-usertype-icon { width: 60px; height: 60px; font-size: 1.6rem; }
+  }
+  /* Card padding at mobile */
+  @media(max-width:480px){
+    .bwari-usertype-card { padding: 32px 20px; }
+    .bwari-usertype-title { font-size: 1.15rem; }
+    .bwari-usertype-desc { font-size: .9rem; }
+    .bwari-usertype-list li { font-size: .9rem; }
+    .bwari-usertype-icon { width: 52px; height: 52px; font-size: 1.4rem; border-radius: 14px; }
+    .bwari-btn, .bwari-btn-purple { font-size: .9rem; padding: 13px 20px; }
+  }
+
+  /* ── Testimonials — 2-col on tablet ── */
+  @media(max-width:900px) and (min-width:600px){
+    .testi-grid { grid-template-columns: repeat(2,1fr); max-width:100%; }
+  }
+  @media(max-width:599px){
+    .testi-grid { grid-template-columns: 1fr; max-width: 520px; margin-left:auto; margin-right:auto; }
+  }
+
+  /* ── Stats banner — remove dead whitespace ── */
+  .stats-banner-hidden { display: none; }
+
+  /* ════════════════════════════════════════════════════════
+     SANITATION LEVY SECTION
+  ════════════════════════════════════════════════════════ */
+  .sanitation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  @media(max-width:900px){
+    .sanitation-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+  .san-step-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--green-dim);
+    color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; flex-shrink: 0;
+  }
+  .san-step-title { display: block; font-size: .92rem; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+  .san-step-desc  { font-size: .84rem; color: var(--ink-3); line-height: 1.6; }
+  .san-benefits-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  }
+  .san-card-icon {
+    width: 44px; height: 44px;
+    background: var(--green-dim);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--green); font-size: 1.1rem;
+  }
+  .san-check-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: .875rem; color: #374151;
+  }
+  .san-penalty-card {
+    background: #fff7ed;
+    border: 1.5px solid #fed7aa;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .san-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .san-stat-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 18px;
+    text-align: center;
+  }
+  .san-stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: -.03em;
+    line-height: 1;
+  }
+  .san-stat-label { font-size: .78rem; color: var(--ink-3); margin-top: 4px; font-weight: 500; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-inner">
+
+    <!-- LEFT CONTENT -->
+    <div class="hero-left">
+      <div class="hero-eyebrow fade">
+        <span class="e-dot"></span>
+        Official Digital Platform — Bwari Area Council, Abuja
+      </div>
+
+      <h1 class="hero-title fade fade-1">
+        Pay your <span class="hero-title-accent">Tenement, Business &amp; Sanitation</span> rates, instantly.
+      </h1>
+      <span class="hero-title-underline"></span>
+
+      <p class="hero-desc fade fade-2">
+        Register your property or business, generate your bill, and pay your annual tenement, business rate, or monthly sanitation levy.
+      </p>
+
+      <!-- SEARCH BAR -->
+      <div class="hero-search-wrap fade fade-3">
+        <span class="hero-search-icon"><i class="fas fa-magnifying-glass"></i></span>
+        <input
+          id="receiptLookupInput"
+          class="hero-search-input"
+          type="text"
+          placeholder="Verify payment or lookup receipt (e.g. REF123456)"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button id="receiptLookupBtn" class="hero-search-btn" type="button">
+          <span class="rl-btn-text">Verify</span>
+          <span class="rl-btn-spinner" style="display:none"><i class="fas fa-circle-notch fa-spin"></i></span>
+        </button>
+      </div>
+
+      <!-- CTA BUTTONS -->
+      <div class="hero-cta fade fade-4">
+        <a href="{% url 'signup' %}" class="btn btn-primary btn-lg">
+          <i class="fas fa-user-plus"></i> Register Now
+        </a>
+        <a href="{% url 'login' %}" class="btn btn-primary btn-lg" style="background:var(--green-dk);">
+          <i class="fas fa-credit-card"></i> Pay Now
+        </a>
+      </div>
+
+      <div class="hero-trust fade fade-4">
+        <span class="trust-chip"><i class="fas fa-shield-halved"></i> 100% Secure</span>
+        <span class="trust-chip"><i class="fas fa-bolt"></i> Instant Receipt</span>
+        <span class="trust-chip"><i class="fas fa-trash-can"></i> Monthly Trash Pickup</span>
+        <span class="trust-chip"><i class="fas fa-location-dot"></i> GPS Tracked</span>
+        <span class="trust-chip"><i class="fas fa-university"></i> Powered by Paystack</span>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: portal stats card -->
+    <div class="hero-right-col">
+      <div class="bwari-hero-visual bwari-fade bwari-fade-2">
+        <div class="bwari-hero-card-stack">
+
+          <div class="bwari-mockup-card bwari-primary-card">
+            <div class="bwari-mockup-card-header">
+              <div class="bwari-mockup-dots"><span></span><span></span><span></span></div>
+              <div class="bwari-mockup-title">Bwari Revenue Portal</div>
+              <div class="bwari-mockup-status">Live</div>
+            </div>
+
+            <div class="bwari-mockup-body">
+              <div class="bwari-mockup-welcome">Welcome back</div>
+
+              <div class="bwari-mockup-stats-row">
+                <div class="bwari-mockup-stat">
+                  <div class="bwari-mockup-stat-val bwari-green">35,000+</div>
+                  <div class="bwari-mockup-stat-label">Registered Properties</div>
+                </div>
+                <div class="bwari-mockup-stat">
+                  <div class="bwari-mockup-stat-val bwari-blue">19,000+</div>
+                  <div class="bwari-mockup-stat-label">Registered Businesses/Trade</div>
+                </div>
+                {% comment %} <div class="bwari-mockup-stat">
+                  <div class="bwari-mockup-stat-val bwari-amber">25,000+</div>
+                  <div class="bwari-mockup-stat-label">Shops</div>
+                </div> {% endcomment %}
+              </div>
+
+              <div class="bwari-mockup-btns">
+                <button class="bwari-mockup-btn bwari-green-btn">
+                  <i class="fas fa-file-invoice"></i> Generate Bill
+                </button>
+                <button class="bwari-mockup-btn bwari-blue-btn">
+                  <i class="fas fa-credit-card"></i> Pay Now
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /.hero-right-col -->
+
+  </div>
+</section>
+
+
+
+
+
+
+<!-- ════════════════════ HOW IT WORKS (UNIQUE CLASSES) ════════════════════════ -->
+<section class="bwari-pg-section" id="how-it-works">
+  <div class="bwari-pg-container">
+    <div class="bwari-sec-center">
+      <div class="bwari-sec-eyebrow"><span class="bwari-dot"></span>Simple Process</div>
+      <h2 class="bwari-sec-title">Pay in 4 Easy Steps</h2>
+      <p class="bwari-sec-sub">No physical office visit needed. Do everything online in minutes.</p>
+    </div>
+    <div class="bwari-steps-grid">
+      <div class="bwari-step-card">
+        <div class="bwari-step-num">01</div>
+        <div class="bwari-step-icon bwari-green"><i class="fas fa-user-plus"></i></div>
+        <h3 class="bwari-step-title">Register</h3>
+        <p class="bwari-step-desc">Create your account as a Landlord/Business owner. Add your property/business details and capture your GPS location.</p>
+        <a href="{% url 'signup' %}" class="bwari-step-link">Get started <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="bwari-step-card">
+        <div class="bwari-step-num">02</div>
+        <div class="bwari-step-icon bwari-blue"><i class="fas fa-file-invoice-dollar"></i></div>
+        <h3 class="bwari-step-title">Get Your Bill</h3>
+        <p class="bwari-step-desc">The system automatically calculates your tenement/business rate and generates your unique Paystack RRR payment reference.</p>
+        <a href="{% url 'login' %}" class="bwari-step-link">Generate bill <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="bwari-step-card">
+        <div class="bwari-step-num">03</div>
+        <div class="bwari-step-icon bwari-amber"><i class="fas fa-credit-card"></i></div>
+        <h3 class="bwari-step-title">Pay Online</h3>
+        <p class="bwari-step-desc">Pay securely via Paystack using card, bank transfer, or USSD. Your payment is recorded instantly on the system.</p>
+        <a href="{% url 'login' %}" class="bwari-step-link">Pay now <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="bwari-step-card">
+        <div class="bwari-step-num">04</div>
+        <div class="bwari-step-icon bwari-red"><i class="fas fa-download"></i></div>
+        <h3 class="bwari-step-title">Get Receipt</h3>
+        <p class="bwari-step-desc">Download your official payment receipt instantly. Your compliance status updates automatically — no waiting needed.</p>
+        <a href="{% url 'login' %}" class="bwari-step-link">View receipts <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════ FEATURES ════════════════════════════ -->
+<section class="pg-section alt" id="features">
+  <div class="pg-container">
+    <div class="feat-header">
+      <div>
+        <div class="sec-eyebrow"><span class="dot"></span>Why Use This Portal</div>
+        <h2 class="sec-title">Built for Bwari Residents</h2>
+      </div>
+      <p class="feat-header-desc">Everything you need to manage your property tax obligation — in one place, online, 24/7.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card featured">
+        <div class="feat-icon"><i class="fas fa-location-dot"></i></div>
+        <h3 class="feat-title">GPS Property Tracking</h3>
+        <p class="feat-desc">Your property location is captured via live GPS during registration for accurate mapping and billing across all Bwari districts.</p>
+        <div class="feat-tag">Geolocation</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fas fa-shield-halved"></i></div>
+        <h3 class="feat-title">Secure Online Payments</h3>
+        <p class="feat-desc">Payments processed through Paystack — the official government-approved gateway. Card, transfer, and USSD all supported.</p>
+        <div class="feat-tag">Paystack Powered</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fas fa-file-invoice"></i></div>
+        <h3 class="feat-title">Instant Bills &amp; Receipts</h3>
+        <p class="feat-desc">Generate your RRR reference and download your official receipt immediately after payment — no waiting, no queues.</p>
+        <div class="feat-tag">Instant</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fas fa-chart-bar"></i></div>
+        <h3 class="feat-title">Compliance Dashboard</h3>
+        <p class="feat-desc">Track your payment history and compliance status for every property across all assessment years in one clean dashboard.</p>
+        <div class="feat-tag">Real-time</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fas fa-comments"></i></div>
+        <h3 class="feat-title">Complaints &amp; Support</h3>
+        <p class="feat-desc">Submit issues directly to the council. Track your complaint from submission to resolution with your unique complaint ID.</p>
+        <div class="feat-tag">Support</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><i class="fas fa-mobile-screen"></i></div>
+        <h3 class="feat-title">Works on Any Device</h3>
+        <p class="feat-desc">Fully optimised for mobile phones, tablets, and desktops. Pay from anywhere in Bwari — even with slow internet.</p>
+        <div class="feat-tag">Mobile Ready</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ COUNCIL REVENUE SERVICES ════════════════════════ -->
+<section class="pg-section" id="services">
+  <div class="pg-container">
+    <div class="sec-center">
+      <div class="sec-eyebrow"><span class="dot"></span>Council Revenue &amp; Services</div>
+      <h2 class="sec-title">Popular Council Fee Categories</h2>
+      <p class="sec-sub" style="margin:0 auto 48px;">All fees are officially collected and managed by Bwari Area Council. Pay online and get your receipt instantly.</p>
+    </div>
+
+    <div class="service-grid">
+
+      <!-- Waste Disposal -->
+      <div class="service-card">
+        <div class="svc-icon" style="background:#ccfbf1;color:#0d9488;"><i class="fas fa-trash-can"></i></div>
+        <div class="svc-title">Waste Disposal Payment</div>
+        <div class="svc-desc">Pay your annual commercial or residential waste disposal levy to the council.</div>
+        <div class="svc-tag" style="background:#ccfbf1;color:#0d9488;">Environmental Services</div>
+      </div>
+
+      <!-- Sanitation Levy -->
+      <div class="service-card">
+        <div class="svc-icon" style="background:var(--green-dim);color:var(--green);"><i class="fas fa-leaf"></i></div>
+        <div class="svc-title">Sanitation Levy</div>
+        <div class="svc-desc">Monthly environmental sanitation fee for residential and commercial premises within Bwari.</div>
+        <div class="svc-tag" style="background:var(--green-dim);color:var(--green);">Sanitation</div>
+      </div>
+
+      <!-- Environmental Compliance -->
+      <div class="service-card featured-svc">
+        <div class="svc-icon" style="background:rgba(22,163,74,.2);color:#4ade80;"><i class="fas fa-shield-halved"></i></div>
+        <div class="svc-title">Environmental Compliance</div>
+        <div class="svc-desc">Obtain your environmental compliance certificate as required for businesses operating in Bwari.</div>
+        <div class="svc-tag" style="background:rgba(22,163,74,.2);color:#4ade80;">Compliance</div>
+      </div>
+
+      <!-- Commercial Waste Permit -->
+      <div class="service-card">
+        <div class="svc-icon" style="background:var(--amber-dim);color:var(--amber);"><i class="fas fa-file-contract"></i></div>
+        <div class="svc-title">Commercial Waste Permit</div>
+        <div class="svc-desc">Businesses generating above-average waste must obtain and renew their commercial waste permit annually.</div>
+        <div class="svc-tag" style="background:var(--amber-dim);color:var(--amber);">Commercial</div>
+      </div>
+
+    </div>
+
+
+
+    <!-- Bottom CTA strip -->
+    <div class="svc-cta-strip">
+      <div class="svc-cta-info">
+        <div class="svc-cta-icon"><i class="fas fa-info-circle"></i></div>
+        <div>
+          <div class="svc-cta-title">All these services are managed through your Bwari portal account</div>
+          <div class="svc-cta-sub">Register or log in to access payment, permits, and environmental compliance services.</div>
+        </div>
+      </div>
+      <div class="svc-cta-btns">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="btn btn-primary"><i class="fas fa-user"></i> View Dashboard</a>
+        {% else %}
+          <a href="{% url 'signup' %}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Register Now</a>
+          <a href="{% url 'login' %}" class="btn btn-outline"><i class="fas fa-arrow-right-to-bracket"></i> Sign In</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ SANITATION LEVY ════════════════════════════════════════ -->
+<section class="pg-section alt" id="sanitation-levy">
+  <div class="pg-container">
+    <div class="sanitation-grid">
+
+      <!-- Left: Info -->
+      <div>
+        <div class="sec-eyebrow"><span class="dot"></span>Environmental Sanitation</div>
+        <h2 class="sec-title">Sanitation Levy &amp;<br>Monthly Trash Pickup</h2>
+        <p style="font-size:1rem;color:#4b5563;line-height:1.75;margin-bottom:24px;">
+          The Bwari Area Council Environmental Sanitation Levy is a mandatory fee collected from all residential and commercial premises within the council area. It funds organised waste collection, neighbourhood cleanliness, and environmental health enforcement.
+        </p>
+        <p style="font-size:1rem;color:#4b5563;line-height:1.75;margin-bottom:32px;">
+          When you pay your sanitation levy through this portal, your property is automatically enrolled in the <strong style="color:#0f1117;">monthly doorstep refuse collection programme</strong> — a council sanitation team visits your registered address every month to collect household waste at no additional charge.
+        </p>
+
+        <!-- Mini steps -->
+        <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:36px;">
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div class="san-step-icon"><i class="fas fa-user-plus"></i></div>
+            <div><strong class="san-step-title">Register &amp; Add Your Property</strong><span class="san-step-desc">Create your portal account, add your residential or commercial property, and select the Sanitation Levy from your payment options.</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div class="san-step-icon"><i class="fas fa-credit-card"></i></div>
+            <div><strong class="san-step-title">Pay Securely via Paystack</strong><span class="san-step-desc">Pay your annual sanitation levy online using card, bank transfer, or USSD. Payment is confirmed and recorded immediately.</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div class="san-step-icon"><i class="fas fa-trash-can"></i></div>
+            <div><strong class="san-step-title">Enjoy Monthly Doorstep Collection</strong><span class="san-step-desc">A council-assigned sanitation team collects your household refuse every month from your registered address — no extra fees, no hassle.</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div class="san-step-icon"><i class="fas fa-download"></i></div>
+            <div><strong class="san-step-title">Download Your Compliance Certificate</strong><span class="san-step-desc">Receive your official sanitation levy receipt instantly — proof of environmental compliance for your property.</span></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="{% url 'signup' %}" class="btn btn-primary btn-lg"><i class="fas fa-leaf"></i> Pay Sanitation Levy</a>
+          <a href="{% url 'bylaw_environmental_sanitation' %}" class="btn btn-outline btn-lg"><i class="fas fa-scale-balanced"></i> Read the Bye-Law</a>
+        </div>
+      </div>
+
+      <!-- Right: Feature cards -->
+      <div>
+        <div class="san-benefits-card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+            <div class="san-card-icon"><i class="fas fa-star"></i></div>
+            <strong style="font-size:1rem;color:#0f1117;">What the Levy Covers</strong>
+          </div>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+            <li class="san-check-item"><i class="fas fa-check-circle" style="color:#16a34a;flex-shrink:0;"></i>Monthly doorstep refuse collection</li>
+            <li class="san-check-item"><i class="fas fa-check-circle" style="color:#16a34a;flex-shrink:0;"></i>Neighbourhood drainage clearance</li>
+            <li class="san-check-item"><i class="fas fa-check-circle" style="color:#16a34a;flex-shrink:0;"></i>Environmental health inspections</li>
+            <li class="san-check-item"><i class="fas fa-check-circle" style="color:#16a34a;flex-shrink:0;"></i>Public space and market sanitation</li>
+            <li class="san-check-item"><i class="fas fa-check-circle" style="color:#16a34a;flex-shrink:0;"></i>Official sanitation compliance certificate</li>
+          </ul>
+        </div>
+
+        <div class="san-penalty-card">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <i class="fas fa-triangle-exclamation" style="color:#ea580c;font-size:1.1rem;flex-shrink:0;margin-top:2px;"></i>
+            <div>
+              <strong style="display:block;font-size:.9rem;color:#92400e;margin-bottom:6px;">Non-Payment Penalty</strong>
+              <p style="font-size:.84rem;color:#78350f;line-height:1.65;margin:0;">Properties without a valid sanitation levy payment are subject to enforcement action under the Bwari Environmental Sanitation Bye-Law, including fines and prohibition notices. Pay before the deadline to remain compliant.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="san-stats-row">
+          <div class="san-stat-card">
+            <div class="san-stat-num">12×</div>
+            <div class="san-stat-label">Monthly Pickups Per Year</div>
+          </div>
+          <div class="san-stat-card">
+            <div class="san-stat-num">₦0</div>
+            <div class="san-stat-label">Extra Cost for Collection</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ WHO IS IT FOR (UNIQUE CLASSES) ═══════════════════════════ -->
+<section class="bwari-pg-section">
+  <div class="bwari-pg-container">
+    <div class="bwari-sec-center">
+      <div class="bwari-sec-eyebrow"><span class="bwari-dot"></span>Who Can Use This Portal</div>
+      <h2 class="bwari-sec-title">Choose Your Account Type</h2>
+    </div>
+    <div class="usertype-grid-2">
+      <div class="bwari-usertype-card">
+        <div class="bwari-usertype-icon bwari-green"><i class="fas fa-house"></i></div>
+        <h3 class="bwari-usertype-title">Business / Property Owner</h3>
+        <p class="bwari-usertype-desc">Own businesses or properties in Bwari Area Council? Register, generate your annual tenement rate bill, and pay online in minutes.</p>
+        <ul class="bwari-usertype-list">
+          <li><i class="fas fa-check"></i> Register multiple businesses/properties</li>
+          <li><i class="fas fa-check"></i> Annual rate: calculated per business/property</li>
+          <li><i class="fas fa-check"></i> Instant payment receipt</li>
+        </ul>
+        <a href="{% url 'signup' %}" class="bwari-btn bwari-btn-primary bwari-btn-full">Register as Business / Property Owner</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ TRUST STRIP ════════════════════════════ -->
+<section class="pg-section alt" style="padding: 48px 0;">
+  <div class="pg-container">
+    <div class="trust-strip">
+      <div class="trust-chip-lg"><i class="fas fa-lock"></i>256-bit SSL Encryption</div>
+      <div class="trust-chip-lg"><i class="fas fa-building-columns"></i><span><span class="trust-brand">Paystack</span> — Government Approved Gateway</span></div>
+      {% comment %} <div class="trust-chip-lg"><i class="fas fa-landmark"></i>Official Bwari Area Council Platform</div> {% endcomment %}
+      <div class="trust-chip-lg"><i class="fas fa-headset"></i>Mon – Fri Support Available</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ CTA ════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <div>
+      <h2 class="cta-title">Ready to Pay Your Tenement, Business &amp; Sanitation Rates?</h2>
+      <p class="cta-desc">Join thousands of Bwari property owners paying online. Fast, safe, and officially recognised by the Area Council. Sanitation levy payers also enjoy monthly doorstep refuse collection.</p>
+    </div>
+    {% if user.is_authenticated %}
+      <div class="cta-btns">
+        <a href="{% url 'dashboard' %}" class="btn btn-white btn-lg"><i class="fas fa-tachometer-alt"></i> Go to Dashboard</a>
+      </div>
+    {% else %}
+      <div class="cta-btns">
+        <a href="{% url 'signup' %}" class="btn btn-white btn-lg"><i class="fas fa-user-plus"></i> Register Now — It's Free</a>
+        <a href="{% url 'login' %}"  class="btn btn-outline-white btn-lg"><i class="fas fa-arrow-right-to-bracket"></i> Already Registered? Login</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ════════════════ TESTIMONIALS ════════════════════════════ -->
+<section class="pg-section" id="testimonials">
+  <div class="pg-container">
+    <div class="sec-center">
+      <div class="sec-eyebrow"><span class="dot"></span>What Residents Say</div>
+      <h2 class="sec-title">Trusted by Bwari Property and Business Owners</h2>
+      <p class="sec-sub">Real feedback from landlords who've used the portal to pay their tenement rates online.</p>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">
+          <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        </div>
+        <p class="testi-body">"I used to spend the whole day at the council office just to pay my tenement rate. Now I do it from my phone in under 10 minutes. This system is a game changer."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">AO</div>
+          <div>
+            <div class="testi-name">Alhaji Okonkwo</div>
+            <div class="testi-role">Landlord, Bwari Town</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card featured-testi">
+        <div class="testi-stars">
+          <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        </div>
+        <p class="testi-body">"The GPS registration was smooth and the receipt came instantly after payment via Paystack. I downloaded it and the council accepted it without any issues. Very professional."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">FM</div>
+          <div>
+            <div class="testi-name">Fatima Musa</div>
+            <div class="testi-role">Property Owner, Dutse-Alhaji</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">
+          <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-stroke"></i>
+        </div>
+        <p class="testi-body">"I own three properties in Bwari and managing all of them from one dashboard is excellent. The compliance tracker shows which ones are paid and which aren't — very clear."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">EI</div>
+          <div>
+            <div class="testi-name">Emmanuel Ike</div>
+            <div class="testi-role">Multiple Property Owner, Ushafa</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ FAQ ════════════════════════════════════ -->
+<section class="pg-section alt" id="faq">
+  <div class="pg-container">
+    <div class="faq-layout">
+      <div class="faq-left">
+        <div class="sec-eyebrow"><span class="dot"></span>FAQ</div>
+        <h2 class="sec-title">Frequently Asked Questions</h2>
+        <p class="sec-sub">Got questions? We have answers. If you need more help, contact our support team.</p>
+        <a href="{% url 'contact' %}" class="btn btn-outline" style="margin-top:24px;">Contact Support <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary class="faq-q">What is Tenement Rate? <i class="fas fa-plus faq-icon"></i></summary>
+          <p class="faq-a">Tenement rate is an annual property tax levied by the Bwari Area Council on all residential and commercial buildings within its jurisdiction, as required by Nigerian law. It is used to fund local infrastructure and services.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">Who is required to pay? <i class="fas fa-plus faq-icon"></i></summary>
+          <p class="faq-a">All owners of residential houses, commercial buildings, and landed properties within Bwari Area Council are legally required to pay the annual tenement rate. Failure to pay may attract penalties.</p>
+        </details>
+        
+        <details class="faq-item">
+          <summary class="faq-q">What payment methods are accepted? <i class="fas fa-plus faq-icon"></i></summary>
+          <p class="faq-a">Payments are processed through Paystack — the Nigerian government's approved payment gateway. You can pay using your debit/credit card, internet banking, USSD, or direct bank deposit using your unique RRR reference.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">How do I get my receipt? <i class="fas fa-plus faq-icon"></i></summary>
+          <p class="faq-a">After successful payment, your official receipt is immediately available for download from your dashboard. The receipt is digitally stamped and accepted as proof of compliance by the Bwari Area Council.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">What happens if I don't pay before the deadline? <i class="fas fa-plus faq-icon"></i></summary>
+          <p class="faq-a">Properties with outstanding rates may be subject to penalties, surcharges, or enforcement actions by the Area Council. We recommend paying early to avoid additional fees.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════ NOTICES & DEADLINES ═════════════════════ -->
+<section class="pg-section" id="notices">
+  <div class="pg-container">
+    <div class="sec-center">
+      <div class="sec-eyebrow"><span class="dot"></span>Council Notices</div>
+      <h2 class="sec-title">Important Announcements</h2>
+    </div>
+    <div class="notices-grid">
+      <div class="notice-card urgent">
+        <div class="notice-meta">
+          <span class="notice-tag red"><i class="fas fa-circle-exclamation"></i> Urgent</span>
+          <span class="notice-date">2025 Assessment Year</span>
+        </div>
+        <h3 class="notice-title">2025 Tenement, Business &amp; Sanitation Levy Payment Now Open</h3>
+        <p class="notice-body">All property owners and residents in Bwari Area Council are required to complete their 2025 tenement rate, business rate, and sanitation levy assessment and payment. Register or log in to your portal account to generate your bill and pay online. Sanitation levy payers are enrolled in the monthly doorstep refuse collection programme.</p>
+        <a href="{% url 'signup' %}" class="btn btn-primary" style="margin-top:16px;">Register &amp; Pay Now</a>
+      </div>
+      <div class="notice-card">
+        <div class="notice-meta">
+          <span class="notice-tag amber"><i class="fas fa-triangle-exclamation"></i> Deadline</span>
+          <span class="notice-date">Dec 31, 2025</span>
+        </div>
+        <h3 class="notice-title">Late Payment Penalty After Deadline</h3>
+        <p class="notice-body">Payments received after the December 31, 2025 deadline will attract a 10% surcharge on the outstanding rate. Complete your payment early to avoid additional charges.</p>
+      </div>
+      <div class="notice-card">
+        <div class="notice-meta">
+          <span class="notice-tag green"><i class="fas fa-circle-check"></i> New</span>
+          <span class="notice-date">Portal Update</span>
+        </div>
+        <h3 class="notice-title">GPS Property Mapping Now Available</h3>
+        <p class="notice-body">The portal now captures your property's GPS coordinates during registration for more accurate billing and compliance tracking. Ensure location access is enabled on your device when registering.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════ RECEIPT LOOKUP MODAL ════════════════════════ -->
+<div class="rl-modal-overlay" id="rlModalOverlay" role="dialog" aria-modal="true" aria-labelledby="rlModalTitle">
+  <div class="rl-modal" id="rlModal">
+    <div class="rl-modal-header">
+      <div class="rl-modal-title" id="rlModalTitle">
+        <i class="fas fa-receipt"></i> Payment Receipt Verification
+      </div>
+      <button class="rl-modal-close" id="rlModalClose" aria-label="Close"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="rl-modal-body" id="rlModalBody">
+      <!-- dynamically populated -->
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Receipt Lookup ─────────────────────────────────────────── */
+(function(){
+  const input   = document.getElementById('receiptLookupInput');
+  const btn     = document.getElementById('receiptLookupBtn');
+  const btnText = btn.querySelector('.rl-btn-text');
+  const spinner = btn.querySelector('.rl-btn-spinner');
+  const overlay = document.getElementById('rlModalOverlay');
+  const body    = document.getElementById('rlModalBody');
+  const closeBtn= document.getElementById('rlModalClose');
+
+  function openModal(html){
+    body.innerHTML = html;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+
+  function closeModal(){
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    input.focus();
+  }
+
+  function setLoading(on){
+    btn.disabled   = on;
+    btnText.style.display  = on ? 'none' : '';
+    spinner.style.display  = on ? ''     : 'none';
+  }
+
+  function fmt(n){ return parseFloat(n).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+  function buildSuccess(d){
+    const statusBadge = d.expired
+      ? `<div class="rl-status-expired"><i class="fas fa-clock"></i> Expired</div>`
+      : `<div class="rl-status-valid"><i class="fas fa-circle-check"></i> Valid &amp; Verified</div>`;
+
+    const expiryNote = d.expired
+      ? `<span style="color:var(--red);font-size:.8rem;font-weight:600;"><i class="fas fa-triangle-exclamation"></i> This payment has expired. Please renew.</span>`
+      : (d.days_remaining !== null
+          ? `<span style="color:var(--green);font-size:.8rem;font-weight:600;"><i class="fas fa-hourglass-half"></i> ${d.days_remaining} day${d.days_remaining !== 1 ? 's' : ''} remaining</span>`
+          : '');
+
+    return `
+      ${statusBadge}
+      <div class="rl-ref-display"><i class="fas fa-hashtag"></i> ${d.reference}</div>
+      <div class="rl-row-grid">
+        <div class="rl-field full">
+          <div class="rl-field-label">Property</div>
+          <div class="rl-field-value">${d.property_name}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">Type</div>
+          <div class="rl-field-value">${d.property_type}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">District</div>
+          <div class="rl-field-value">${d.district}</div>
+        </div>
+        <div class="rl-field full">
+          <div class="rl-field-label">Address</div>
+          <div class="rl-field-value">${d.property_address}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">Owner</div>
+          <div class="rl-field-value">${d.landlord_name}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">Rate / Bill Type</div>
+          <div class="rl-field-value">${d.rate_name}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">Amount Paid</div>
+          <div class="rl-field-value" style="color:var(--green-dk);">₦${fmt(d.amount)}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">Date Paid</div>
+          <div class="rl-field-value">${d.paid_at}</div>
+        </div>
+        <div class="rl-field">
+          <div class="rl-field-label">Valid Until</div>
+          <div class="rl-field-value">${d.expires_at}</div>
+        </div>
+        <div class="rl-field" style="display:flex;align-items:center;">
+          ${expiryNote}
+        </div>
+      </div>
+    `;
+  }
+
+  function buildError(msg){
+    return `
+      <div class="rl-error-box">
+        <i class="fas fa-circle-xmark"></i>
+        <span>${msg}</span>
+      </div>
+    `;
+  }
+
+  async function doLookup(){
+    const ref = input.value.trim();
+    if(!ref){ input.focus(); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(`{% url 'public_lookup_receipt' %}?ref=${encodeURIComponent(ref)}`);
+      const data = await res.json();
+      openModal(data.found ? buildSuccess(data) : buildError(data.error || 'No record found.'));
+    } catch(e){
+      openModal(buildError('Could not reach the server. Please try again.'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  btn.addEventListener('click', doLookup);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') doLookup(); });
+
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', e => { if(e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && overlay.classList.contains('open')) closeModal(); });
+})();
+
+/* Counter animation */
+(function(){
+  function animate(el){
+    const target = parseInt(el.dataset.target);
+    const prefix = el.dataset.prefix || '';
+    const isShort = el.dataset.short;
+    const dur = 2000, start = performance.now();
+    function frame(now){
+      const pct = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - pct, 3);
+      const val = Math.round(ease * target);
+      if(isShort){
+        el.textContent = prefix + (val >= 1e6 ? (val/1e6).toFixed(1)+'M' : val >= 1e3 ? (val/1e3).toFixed(0)+'K' : val);
+      } else {
+        el.textContent = prefix + val.toLocaleString();
+      }
+      if(pct < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ animate(e.target); obs.unobserve(e.target); } });
+  }, {threshold:.3});
+  document.querySelectorAll('[data-target]').forEach(el => obs.observe(el));
+})();
+</script>
+
+{% endblock %}

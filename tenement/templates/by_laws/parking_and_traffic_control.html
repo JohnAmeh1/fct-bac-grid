@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Parking & Traffic Control — Bwari Area Council Bye-Laws{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden;
+  }
+  .bylaw-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bylaw-hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 100px; padding: 6px 16px;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px;
+  }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; font-size: 0.88rem; color: #991b1b; margin: 16px 0; }
+  .bylaw-alert i { color: #dc2626; margin-top: 2px; flex-shrink: 0; }
+  .bylaw-schedule-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.88rem; }
+  .bylaw-schedule-table th { background: #f0fdf4; color: #065f46; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; text-align: left; border-bottom: 2px solid #d1fae5; }
+  .bylaw-schedule-table td { padding: 10px 14px; color: #374151; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-schedule-table tr:last-child td { border-bottom: none; }
+  .bylaw-schedule-table td:last-child, .bylaw-schedule-table th:last-child { text-align: right; }
+  .bylaw-exempt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+  .bylaw-exempt-item { display: flex; align-items: center; gap: 12px; background: #f0fdf4; border: 1px solid #d1fae5; border-radius: 10px; padding: 12px 16px; font-size: 0.88rem; font-weight: 500; color: #065f46; }
+  .bylaw-exempt-item i { color: #059669; flex-shrink: 0; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-square-parking"></i>
+    Part IX — Bye-Law No. 8 of 2016
+  </div>
+  <h1>Loading/Off-Loading, Parking &amp; Traffic Control</h1>
+  <p>Haulage Activities, Parking Regulations and Traffic Management within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part IX — Parking &amp; Traffic Control</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-traffic-light"></i></div>
+      <div>
+        <h2>Loading/Off-Loading &amp; Parking Control Bye-Law No. 8 of 2016</h2>
+        <span>Part IX — Bwari Area Council FCT Abuja, Nigeria (As Amended)</span>
+      </div>
+    </div>
+    <p>Pursuant to the provision of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999 (as amended), and other relevant sections of the Local Government Act, Laws of FCT Abuja 2006, this Bye-Law governs loading/off-loading, haulage activities, parking, and traffic control within the territorial jurisdiction of the Bwari Area Council.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 8 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part IX</span></div>
+      <div class="bylaw-meta-item"><label>Authority</label><span>Bwari Area Council, FCT Abuja</span></div>
+      <div class="bylaw-meta-item"><label>Legal Basis</label><span>Section 7, Fourth Schedule — 1999 Constitution</span></div>
+    </div>
+  </div>
+
+  <!-- Haulage & Loading -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-truck-moving"></i></div>
+      <div>
+        <h2>Loading, Off-Loading &amp; Haulage Activities</h2>
+        <span>Section 1 — Fees, Levies &amp; Charges</span>
+      </div>
+    </div>
+    <p>All companies, persons, corporate bodies, establishments, transporters, transport companies, owners of warehouses, depots, quarries, construction sites, workshops, open spaces, factories, farmlands and estate facilities operating or carrying out business/commercial activities within the territorial jurisdiction of the Bwari Area Council shall pay a fee, levy or charge on every single loading/offloading and other haulage activities at the points of loading or discharge.</p>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Failure to comply with these provisions shall attract a fine as may be determined by the court. It shall also be an offence to park or abandon a vehicle on the highway or obstruct the free flow of traffic anywhere other than an approved car park.</span>
+    </div>
+    <h3>Impoundment of Non-Compliant Vehicles</h3>
+    <ul class="bylaw-func-list">
+      <li>Where a vehicle is found operating haulage activities without evidence of payment of prescribed fees, it shall be impounded by the authorized person and towed to the Area Council premises or the nearest police station.</li>
+      <li>The owner may recover the impounded vehicle upon payment of prescribed fees plus an additional ₦1,000 for every subsequent day spent within the Area Council premises.</li>
+    </ul>
+  </div>
+
+  <!-- Parking Fees -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-ticket"></i></div>
+      <div>
+        <h2>Parking Fees &amp; Car Park Rules</h2>
+        <span>Section 3 — Authorized Car Parks</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>A minimum parking fee of ₦100.00 and a maximum of ₦500.00 per vehicle (depending on type) shall be payable for use of any authorized car park between 6:00 am and 6:00 pm.</li>
+      <li>The vehicle owner shall obtain an official ticket and show same to the Park Wardens on demand.</li>
+      <li>Annual fees for corporate bodies and establishments shall be charged at 10% of every single loading and offloading, payable not later than 14 days from the Demand/Reminder Notice date.</li>
+      <li>Any appeal against an Assessment or Demand Notice must be filed within 30 days from the date of the decision being appealed.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Any person who obstructs an authorized officer in the discharge of his duties is guilty of an offence and liable on conviction to a fine of ₦50,000 (Fifty Thousand Naira) or six months imprisonment or both.</span>
+    </div>
+  </div>
+
+  <!-- Powers -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-shield-halved"></i></div>
+      <div>
+        <h2>Powers of the Area Council</h2>
+        <span>Section 4 — Regulatory Powers</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Provide and maintain parking lots and truck terminals.</li>
+      <li>Charge fees on private commercial parks and parking facilities.</li>
+      <li>Issue permits on private parking development and enter into contracts for provision and management of parks.</li>
+      <li>Provide facilities for the removal of vehicles contravening this Bye-Law.</li>
+      <li>Maintain proper records containing particulars of each removed vehicle, the date of removal, and the facility in which it is kept.</li>
+    </ul>
+    <h3>Exempt Vehicles</h3>
+    <p>The following vehicles are exempt from the provisions of this Bye-Law:</p>
+    <div class="bylaw-exempt-grid">
+      <div class="bylaw-exempt-item"><i class="fas fa-ambulance"></i> Ambulances</div>
+      <div class="bylaw-exempt-item"><i class="fas fa-fire-extinguisher"></i> Fire Service Vehicles</div>
+      <div class="bylaw-exempt-item"><i class="fas fa-cross"></i> Hearse</div>
+      <div class="bylaw-exempt-item"><i class="fas fa-trash-can"></i> Refuse Collection Vehicles</div>
+    </div>
+  </div>
+
+  <!-- Schedule -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-table-list"></i></div>
+      <div>
+        <h2>Schedule — Fee Tariff</h2>
+        <span>Loading/Off-Loading &amp; Motor Park Entry Fees</span>
+      </div>
+    </div>
+    <h3>Loading &amp; Off-Loading Fees</h3>
+    <table class="bylaw-schedule-table">
+      <thead>
+        <tr><th>Type of Vehicle</th><th>Fee (₦)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Lorries / Tippers</td><td>15,000</td></tr>
+        <tr><td>Cars / Buses / Vans / Pick-ups</td><td>5,000</td></tr>
+        <tr><td>Dyna Delivery Van / J5</td><td>10,000</td></tr>
+        <tr><td>Luxurious Buses</td><td>20,000</td></tr>
+        <tr><td>Trailers</td><td>20,000</td></tr>
+        <tr><td>Cranes</td><td>25,000</td></tr>
+        <tr><td>Earth-Moving Equipment</td><td>25,000</td></tr>
+        <tr><td>Loading / Off-Loading (per trip)</td><td>10% of above fees</td></tr>
+      </tbody>
+    </table>
+    <h3>Motor Park Entry Fees</h3>
+    <table class="bylaw-schedule-table">
+      <thead>
+        <tr><th>Type of Vehicle</th><th>Fee (₦)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Lorries / Luxurious</td><td>300</td></tr>
+        <tr><td>Tanker / Trailer</td><td>1,000 – 1,500</td></tr>
+        <tr><td>Private</td><td>1,500 – 2,000</td></tr>
+        <tr><td>Town Service / Inter-State</td><td>1,000 – 2,000</td></tr>
+        <tr><td>Loading / Off-Loading</td><td>10% of Total Loading Income</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top: 12px; font-size: 0.82rem; color: #6b7280;"><i class="fas fa-info-circle"></i> These charges/fees are subject to review by the Area Council when necessary.</p>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_wrong_parking' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-car-burst"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Wrong Parking &amp; Permits</strong><span>Part XXIV — Bye-Law No. 23</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_movement_keeping_dogs' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-dog"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Movement &amp; Keeping of Dogs</strong><span>Part XI — Bye-Law No. 10</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_refuse_operation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-trash-can"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Refuse Operations (PSPRO)</strong><span>Part XXII — Bye-Law No. 21</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

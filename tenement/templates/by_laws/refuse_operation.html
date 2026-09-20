@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Refuse Operations (PSPRO) — Bwari Area Council Bye-Laws{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; font-size: 0.88rem; color: #991b1b; margin: 16px 0; }
+  .bylaw-alert i { color: #dc2626; margin-top: 2px; flex-shrink: 0; }
+  .bylaw-info { background: #f0fdf4; border: 1px solid #d1fae5; border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; font-size: 0.88rem; color: #065f46; margin: 16px 0; }
+  .bylaw-info i { color: #059669; margin-top: 2px; flex-shrink: 0; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-recycle"></i>
+    Part XXII — Bye-Law No. 21 of 2016
+  </div>
+  <h1>Private Sector Participation Refuse Operations</h1>
+  <p>Regulation of PSP Refuse Operators and Waste Management within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XXII — Refuse Operations (PSPRO)</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-trash-can-arrow-up"></i></div>
+      <div>
+        <h2>PSPRO Bye-Law No. 21 of 2016</h2>
+        <span>Part XXII — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant sections of the Local Government Act, Laws of FCT Abuja 2006, this Bye-Law regulates private sector participation in refuse collection, transportation and disposal within the Bwari Area Council.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 21 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XXII</span></div>
+      <div class="bylaw-meta-item"><label>Commencement</label><span>5th January 2016</span></div>
+      <div class="bylaw-meta-item"><label>Legal Basis</label><span>Section 7, Fourth Schedule — 1999 Constitution</span></div>
+    </div>
+  </div>
+
+  <!-- Mandatory Engagement of PSP Operators -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-handshake"></i></div>
+      <div>
+        <h2>Mandatory Engagement of PSP Refuse Operators</h2>
+        <span>Section 1 — Obligation on Property Owners &amp; Occupiers</span>
+      </div>
+    </div>
+    <p>Every owner or occupier of premises, buildings and tenements shall engage the services of a Private Sector Participation (PSP) Refuse Operator that is registered and/or licensed by the Bwari Area Council for the purpose of removal, transportation and disposal of refuse from such building, premises and/or operations within any part of the territorial jurisdiction of the Area Council.</p>
+    <div class="bylaw-info">
+      <i class="fas fa-circle-info"></i>
+      <span>Only PSP Refuse Operators registered and licensed by the Bwari Area Council are authorised to operate within the territorial jurisdiction of the Area Council.</span>
+    </div>
+  </div>
+
+  <!-- Offences -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div>
+        <h2>Prohibited Acts &amp; Offences</h2>
+        <span>Sections 2–4 — Offences</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li><strong>Unregistered Operation:</strong> It shall be an offence for any unregistered PSP Refuse Operator to carry on business and/or operations within any part of the territorial jurisdiction of the Area Council.</li>
+      <li><strong>Illegal Disposal:</strong> It shall be an offence for any owner or occupier of any building or tenement to dispose of refuse other than through a PSP operator registered by Bwari Area Council.</li>
+      <li><strong>Obstruction:</strong> It shall be an offence for any person, whether an individual or a body corporate or unincorporated, to obstruct a registered and/or licensed PSP Refuse Operator or its agent or delegate in the process of performing their legitimate duty of refuse collection.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Contraventions of any section of this Bye-Law are punishable as offences. The court with jurisdiction is the Magistrate Court of any grade.</span>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_pest_control' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-bug"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Pest Control</strong><span>Part XIX — Bye-Law No. 18</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_public_toilet' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-restroom"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Public Toilet</strong><span>Part XVIII — Bye-Law No. 17</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_tenement_rate' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Tenement Rate</strong><span>Part XXI — Bye-Law No. 20</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

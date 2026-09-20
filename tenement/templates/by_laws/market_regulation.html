@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Market Regulation Bye-Law | Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 10px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .alert-box { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; margin: 16px 0; }
+  .alert-box i { color: #d97706; margin-top: 2px; flex-shrink: 0; }
+  .alert-box p { margin: 0; font-size: 0.88rem; color: #78350f; line-height: 1.6; }
+  .definition-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .definition-item { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #059669; border-radius: 8px; padding: 14px 18px; }
+  .definition-term { display: block; font-weight: 700; font-size: 0.88rem; color: #065f46; margin-bottom: 4px; }
+  .definition-desc { font-size: 0.88rem; color: #374151; line-height: 1.65; }
+  .penalty-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .penalty-label { font-size: 0.88rem; font-weight: 500; color: #374151; }
+  .penalty-amount { font-size: 0.88rem; font-weight: 700; color: #065f46; white-space: nowrap; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .stamp-block { text-align: center; padding: 28px; background: #f0fdf4; border: 1px dashed #6ee7b7; border-radius: 12px; margin-top: 8px; }
+  .stamp-block p { margin: 0; font-size: 0.9rem; font-weight: 600; color: #065f46; letter-spacing: 0.03em; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-store"></i>
+    Part XIV — Bye-Law No. 13 of 2016
+  </div>
+  <h1>Market Regulation Bye-Law 2016</h1>
+  <p>Establishment, control and management of markets within Bwari Area Council jurisdiction</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XIV — Market Regulation</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-store"></i></div>
+      <div>
+        <h2>Market Regulation Bye-Law — No. 13 of 2016</h2>
+        <span>Part XIV — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant Sections of the Local Government Act, Laws of the FCT Abuja 2006 and all other laws enabling it in that behalf, the Bwari Area Council hereby makes the following Bye-Law.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 13 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XIV</span></div>
+      <div class="bylaw-meta-item"><label>Stall Allotment Max</label><span>One (1) Year</span></div>
+      <div class="bylaw-meta-item"><label>Max Fine</label><span>₦150,000</span></div>
+    </div>
+  </div>
+
+  <!-- Establishment & Control -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-landmark"></i></div>
+      <div>
+        <h2>Establishment &amp; Control of Markets</h2>
+        <span>Sections 1–4 — Approval, Management and Hours</span>
+      </div>
+    </div>
+    <h3>Approval Requirement</h3>
+    <p>No person shall establish or maintain a market without the <strong>approval of the Area Council</strong>. All markets established within the territorial jurisdiction of the Area Council shall be under the control and management of the Area Council.</p>
+
+    <div class="alert-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Contravention:</strong> Any person who contravenes this provision shall be liable on conviction to a fine of <strong>₦100,000 or 3 months imprisonment or both</strong>. Such market shall be closed/sealed up until written approval is obtained from the Area Council.</p>
+    </div>
+
+    <h3>Market Opening Hours</h3>
+    <p>Markets shall be opened on such days and between such hours of the day as the Area Council may approve.</p>
+
+    <h3>Tolls and Stallages</h3>
+    <p>Tolls and stallages fixed by the Area Council from time to time shall be paid by all persons selling or carrying on trade or stalling in the market. All tolls and stallages shall be paid <strong>monthly, quarterly, or half yearly in advance</strong> to the revenue Collectors of Bwari Area Council Treasury.</p>
+  </div>
+
+  <!-- Market Rules -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-clipboard-list"></i></div>
+      <div>
+        <h2>Market Rules &amp; Obligations</h2>
+        <span>Sections 6–20 — Conduct, Structures and Cleanliness</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>No person shall erect a stall, shed, building, wall, fence or enclosure within the market or within <strong>3 metres of the market boundary</strong> without approval of the Council.</li>
+      <li>No person shall make any alteration in any stall, building, fence, wall or enclosure within any market without the approval of the Area Council.</li>
+      <li>All stalls, sheds, buildings, walls, fences or enclosures constructed after the date of application of this Bye-Law shall conform in all respects to the requirements of the Area Council.</li>
+      <li>No stall holder shall assign, sublet, or otherwise part with possession of the stall or any part thereof except with the <strong>prior consent of the Area Council</strong>.</li>
+      <li>No stall in the market shall be used as a <strong>dwelling place</strong>.</li>
+      <li>No person shall constitute a nuisance in the market.</li>
+      <li>Every occupier of a stall, table or place in a market shall keep the same in perfectly clean state and after close of every day's business, brush, sweep and clear away all dirt and filth, and dump same in the refuse bag.</li>
+    </ul>
+  </div>
+
+  <!-- Penalties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Penalties &amp; Sanctions</h2>
+        <span>Sections 7–17 — Specific Fines by Offence</span>
+      </div>
+    </div>
+    <div class="penalty-row"><span class="penalty-label">Trading without paying tolls/stallages (trespasser)</span><span class="penalty-amount">₦50,000 or 3 months</span></div>
+    <div class="penalty-row"><span class="penalty-label">Trading on unapproved days or hours</span><span class="penalty-amount">₦50,000 or 3 months</span></div>
+    <div class="penalty-row"><span class="penalty-label">Unauthorized establishment of market</span><span class="penalty-amount">₦100,000 or 3 months</span></div>
+    <div class="penalty-row"><span class="penalty-label">Erecting unauthorized structures within market/3m boundary</span><span class="penalty-amount">₦150,000 or 6 months</span></div>
+    <div class="penalty-row"><span class="penalty-label">Any other contravention without specific penalty</span><span class="penalty-amount">₦150,000 or 6 months</span></div>
+    <p style="margin-top:16px; font-size:0.85rem; color:#6b7280;">The <strong>Magistrate Court of any grade</strong> shall have jurisdiction to try offences under this Bye-Law.</p>
+  </div>
+
+  <!-- Interpretation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-book-open"></i></div>
+      <div>
+        <h2>Interpretation</h2>
+        <span>Key Definitions under this Bye-Law</span>
+      </div>
+    </div>
+    <div class="definition-grid">
+      <div class="definition-item">
+        <span class="definition-term">"Area Council"</span>
+        <span class="definition-desc">Means the Bwari Area Council.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Fees"</span>
+        <span class="definition-desc">Means all monies payable to the Area Council under the provisions of this Bye-Law but shall not include fines or other penalties levied for contravention of any provision of this Bye-Law.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Market Master"</span>
+        <span class="definition-desc">Means the person appointed by the Area Council to oversee the affairs of all markets within the Area Council.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Stall/Shop"</span>
+        <span class="definition-desc">Means any erection permanently or temporarily designed to give the occupant(s) protection from weather or any construction affixed to the ground for the display of goods for sale.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Citation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-stamp"></i></div>
+      <div>
+        <h2>Citation</h2>
+        <span>Market Regulation Bye-Law (No. 13) 2016</span>
+      </div>
+    </div>
+    <p>This Bye-Law shall be referred to as the <strong>Market Regulation Bye-Law (No. 13) 2016</strong>.</p>
+    <div class="stamp-block">
+      <p><i class="fas fa-gavel" style="margin-right:8px;"></i>DULY passed by the Bwari Area Council Legislative Arm.</p>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_foodstuff_regulation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-utensils"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Foodstuff Regulation</strong><span>Part XXV — Bye-Law No. 24</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_liquor_licensing' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-wine-glass"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Liquor Licensing</strong><span>Part XXIII — Bye-Law No. 22</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_cutting_road_tar' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-road"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Cutting of Road Tar</strong><span>Part X — Bye-Law No. 9</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_mobile_advertisement' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-ad"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Mobile Advertisement</strong><span>Part VII — Bye-Law No. 6</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

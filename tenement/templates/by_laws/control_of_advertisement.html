@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Control of Advertisement — Sign Post &amp; Advertisement Permit Bye-Law No. 5{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem,4vw,2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .bylaw-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 12px; }
+  .bylaw-table thead { background: #f0fdf4; }
+  .bylaw-table th { padding: 10px 14px; text-align: left; font-weight: 700; color: #065f46; border-bottom: 2px solid #d1fae5; }
+  .bylaw-table td { padding: 9px 14px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .bylaw-table tbody tr:hover { background: #fafffe; }
+  .bylaw-table .amount { font-weight: 600; color: #065f46; }
+  .table-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid #e5e7eb; }
+  .penalty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .penalty-item { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; }
+  .penalty-item label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #dc2626; margin-bottom: 4px; }
+  .penalty-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .notice-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+  .notice-box p { font-size: 0.88rem; color: #92400e; margin: 0; line-height: 1.7; }
+  .exempt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin: 12px 0; }
+  .exempt-item { display: flex; align-items: flex-start; gap: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #065f46; }
+  .exempt-item i { flex-shrink: 0; margin-top: 2px; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } .penalty-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-rectangle-ad"></i>
+    Part VI — Bye-Law No. 5 of 2016
+  </div>
+  <h1>Control of Advertisement</h1>
+  <p>Sign post and advertisement permit regulations within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part VI — Control of Advertisement</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-rectangle-ad"></i></div>
+      <div>
+        <h2>Control of Advertisement — Bye-Law No. 5 of 2016</h2>
+        <span>Part VI — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>In accordance with Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999 (as amended), and relevant sections of the Local Government Act, Laws of FCT Abuja 2006, the Bwari Area Council promulgates this Bye-Law.</p>
+    <p>No person shall display an advertisement within Bwari Area Council <strong>without a permit issued by the Area Council</strong>.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 5 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part VI</span></div>
+      <div class="bylaw-meta-item"><label>Authority</label><span>Bwari Area Council, FCT Abuja</span></div>
+      <div class="bylaw-meta-item"><label>Jurisdiction</label><span>Magistrate Court</span></div>
+    </div>
+  </div>
+
+  <!-- Permit Provisions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-id-card"></i></div>
+      <div>
+        <h2>Permit Provisions</h2>
+        <span>Issuance, validity, renewal and refusal</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>A permit may be obtained from the Area Council on application (Form A) upon payment of the fee prescribed in the First Schedule.</li>
+      <li>The permit shall be signed by the Council Manager on behalf of the Area Council (Form B).</li>
+      <li>Any permit issued shall <strong>expire on 31st December</strong> of the year of issuance.</li>
+      <li>Permits shall be <strong>renewed annually</strong> on payment of the prescribed fee (Form C).</li>
+      <li>An application may be refused on grounds set out in Form D or E — including non-disclosure of business type, failure to submit drawings, and obstructing traffic signs.</li>
+      <li>The Area Council may <strong>revoke or modify</strong> a permit when expedient and shall issue a notice (Form F) to that effect.</li>
+      <li>The Area Council reserves the right to reject any <strong>obscene language</strong> appearing on any advertisement.</li>
+    </ul>
+  </div>
+
+  <!-- Temporary Advertisements -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-calendar-days"></i></div>
+      <div>
+        <h2>Temporary Advertisements</h2>
+        <span>Events, entertainment, fairs and circuses</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>A temporary permit may be obtained for advertisements relating to a visit, travel, circus, fair, entertainment or similar event.</li>
+      <li>Such advertisements shall <strong>not exceed one square meter</strong> in area and shall not be displayed <strong>above four (4) metres</strong> from ground level.</li>
+      <li>No such advertisement shall be displayed <strong>earlier than seven (7) days</strong> before the first performance or opening of the event.</li>
+      <li>The advertisement must be <strong>removed on the last day</strong> of the event for which the permit was granted.</li>
+      <li>Advertisements must not obstruct road traffic signals, railways, inland waterways, metro signals or airfields.</li>
+    </ul>
+  </div>
+
+  <!-- Enforcement -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Enforcement &amp; Removal</h2>
+        <span>Procedure when advertisements are displayed without a permit</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Where an advertisement is displayed without a permit, the Area Council shall serve an enforcement notice (Form G) on the owner or occupier.</li>
+      <li>If the notice is not complied with within the specified period, the Area Council may <strong>remove the advertisement at the owner's expense</strong>.</li>
+      <li>Any advertisement board declared to be <strong>dangerously displayed</strong> shall be demolished immediately by the Area Council.</li>
+      <li>A person aggrieved by an enforcement notice may appeal within the period specified in the notice — the Area Council's decision shall be <strong>final</strong>.</li>
+    </ul>
+    <div class="notice-box">
+      <p><i class="fas fa-circle-info" style="margin-right:6px;"></i> Advertisements displayed <strong>prior to this Bye-Law</strong> may continue for three (3) months from commencement, during which application for a permit must be made. If no permit is issued, the display must cease at expiry of three months.</p>
+    </div>
+  </div>
+
+  <!-- Penalties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div>
+        <h2>Offences &amp; Penalties</h2>
+        <span>Fines and imprisonment for contravention</span>
+      </div>
+    </div>
+    <div class="penalty-grid">
+      <div class="penalty-item">
+        <label>Individual</label>
+        <span>Fine not exceeding ₦20,000.00 or imprisonment not exceeding 3 months, or both</span>
+      </div>
+      <div class="penalty-item">
+        <label>Corporate Body</label>
+        <span>Fine of not less than ₦50,000.00</span>
+      </div>
+    </div>
+    <p style="margin-top:16px;">In the case of a <strong>continuing offence</strong>, an individual shall be liable to a fine of <strong>₦1,000 for each day</strong> during which the offence continues after conviction.</p>
+  </div>
+
+  <!-- Exemptions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-user-shield"></i></div>
+      <div>
+        <h2>Exemptions</h2>
+        <span>Advertisements not subject to this Bye-Law</span>
+      </div>
+    </div>
+    <div class="exempt-grid">
+      <div class="exempt-item"><i class="fas fa-check-circle"></i> Advertisements relating specifically to a pending General Area Council or Bye-Election</div>
+      <div class="exempt-item"><i class="fas fa-check-circle"></i> Advertisements required by any enactment or standing orders of national, state or Area Council authority</div>
+      <div class="exempt-item"><i class="fas fa-check-circle"></i> Traffic control, guidance or safety signs authorized by the Secretary/Director of Transport, FRSC, or authorized Police Officer</div>
+    </div>
+  </div>
+
+  <!-- First Schedule: Fee Table -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-list-ol"></i></div>
+      <div>
+        <h2>First Schedule — Advertisement Permit Fees</h2>
+        <span>Minimum Annual Rates by Advertisement Type</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="bylaw-table">
+        <thead><tr><th>#</th><th>Type</th><th>Minimum Fee (₦)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>School Sign Board</td><td class="amount">20,800.00</td></tr>
+          <tr><td>2</td><td>Neon Sign</td><td class="amount">20,200.00</td></tr>
+          <tr><td>3</td><td>Metal Fixed</td><td class="amount">10,400.00</td></tr>
+          <tr><td>4</td><td>Wooden Fixed</td><td class="amount">10,800.00</td></tr>
+          <tr><td>5</td><td>Metal Standing (Two Faces)</td><td class="amount">10,800.00</td></tr>
+          <tr><td>6</td><td>Metal Standing (Dual Faces)</td><td class="amount">10,400.00</td></tr>
+          <tr><td>7</td><td>Wooden Standing</td><td class="amount">10,000.00</td></tr>
+          <tr><td>8</td><td>Wooden Standing (Two Faces)</td><td class="amount">20,000.00</td></tr>
+          <tr><td>9</td><td>Electrical Fixed</td><td class="amount">15,000.00</td></tr>
+          <tr><td>10</td><td>Plastic Fixed</td><td class="amount">15,000.00</td></tr>
+          <tr><td>11</td><td>Electrical Standing</td><td class="amount">20,000.00</td></tr>
+          <tr><td>12</td><td>Electrical Standing (Two Faces)</td><td class="amount">38,000.00</td></tr>
+          <tr><td>13</td><td>Plastic Standing</td><td class="amount">20,000.00</td></tr>
+          <tr><td>14</td><td>Plastic Standing (Two Faces)</td><td class="amount">38,000.00</td></tr>
+          <tr><td>15</td><td>Special Sign Board</td><td class="amount">150,000.00</td></tr>
+          <tr><td>16</td><td>Carving</td><td class="amount">8,000.00</td></tr>
+          <tr><td>17</td><td>Banners</td><td class="amount">10,000.00</td></tr>
+          <tr><td>18</td><td>Posters</td><td class="amount">5,000.00</td></tr>
+          <tr><td>19</td><td>Tin Plates</td><td class="amount">20,000.00</td></tr>
+          <tr><td>20</td><td>Advert on Cloths</td><td class="amount">30,000.00</td></tr>
+          <tr><td>21</td><td>Major Highway / Town Billboard</td><td class="amount">350,000.00</td></tr>
+          <tr><td>22</td><td>Lamp Plate Advert</td><td class="amount">60,000.00</td></tr>
+          <tr><td>23</td><td>Multinational Companies</td><td class="amount">700,000.00</td></tr>
+          <tr><td>24</td><td>Financial Institution</td><td class="amount">200,000.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Definitions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-book-open"></i></div>
+      <div><h2>Definitions</h2><span>Key terms under this Bye-Law</span></div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li><strong>"Advertisement"</strong> means words, letters, model, sign, placard, board, notice, device or representation, whether illuminated or not.</li>
+      <li><strong>"Existing Advertisement"</strong> means any advertisement being displayed prior to and at the date this Bye-Law came into force.</li>
+      <li><strong>"Owner" or "Occupier"</strong> means the person who owns or maintains the display, the owner or occupier of the land on which the advertisement is displayed, and includes any person whose goods, trade or business is being advertised.</li>
+    </ul>
+  </div>
+
+  <!-- Other bye-laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_preliminary' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Preliminary</strong><span>Part I — General Provisions</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_allied_matters' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-store"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Shops, Kiosks &amp; Trade License</strong><span>Part XV — Bye-Law No. 14</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_construction_permits' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-hard-hat"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Construction Site Permit</strong><span>Part VIII — Bye-Law No. 7</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

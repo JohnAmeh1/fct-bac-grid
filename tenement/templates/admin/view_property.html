@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ property.name }} | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --accent: #1e6cf0; --accent-dim: #dbeafe; --accent-dk: #1558c8;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow: 0 4px 12px rgba(0,0,0,.07);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,.12);
+    --radius: 10px; --radius-lg: 16px;
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface-2); }
+
+  .property-view-wrapper {
+    max-width: 1200px; margin: 0 auto; padding: 40px 24px 60px;
+  }
+
+  .property-view-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px; gap: 16px; flex-wrap: wrap;
+  }
+
+  .property-view-back {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--ink-3); text-decoration: none; font-weight: 500; font-size: .9rem;
+    padding: 8px 12px; border-radius: var(--radius);
+    transition: color var(--transition), background var(--transition);
+  }
+  .property-view-back:hover { color: var(--green); background: var(--green-dim); }
+
+  .property-view-title {
+    font-size: 2rem; font-weight: 700; color: var(--ink); letter-spacing: -.4px;
+  }
+
+  .property-meta-strip {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+
+  .meta-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 99px; font-size: .8rem; font-weight: 600;
+  }
+  .meta-badge.type { background: var(--accent-dim); color: var(--accent); }
+  .meta-badge.status { background: var(--green-dim); color: var(--green); }
+
+  .property-content {
+    display: grid; grid-template-columns: 1fr 380px; gap: 28px; margin-top: 32px;
+  }
+  @media (max-width: 1024px) { .property-content { grid-template-columns: 1fr; } }
+
+  /* Images Gallery */
+  .property-images {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 0; overflow: hidden;
+    box-shadow: var(--shadow); margin-bottom: 28px;
+  }
+
+  .property-main-image {
+    width: 100%; height: 380px; object-fit: cover; display: block;
+  }
+
+  .property-thumbnails {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px;
+    background: var(--surface-2);
+  }
+
+  .property-thumbnail {
+    width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius);
+    border: 2px solid var(--border); cursor: pointer;
+    transition: border-color var(--transition), transform var(--transition);
+  }
+  .property-thumbnail:hover { border-color: var(--green); transform: scale(1.02); }
+
+  /* Details Card */
+  .property-details-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow);
+  }
+
+  .detail-section {
+    margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
+  }
+  .detail-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .detail-section h3 {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--ink-3); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+
+  .detail-item {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .detail-label {
+    font-size: .8rem; font-weight: 600; color: var(--ink-3); flex: 0 0 40%;
+  }
+
+  .detail-value {
+    font-size: .95rem; color: var(--ink); flex: 1; word-break: break-word; font-weight: 500;
+  }
+
+  .detail-value.empty {
+    color: var(--ink-4); font-style: italic;
+  }
+
+  /* GPS Link */
+  .gps-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--accent); text-decoration: none; font-weight: 600;
+    padding: 8px 12px; border-radius: var(--radius); background: var(--accent-dim);
+    transition: all var(--transition);
+  }
+  .gps-link:hover { background: var(--accent); color: white; }
+  .gps-link i { font-size: .75rem; }
+
+  /* Owner Card */
+  .owner-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px; text-align: center;
+  }
+
+  .owner-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green), #4ade80);
+    color: white; font-weight: 700; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+  }
+
+  .owner-name {
+    font-size: 1rem; font-weight: 700; color: var(--ink); margin: 0 0 4px;
+  }
+
+  .owner-username {
+    font-size: .8rem; color: var(--ink-3); margin: 0; font-family: 'DM Mono', monospace;
+  }
+
+  .owner-info {
+    font-size: .75rem; color: var(--ink-4); margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Notes */
+  .property-notes {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+
+  .property-notes h3 {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--ink-3); margin-bottom: 12px;
+  }
+
+  .property-notes p {
+    font-size: .95rem; line-height: 1.7; color: var(--ink-2); margin: 0;
+  }
+
+  .no-notes {
+    font-size: .9rem; color: var(--ink-4); font-style: italic;
+  }
+  .gps-ok{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;color:var(--green);background:var(--green-dim);padding:2px 8px;border-radius:99px;}
+</style>
+
+<div class="property-view-wrapper">
+  <div class="property-view-header">
+    <a href="{% url 'admin_manage_properties' %}" class="property-view-back">
+      <i class="fas fa-arrow-left"></i> Back to Properties
+    </a>
+  </div>
+
+  <h1 class="property-view-title">{{ property.name }}</h1>
+
+  <div class="property-meta-strip">
+    <div class="meta-badge type">
+      {% if property.property_type == 'residential' %}<i class="fas fa-house"></i> Residential
+      {% elif property.property_type == 'commercial' %}<i class="fas fa-store"></i> Commercial
+      {% elif property.property_type == 'industrial' %}<i class="fas fa-industry"></i> Industrial
+      {% elif property.property_type == 'land' %}<i class="fas fa-mountain-sun"></i> Land{% endif %}
+    </div>
+    <div class="meta-badge status">
+      <i class="fas fa-check-circle"></i> Active
+    </div>
+  </div>
+
+  <div class="property-content">
+    <div>
+      <!-- Images Gallery -->
+      {% if property.main_image or property.image_1 %}
+      <div class="property-images">
+        <img src="{{ property.main_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
+        {% if property.image_1 or property.image_2 or property.image_3 or property.image_4 or property.image_5 or property.image_6 %}
+        <div class="property-thumbnails">
+          {% if property.image_1 %}
+          <img src="{{ property.image_1.url }}" alt="Image 1" class="property-thumbnail" onclick="document.getElementById('mainImage').src=this.src">
+          {% endif %}
+          {% if property.image_2 %}
+          <img src="{{ property.image_2.url }}" alt="Image 2" class="property-thumbnail" onclick="document.getElementById('mainImage').src=this.src">
+          {% endif %}
+          {% if property.image_3 %}
+          <img src="{{ property.image_3.url }}" alt="Image 3" class="property-thumbnail" onclick="document.getElementById('mainImage').src=this.src">
+          {% endif %}
+          {% if property.image_4 %}
+          <img src="{{ property.image_4.url }}" alt="Image 4" class="property-thumbnail" onclick="document.getElementById('mainImage').src=this.src">
+          {% endif %}
+          {% if property.image_5 %}
+          <img src="{{ property.image_5.url }}" alt="Image 5" class="property-thumbnail" onclick="document.getElementById('mainImage').src=this.src">
+          {% endif %}
+          {% if property.image_6 %}
+          <img src="{{ property.image_6.url }}" alt="Image 6" class="property-thumbnail" onclick="document.getElementById('mainImage').src=this.src">
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Notes -->
+      {% if property.notes %}
+      <div class="property-notes">
+        <h3><i class="fas fa-note-sticky"></i> Additional Notes</h3>
+        <p>{{ property.notes }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div>
+      <!-- Details Panel -->
+      <div class="property-details-card">
+        <div class="detail-section">
+          <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+          <div class="detail-item">
+            <span class="detail-label">Address</span>
+            <span class="detail-value">{{ property.address }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">District</span>
+            <span class="detail-value">{{ property.district|capfirst }}</span>
+          </div>
+          {% if property.latitude and property.longitude %}
+          <div class="detail-item">
+            <span class="detail-label">GPS</span>
+            <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}" target="_blank" class="gps-link">
+              <i class="fas fa-location-dot"></i> View Map
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="detail-section">
+          <h3><i class="fas fa-building"></i> Property Info</h3>
+          <div class="detail-item">
+            <span class="detail-label">Type</span>
+            <span class="detail-value">{{ property.get_property_type_display }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Units</span>
+            <span class="detail-value">{{ property.num_units }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Registered</span>
+            <span class="detail-value">{{ property.created_at|date:"M d, Y" }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
+          <div class="detail-item">
+            <span class="detail-label">Tenement Rate</span>
+            <span class="detail-value">
+              {% if property_payment_status == 'paid' %}
+                <span class="gps-ok"><i class="fas fa-check-circle"></i> Paid</span>
+              {% elif property_payment_status == 'pending' %}
+                <span class="chip amber"><i class="fas fa-clock"></i> Pending</span>
+              {% else %}
+                <span class="chip red"><i class="fas fa-xmark-circle"></i> Not Paid</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Sanitation Levy</span>
+            <span class="detail-value">
+              {% if sanitation_status == 'paid' %}
+                <span class="gps-ok"><i class="fas fa-check-circle"></i> Paid</span>
+              {% elif sanitation_status == 'pending' %}
+                <span class="chip amber"><i class="fas fa-clock"></i> Pending</span>
+              {% else %}
+                <span class="chip red"><i class="fas fa-xmark-circle"></i> Not Paid</span>
+              {% endif %}
+            </span>
+          </div>
+          <!-- Optionally list individual rates and payment status -->
+        </div>
+
+        <div class="detail-section">
+          <h3><i class="fas fa-user"></i> Owner</h3>
+          <div class="owner-card">
+            <div class="owner-avatar">{{ property.owner.get_full_name|default:property.owner.username|slice:":1"|upper }}</div>
+            <p class="owner-name">{{ property.owner.get_full_name|default:property.owner.username }}</p>
+            <p class="owner-username">@{{ property.owner.username }}</p>
+            <div class="owner-info">
+              {% if property.owner.email %}
+              <a href="mailto:{{ property.owner.email }}" style="color: var(--accent); text-decoration: none;">{{ property.owner.email }}</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,704 @@
+{% extends 'base.html' %} {% load static %} {% block title %}My Profile | Bwari
+Tenement System{% endblock %} {% block content %}
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap");
+
+  :root {
+    --ink: #0f1117;
+    --ink-2: #3b3f4a;
+    --ink-3: #6b7280;
+    --ink-4: #9ca3af;
+    --surface: #ffffff;
+    --surface-2: #f7f8fa;
+    --surface-3: #f0f2f5;
+    --border: #e5e7eb;
+    --border-2: #d1d5db;
+    --green: #16a34a;
+    --green-dim: #dcfce7;
+    --green-dk: #15803d;
+    --accent: #1e6cf0;
+    --accent-dim: #dbeafe;
+    --amber: #d97706;
+    --amber-dim: #fef3c7;
+    --red: #dc2626;
+    --red-dim: #fee2e2;
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: "DM Sans", sans-serif;
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+  @keyframes fadein {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .fade {
+    animation: fadein 0.4s ease both;
+  }
+  .fade-1 {
+    animation-delay: 0.06s;
+  }
+  .fade-2 {
+    animation-delay: 0.12s;
+  }
+  .fade-3 {
+    animation-delay: 0.18s;
+  }
+
+  /* ── Page wrapper ─────────────────────────────────────── */
+  .profile-page {
+    min-height: 100vh;
+    background: var(--surface-2);
+    padding: 48px 24px 80px;
+  }
+  .profile-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .profile-inner {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── Left: User card ──────────────────────────────────── */
+  .user-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  .user-card-banner {
+    background: var(--ink);
+    height: 72px;
+    position: relative;
+  }
+  .user-card-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .user-card-banner::after {
+    content: "";
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(
+      circle,
+      rgba(22, 163, 74, 0.25) 0%,
+      transparent 70%
+    );
+  }
+  .user-card-body {
+    padding: 0 24px 28px;
+  }
+  .user-avatar {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--green) 0%, #4ade80 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+    border: 3px solid var(--surface);
+    margin-top: -34px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .user-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .user-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--green);
+    background: var(--green-dim);
+    padding: 2px 9px;
+    border-radius: 99px;
+    margin-bottom: 20px;
+  }
+  .user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .user-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.825rem;
+    color: var(--ink-3);
+  }
+  .user-meta-row i {
+    width: 16px;
+    color: var(--ink-4);
+    font-size: 0.8rem;
+  }
+
+  /* Nav links */
+  .profile-nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .profile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    font-size: 0.855rem;
+    font-weight: 500;
+    color: var(--ink-3);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition:
+      background var(--transition),
+      color var(--transition);
+    cursor: pointer;
+  }
+  .profile-nav-item:last-child {
+    border-bottom: none;
+  }
+  .profile-nav-item:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+  .profile-nav-item.active {
+    color: var(--green);
+    background: var(--green-dim);
+    font-weight: 600;
+  }
+  .profile-nav-item i {
+    width: 16px;
+    font-size: 0.85rem;
+  }
+
+  /* ── Right: Form area ─────────────────────────────────── */
+  .profile-form-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+  .form-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+  .form-section-title .fst-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
+    color: var(--ink-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+  }
+  .form-section-body {
+    padding: 24px 24px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 540px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .form-span2 {
+    grid-column: span 2;
+  }
+  @media (max-width: 540px) {
+    .form-span2 {
+      grid-column: span 1;
+    }
+  }
+
+  .fld {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .fld label {
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    letter-spacing: 0.01em;
+  }
+  .fld-inner {
+    position: relative;
+  }
+  .fld-ico {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.78rem;
+    color: var(--ink-4);
+    pointer-events: none;
+    transition: color var(--transition);
+  }
+  .fld input,
+  .fld textarea {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.875rem;
+    color: var(--ink);
+    background: var(--surface-2);
+    outline: none;
+    transition:
+      border-color var(--transition),
+      background var(--transition),
+      box-shadow var(--transition);
+  }
+  .fld input:focus,
+  .fld textarea:focus {
+    border-color: var(--green);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+  }
+  .fld-inner:focus-within .fld-ico {
+    color: var(--green);
+  }
+  .fld textarea {
+    resize: vertical;
+    min-height: 100px;
+    padding-top: 12px;
+  }
+
+  /* Read-only / account info fields */
+  .fld-readonly {
+    padding: 10px 14px 10px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    background: var(--surface-3);
+    font-family: "DM Mono", monospace;
+    font-size: 0.8rem;
+  }
+
+  /* Save button */
+  .form-section-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-save {
+    background: var(--green);
+    color: white;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 11px 24px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition:
+      background var(--transition),
+      transform var(--transition),
+      box-shadow var(--transition);
+  }
+  .btn-save:hover {
+    background: var(--green-dk);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+  }
+  .btn-cancel {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--ink-3);
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 11px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition:
+      background var(--transition),
+      border-color var(--transition),
+      color var(--transition);
+  }
+  .btn-cancel:hover {
+    background: var(--surface-3);
+    border-color: var(--border-2);
+    color: var(--ink);
+  }
+
+  /* Success message */
+  .success-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--green-dim);
+    border: 1px solid #bbf7d0;
+    color: var(--green-dk);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 0.845rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  /* Danger zone */
+  .danger-zone {
+    border-color: #fca5a5;
+  }
+  .danger-head {
+    border-color: #fca5a5;
+  }
+  .danger-head .form-section-title {
+    color: var(--red);
+  }
+  .danger-head .fst-icon {
+    background: var(--red-dim);
+    color: var(--red);
+  }
+  .danger-body {
+    padding: 20px 24px;
+  }
+  .danger-desc {
+    font-size: 0.845rem;
+    color: var(--ink-3);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .btn-danger {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1.5px solid #fca5a5;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.845rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition:
+      background var(--transition),
+      box-shadow var(--transition);
+  }
+  .btn-danger:hover {
+    background: #fee2e2;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+  }
+</style>
+
+<div class="profile-page">
+  <div class="profile-inner">
+    <!-- ── Left sidebar ──────────────────────────────────── -->
+    <div class="fade">
+      <!-- User card -->
+      <div class="user-card">
+        <div class="user-card-banner"></div>
+        <div class="user-card-body">
+          <div class="user-avatar">
+            {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+          </div>
+          <div class="user-name">
+            {{ user.get_full_name|default:user.username }}
+          </div>
+          <div class="user-role">
+            {% if user_type == 'admin' %}
+                <i class="fas fa-shield-halved"></i> Administrator
+            {% elif user_type == 'landlord' %}
+                <i class="fas fa-house-user"></i> Landlord
+            {% else %}
+
+            {% endif %}
+          </div>
+          <div class="user-meta">
+            <div class="user-meta-row">
+              <i class="fas fa-user"></i>{{ user.username }}
+            </div>
+            <div class="user-meta-row">
+              <i class="fas fa-envelope"></i>{{ user.email|default:"—" }}
+            </div>
+            <div class="user-meta-row">
+              <i class="fas fa-calendar"></i>Member since {{ user.date_joined|date:"d M Y" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <div class="profile-nav">
+        
+        <a href="{% url 'dashboard' %}" class="profile-nav-item"
+          ><i class="fas fa-gauge-high"></i> Dashboard</a
+        >
+        <a href="#" class="profile-nav-item"
+          ><i class="fas fa-lock"></i> Change Password</a
+        >
+        
+      </div>
+    </div>
+
+    <!-- ── Right: Form ────────────────────────────────────── -->
+    <div class="profile-form-wrap">
+      {% if messages %}
+      <div class="success-notice fade">
+        <i class="fas fa-circle-check"></i> Your profile has been updated
+        successfully.
+      </div>
+      {% endif %}
+
+      <form method="post" class="fade fade-1">
+        {% csrf_token %}
+
+        <!-- Personal Info -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <div class="form-section-title">
+              <span class="fst-icon"><i class="fas fa-user"></i></span>
+              Personal Information
+            </div>
+          </div>
+          <div class="form-section-body">
+            <div class="form-grid">
+              <div class="fld">
+                <label>First Name</label>
+                <div class="fld-inner">
+                  {{ form.first_name }}
+                  <i class="fas fa-user fld-ico"></i>
+                </div>
+              </div>
+              <div class="fld">
+                <label>Last Name</label>
+                <div class="fld-inner">
+                  {{ form.last_name }}
+                  <i class="fas fa-user fld-ico"></i>
+                </div>
+              </div>
+              <div class="fld form-span2">
+                <label>Email Address</label>
+                <div class="fld-inner">
+                  {{ form.email }}
+                  <i class="fas fa-envelope fld-ico"></i>
+                </div>
+              </div>
+              <div class="fld">
+                <label>Phone Number</label>
+                <div class="fld-inner">
+                  {{ form.phone_number }}
+                  <i class="fas fa-phone fld-ico"></i>
+                </div>
+              </div>
+              <div class="fld">
+                <label>Address</label>
+                <div class="fld-inner">
+                  {{ form.address }}
+                  <i class="fas fa-location-dot fld-ico"></i>
+                </div>
+              </div>
+              <div class="fld form-span2">
+                <label>Bio</label>
+                <div class="fld-inner">{{ form.bio }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-section-actions">
+            <button type="submit" class="btn-save">
+              <i class="fas fa-floppy-disk"></i> Save Changes
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn-cancel"
+              ><i class="fas fa-xmark"></i> Cancel</a
+            >
+          </div>
+        </div>
+      </form>
+
+      <!-- Account Info (read-only) -->
+      <div class="form-section fade fade-2">
+        <div class="form-section-head">
+          <div class="form-section-title">
+            <span class="fst-icon"><i class="fas fa-circle-user"></i></span>
+            Account Information
+          </div>
+        </div>
+        <div class="form-section-body">
+          <div class="form-grid">
+            <div class="fld">
+              <label>Username</label>
+              <div class="fld-inner">
+                <div class="fld-readonly">{{ user.username }}</div>
+                <i class="fas fa-at fld-ico"></i>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Account Type</label>
+              <div class="fld-inner">
+                <div class="fld-readonly">
+                  {% comment %} {% if user_type == 'admin' %}Administrator{% elif user_type ==
+                  'landlord' %}Landlord{% else %}Shop Owner{% endif %} {% endcomment %}
+
+                  {% if user_type == 'admin' %} Administrator
+                  {% elif user_type == 'landlord' %} Landlord
+
+                  {% endif %}
+                </div>
+                <i class="fas fa-id-card fld-ico"></i>
+              </div>
+            </div>
+
+            <div class="fld">
+              <label>Date Joined</label>
+              <div class="fld-inner">
+                <div class="fld-readonly">
+                  {{ user.date_joined|date:"d M Y" }}
+                </div>
+                <i class="fas fa-calendar fld-ico"></i>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Last Login</label>
+              <div class="fld-inner">
+                <div class="fld-readonly">
+                  {{ user.last_login|date:"d M Y, H:i" }}
+                </div>
+                <i class="fas fa-clock fld-ico"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="form-section danger-zone fade fade-3">
+        <div class="form-section-head danger-head">
+          <div class="form-section-title">
+            <span class="fst-icon"
+              ><i class="fas fa-triangle-exclamation"></i
+            ></span>
+            Danger Zone
+          </div>
+        </div>
+        <div class="danger-body">
+          <p class="danger-desc">
+            Deleting your account is permanent and cannot be undone. All your
+            properties, payment records, and data will be removed from the
+            system.
+          </p>
+          <button class="btn-danger">
+            <i class="fas fa-trash"></i> Delete Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Force Django form inputs to match */
+  #id_first_name,
+  #id_last_name,
+  #id_email,
+  #id_phone_number,
+  #id_address,
+  #id_bio {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.875rem;
+    color: var(--ink);
+    background: var(--surface-2);
+    outline: none;
+    transition:
+      border-color 160ms,
+      background 160ms,
+      box-shadow 160ms;
+  }
+  #id_first_name:focus,
+  #id_last_name:focus,
+  #id_email:focus,
+  #id_phone_number:focus,
+  #id_address:focus,
+  #id_bio:focus {
+    border-color: var(--green);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+  }
+  #id_bio {
+    padding-left: 14px;
+  }
+</style>
+
+{% endblock %}

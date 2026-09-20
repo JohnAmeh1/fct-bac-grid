@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Public Toilet — Bwari Area Council Bye-Laws{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; font-size: 0.88rem; color: #991b1b; margin: 16px 0; }
+  .bylaw-alert i { color: #dc2626; margin-top: 2px; flex-shrink: 0; }
+  .bylaw-fine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+  .bylaw-fine-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-fine-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-fine-item span { font-size: 1rem; font-weight: 700; color: #065f46; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-restroom"></i>
+    Part XVIII — Bye-Law No. 17 of 2016
+  </div>
+  <h1>Public Toilet</h1>
+  <p>Regulation of Public Toilet Establishments and Waste Disposal within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XVIII — Public Toilet</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-restroom"></i></div>
+      <div>
+        <h2>Public Toilet Bye-Law No. 17 of 2016</h2>
+        <span>Part XVIII — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant Sections of the Local Government Act, Laws of the FCT Abuja 2006, this Bye-Law regulates the establishment and operation of public toilets and bathrooms within the territorial jurisdiction of the Bwari Area Council.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 17 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XVIII</span></div>
+      <div class="bylaw-meta-item"><label>Commencement</label><span>5th January 2016</span></div>
+      <div class="bylaw-meta-item"><label>Legal Basis</label><span>Section 7, Fourth Schedule — 1999 Constitution</span></div>
+    </div>
+  </div>
+
+  <!-- Establishment & Approval -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-file-circle-check"></i></div>
+      <div>
+        <h2>Establishment &amp; Permit Requirements</h2>
+        <span>Sections 1 &amp; 2 — Approval &amp; Fee</span>
+      </div>
+    </div>
+    <p>It shall be an offence for any person or group of persons to establish or operate a public toilet/bathroom without approval from the Council.</p>
+    <ul class="bylaw-func-list">
+      <li>Any person wishing to establish or operate a public toilet/bathroom shall seek approval from the Council before commencing operation.</li>
+      <li>The owner of an approved application shall pay a prescribed fee as determined by the Council, depending on the size of the structure to be used.</li>
+      <li>A prescribed annual renewal fee shall be paid for the renewal of the Permit/License.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Any person who contravenes Sections 1 or 2 of this Bye-Law shall be guilty of an offence and on conviction liable to a penalty of not less than ₦50,000 (Fifty Thousand Naira) or 3 months imprisonment.</span>
+    </div>
+  </div>
+
+  <!-- Management -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-person-shelter"></i></div>
+      <div>
+        <h2>Management of Government-Owned Toilets</h2>
+        <span>Section 3 — Council &amp; Agent Management</span>
+      </div>
+    </div>
+    <p>Government-owned public toilets shall be managed by the Council, or the Council may allocate management to an agent or contractor on terms specified with the prescribed fees to be paid every month. Any allottee found wanting shall have their approval/license withdrawn.</p>
+  </div>
+
+  <!-- Operator Duties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-broom"></i></div>
+      <div>
+        <h2>Duties of Operators</h2>
+        <span>Section 4 — Maintenance &amp; Waste Disposal</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>The operator shall clean and maintain any drain, side walls, front and rear of the public toilet.</li>
+      <li>The operator shall provide a suitable holding tank for liquid waste or sewage liquor and ensure regular evacuation and disposal of same.</li>
+      <li>No person shall cause or permit any trade or sewage effluent or liquid waste to be discharged into any drain, road, watercourse or any part thereof except at a place authorized by the FCT Abuja or the Area Council.</li>
+    </ul>
+    <div class="bylaw-fine-grid">
+      <div class="bylaw-fine-item"><label>Penalty for Discharge Offence</label><span>₦70,000 or 3 Months</span></div>
+    </div>
+  </div>
+
+  <!-- Dislodging Vehicles -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-truck-field"></i></div>
+      <div>
+        <h2>Private Dislodging Tank / Vehicle Licensing</h2>
+        <span>Section 5 — Registration Requirements</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Any private dislodging tank/vehicle owner who wishes to operate within the jurisdiction of Bwari Area Council shall register with the Environmental Health Department at a fee of ₦100,000.00 (One Hundred Thousand Naira).</li>
+      <li>The license shall expire on 31st December of the year of issuance.</li>
+      <li>Any dislodging vehicle owner that operates without a license is guilty of an offence and on conviction is liable to a fine of ₦70,000 (Seventy Thousand Naira) or three months imprisonment, or both.</li>
+    </ul>
+  </div>
+
+  <!-- General Prohibitions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-ban"></i></div>
+      <div>
+        <h2>General Prohibitions</h2>
+        <span>Sections 6–8 — Structural Integrity &amp; Use Restrictions</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>No person without the authority of the Council shall damage, remove, block up, or alter the fixed position or arrangement of any pipe, valve, tank, or other fittings in any public toilet, or willfully destroy, deface or damage any part of the structure.</li>
+      <li>The agent/contractor shall ensure constant repair of commodes, sinks, tanks and other plumbing work in the public toilet.</li>
+      <li>Toilets in premises designated for dwelling shall not be used as public toilets.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Any person or group of persons who contravenes any of the provisions of this Bye-Law shall be guilty of an offence and on conviction liable to a fine of ₦10,000 (Ten Thousand Naira) or three months imprisonment or both.</span>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_pest_control' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-bug"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Pest Control</strong><span>Part XIX — Bye-Law No. 18</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_refuse_operation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-trash-can"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Refuse Operations (PSPRO)</strong><span>Part XXII — Bye-Law No. 21</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_regulated_premises' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-utensils"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Regulated Premises</strong><span>Part XXVI — Bye-Law No. 25</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

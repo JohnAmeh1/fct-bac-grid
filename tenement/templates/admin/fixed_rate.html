@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fixed Residential Rate | Bwari Tenement System{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;
+    --border:#e5e7eb;--border-2:#d1d5db;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;--accent-dk:#1558c8;
+    --green:#16a34a;--green-dim:#dcfce7;--green-dk:#15803d;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --teal:#0d9488;--teal-dim:#ccfbf1;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--radius-xl:20px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.07);--shadow-md:0 8px 24px rgba(0,0,0,.09);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{
+    font-family:'DM Sans',sans-serif;background:var(--surface-2);
+    min-height:100vh;padding:40px 32px 72px;max-width:920px;margin:0 auto;color:var(--ink);
+  }
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .fade{animation:fadein .35s ease both;}
+  .fade-1{animation-delay:.05s;}.fade-2{animation-delay:.1s;}.fade-3{animation-delay:.15s;}
+
+  /* ── Header ── */
+  .pg-header{display:flex;align-items:center;gap:14px;margin-bottom:32px;flex-wrap:wrap;justify-content:space-between;}
+  .pg-header-left{display:flex;align-items:center;gap:14px;}
+  .back-btn{
+    display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;
+    color:var(--ink-3);text-decoration:none;padding:7px 14px;
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    background:var(--surface);transition:all var(--transition);flex-shrink:0;
+  }
+  .back-btn:hover{background:var(--surface-3);color:var(--ink);}
+  .pg-title{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin:0;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+
+  /* ── Info box ── */
+  .info-box{
+    display:flex;align-items:flex-start;gap:12px;
+    background:var(--accent-dim);border:1px solid #bfdbfe;
+    border-radius:var(--radius);padding:14px 16px;margin-bottom:28px;
+    font-size:.855rem;color:#1e40af;
+  }
+  .info-box i{flex-shrink:0;margin-top:2px;}
+
+  /* ── Form card ── */
+  .form-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-xl);box-shadow:var(--shadow);padding:32px;
+    margin-bottom:28px;
+  }
+  @media(max-width:540px){.form-card{padding:20px 16px;}}
+
+  .section-head{
+    display:flex;align-items:center;gap:8px;
+    font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-4);margin:28px 0 18px;padding-bottom:8px;border-bottom:1px solid var(--border);
+  }
+  .section-head:first-of-type{margin-top:0;}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .form-span2{grid-column:span 2;}
+  @media(max-width:560px){.form-grid{grid-template-columns:1fr;}.form-span2{grid-column:span 1;}}
+
+  .fld{display:flex;flex-direction:column;gap:5px;}
+  .fld label{font-size:.78rem;font-weight:600;color:var(--ink-2);}
+  .fld label .req{color:var(--red);margin-left:2px;}
+  .fld-inner{position:relative;}
+  .fld-ico{
+    position:absolute;left:13px;top:50%;transform:translateY(-50%);
+    font-size:.78rem;color:var(--ink-4);pointer-events:none;transition:color var(--transition);
+  }
+  .fld input,.fld select,.fld textarea,.fld-inner input,.fld-inner select{
+    width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);
+    border-radius:var(--radius);font-family:'DM Sans',sans-serif;
+    font-size:.875rem;color:var(--ink);background:var(--surface-2);outline:none;
+    transition:border-color var(--transition),background var(--transition),box-shadow var(--transition);
+    -webkit-appearance:none;appearance:none;
+  }
+  .fld textarea{padding:10px 14px;resize:vertical;min-height:80px;}
+  .fld input:focus,.fld select:focus,.fld textarea:focus,
+  .fld-inner input:focus,.fld-inner select:focus{
+    border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(30,108,240,.12);
+  }
+  .fld-inner:focus-within .fld-ico{color:var(--accent);}
+  .fld select,.fld-inner select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;
+    background-color:var(--surface-2);padding-right:36px;
+  }
+  .field-error{font-size:.73rem;color:var(--red);margin-top:3px;display:flex;align-items:center;gap:4px;}
+  .help-text{font-size:.74rem;color:var(--ink-4);margin-top:4px;}
+
+  /* ── Live Calculator ── */
+  .calc-box{
+    background:linear-gradient(135deg,var(--green-dim) 0%,#f0fdf4 100%);
+    border:1.5px solid #86efac;border-radius:var(--radius-lg);
+    padding:20px 24px;margin-top:20px;
+    display:none;
+  }
+  .calc-box.visible{display:block;animation:fadein .3s ease both;}
+  .calc-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green-dk);margin-bottom:8px;}
+  .calc-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .calc-expr{font-size:.9rem;color:var(--ink-3);}
+  .calc-expr strong{color:var(--ink);}
+  .calc-total{
+    font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:700;
+    color:var(--green);letter-spacing:-.5px;
+  }
+
+  /* ── Applies-to chips ── */
+  .applies-strip{
+    display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+    margin-top:12px;font-size:.78rem;color:var(--ink-3);
+  }
+  .applies-strip strong{color:var(--ink-2);margin-right:4px;}
+  .prop-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;
+    background:var(--green-dim);color:var(--green);
+  }
+
+  /* ── Existing rates table ── */
+  .table-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;
+  }
+  .table-card-head{
+    padding:18px 24px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  }
+  .tch-title{font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .tbl-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.845rem;}
+  thead th{
+    background:var(--surface-3);font-weight:700;font-size:.7rem;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--ink-3);padding:11px 18px;text-align:left;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td{padding:13px 18px;vertical-align:middle;color:var(--ink-2);}
+
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:700;}
+  .chip.green{background:var(--green-dim);color:var(--green);}
+  .chip.red{background:var(--red-dim);color:var(--red);}
+  .chip.blue{background:var(--accent-dim);color:var(--accent);}
+  .chip.amber{background:var(--amber-dim);color:var(--amber);}
+
+  .action-link{
+    display:inline-flex;align-items:center;gap:4px;margin-right:8px;
+    font-size:.78rem;font-weight:600;text-decoration:none;color:var(--accent);
+  }
+  .action-link.danger{color:var(--red);}
+  .action-link:hover{text-decoration:underline;}
+
+  /* ── Submit ── */
+  .btn-submit{
+    width:100%;margin-top:28px;background:var(--accent);color:white;
+    font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;
+    padding:13px 24px;border-radius:var(--radius);border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:background var(--transition),transform var(--transition),box-shadow var(--transition);
+  }
+  .btn-submit:hover{background:var(--accent-dk);transform:translateY(-1px);box-shadow:0 4px 14px rgba(30,108,240,.3);}
+
+  /* Messages */
+  .msg-success{background:var(--green-dim);border:1px solid #86efac;border-radius:var(--radius);padding:12px 16px;margin-bottom:18px;font-size:.845rem;color:var(--green);display:flex;align-items:center;gap:8px;}
+  .msg-error{background:var(--red-dim);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:18px;font-size:.845rem;color:var(--red);display:flex;align-items:center;gap:8px;}
+
+  .empty-state{text-align:center;padding:40px 24px;color:var(--ink-4);font-size:.9rem;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pg-wrap">
+
+  <!-- Header -->
+  <div class="pg-header fade">
+    <div class="pg-header-left">
+      <a href="{% url 'admin_payment_rates' %}" class="back-btn"><i class="fas fa-chevron-left"></i> Back to Rates</a>
+      <div>
+        <h1 class="pg-title">Fixed Residential Rate</h1>
+        <p class="pg-sub">Set a per-flat rate for residential properties — totals are calculated automatically per property.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="fade">
+    {% for message in messages %}
+      {% if message.tags == 'error' %}
+        <div class="msg-error"><i class="fas fa-circle-xmark"></i> {{ message }}</div>
+      {% else %}
+        <div class="msg-success"><i class="fas fa-circle-check"></i> {{ message }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Info Banner -->
+  <div class="info-box fade fade-1">
+    <i class="fas fa-circle-info"></i>
+    <span>
+      Fixed rates apply <strong>only to residential properties</strong>. You set a rate <em>per flat/unit</em>.
+      The system automatically multiplies this by each property's number of flats and charges the landlord the correct total.
+      For example: ₦30,000 per flat × 3 flats = <strong>₦90,000 total</strong>.
+    </span>
+  </div>
+
+  <!-- Create Form -->
+  <div class="form-card fade fade-1">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="rate_type" value="fixed_residential">
+
+      <div class="section-head"><i class="fas fa-tag"></i> Rate Details</div>
+
+      <div class="form-grid">
+        <div class="fld form-span2">
+          <label for="rate_name">Rate Name <span class="req">*</span></label>
+          <div class="fld-inner">
+            <input type="text" id="rate_name" name="name" required
+                   placeholder="e.g. Annual Residential Tenement Rate 2025"
+                   value="{{ form.name.value|default:'' }}">
+            <i class="fas fa-tag fld-ico"></i>
+          </div>
+          {% if form.name.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.name.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="fld form-span2">
+          <label for="rate_description">Description</label>
+          <textarea id="rate_description" name="description"
+                    placeholder="Optional description for this rate…"
+                    rows="2">{{ form.description.value|default:'' }}</textarea>
+        </div>
+      </div>
+
+      <div class="section-head"><i class="fas fa-calculator"></i> Per-Flat Amount</div>
+
+      <div class="form-grid">
+        <div class="fld">
+          <label for="rate_per_flat">Amount per Flat (₦) <span class="req">*</span></label>
+          <div class="fld-inner">
+            <input type="number" id="rate_per_flat" name="amount" required
+                   min="1" step="0.01"
+                   placeholder="e.g. 30000"
+                   value="{{ form.amount.value|default:'' }}">
+            {% if form.amount.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.amount.errors|striptags }}</p>{% endif %}
+            <i class="fas fa-naira-sign fld-ico"></i>
+          </div>
+          <div class="help-text">This amount will be multiplied by the number of flats in each residential property.</div>
+          {% if form.amount.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.amount.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="fld">
+          <label for="preview_flats">Preview: Number of Flats</label>
+          <div class="fld-inner">
+            <input type="number" id="preview_flats" min="1" placeholder="e.g. 3" value="3">
+            <i class="fas fa-door-open fld-ico"></i>
+          </div>
+          <div class="help-text">Type any flat count to preview the total for that property.</div>
+        </div>
+      </div>
+
+      <!-- Live Calculator -->
+      <div class="calc-box" id="calcBox">
+        <div class="calc-label"><i class="fas fa-equals"></i> Live Total Preview</div>
+        <div class="calc-row">
+          <div class="calc-expr">
+            ₦<strong id="calcRate">0</strong> per flat &times; <strong id="calcFlats">0</strong> flats
+          </div>
+          <div class="calc-total" id="calcTotal">₦0.00</div>
+        </div>
+        <div class="applies-strip">
+          <strong>Applies to:</strong>
+          <span class="prop-chip"><i class="fas fa-house"></i> All Residential Properties</span>
+        </div>
+      </div>
+
+      <div class="section-head"><i class="fas fa-toggle-on"></i> Status</div>
+
+      <div class="fld">
+        <label>
+          <input type="checkbox" name="is_active" id="rate_active"
+                 {% if form.is_active.value != False %}checked{% endif %}
+                 style="width:auto;padding:0;margin-right:6px;">
+          Active — this rate will immediately appear for all eligible landlords
+        </label>
+      </div>
+
+      <!-- Hidden: always residential -->
+      <input type="hidden" name="property_type" value="residential">
+
+      <button type="submit" class="btn-submit">
+        <i class="fas fa-floppy-disk"></i> Save Fixed Residential Rate
+      </button>
+    </form>
+  </div>
+
+  <!-- Existing Fixed Residential Rates -->
+  <div class="section-head fade fade-2" style="margin-bottom:16px;">
+    <i class="fas fa-list"></i> Existing Fixed Residential Rates
+  </div>
+
+  <div class="table-card fade fade-3">
+    <div class="table-card-head">
+      <div class="tch-title"><i class="fas fa-house" style="color:var(--green);"></i> Residential Fixed Rates</div>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Per-Flat Rate</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rate in fixed_rates %}
+          <tr>
+            <td>
+              <strong>{{ rate.name }}</strong>
+              {% if rate.description %}
+              <div style="font-size:.75rem;color:var(--ink-3);margin-top:2px;">{{ rate.description }}</div>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">₦{{ rate.amount|floatformat:2 }}</span>
+              <span style="font-size:.72rem;color:var(--ink-4);"> / flat</span>
+            </td>
+            <td>
+              {% if rate.is_active %}
+                <span class="chip green"><i class="fas fa-check-circle"></i> Active</span>
+              {% else %}
+                <span class="chip red"><i class="fas fa-ban"></i> Inactive</span>
+              {% endif %}
+            </td>
+            <td style="font-size:.8rem;color:var(--ink-3);">{{ rate.created_at|date:"M d, Y" }}</td>
+            <td>
+              <a href="{% url 'admin_toggle_payment_rate' rate.id %}" class="action-link">
+                <i class="fas fa-toggle-on"></i> Toggle
+              </a>
+              <a href="{% url 'admin_delete_payment_rate' rate.id %}" class="action-link danger"
+                 onclick="return confirm('Delete this rate? Landlords who have not yet paid will no longer see this obligation.')">
+                <i class="fas fa-trash-alt"></i> Delete
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <i class="fas fa-house-circle-xmark" style="font-size:2rem;opacity:.3;display:block;margin-bottom:10px;"></i>
+                No fixed residential rates yet. Create one above.
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rateInput  = document.getElementById('rate_per_flat');
+    const flatsInput = document.getElementById('preview_flats');
+    const calcBox    = document.getElementById('calcBox');
+    const calcRate   = document.getElementById('calcRate');
+    const calcFlats  = document.getElementById('calcFlats');
+    const calcTotal  = document.getElementById('calcTotal');
+
+    function fmt(n) {
+      return n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function updateCalc() {
+      const rate  = parseFloat(rateInput.value)  || 0;
+      const flats = parseInt(flatsInput.value)    || 0;
+
+      if (rate > 0 && flats > 0) {
+        calcBox.classList.add('visible');
+        calcRate.textContent  = fmt(rate);
+        calcFlats.textContent = flats;
+        calcTotal.textContent = '₦' + fmt(rate * flats);
+      } else {
+        calcBox.classList.remove('visible');
+      }
+    }
+
+    rateInput.addEventListener('input', updateCalc);
+    flatsInput.addEventListener('input', updateCalc);
+    updateCalc(); // on load if values present
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Enabling Law — Bwari Area Council Bye-Laws{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    color: #fff;
+    padding: 72px 24px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .bylaw-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bylaw-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .bylaw-hero h1 {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 12px;
+  }
+  .bylaw-hero p {
+    font-size: 1rem;
+    opacity: 0.85;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .bylaw-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  .bylaw-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .bylaw-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0fdf4;
+  }
+  .bylaw-card-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: #065f46;
+    font-size: 1.2rem;
+  }
+  .bylaw-card-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 4px;
+  }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.75;
+    margin: 0 0 14px;
+  }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #065f46;
+    margin: 24px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bylaw-card h3::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 16px;
+    background: #059669;
+    border-radius: 2px;
+  }
+  .bylaw-dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .bylaw-dept-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .bylaw-dept-item i {
+    color: #059669;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .bylaw-func-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+  }
+  .bylaw-func-list li {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.6;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before {
+    content: counter(item);
+    counter-increment: item;
+    min-width: 24px; height: 24px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .bylaw-func-list { counter-reset: item; }
+  .bylaw-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .bylaw-meta-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .bylaw-meta-item label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+    margin-bottom: 6px;
+  }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-section-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #059669;
+    margin: 40px 0 16px;
+  }
+  .bylaw-nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .bylaw-nav-card {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 18px 20px; text-decoration: none; color: inherit;
+    transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon {
+    width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: #065f46; font-size: 1rem;
+  }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .bylaw-active-card { border-color: #059669 !important; background: #f0fdf4 !important; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-building-columns"></i>
+    Part II — Bye-Law No. 1 of 2016
+  </div>
+  <h1>Enabling Law &amp; Area Council Departments</h1>
+  <p>Application, Functions of the Area Council, and Establishment of Departments</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part II — Enabling Law</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Enabling Law — Bye-Law No. 1 of 2016</h2>
+        <span>Part II — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>In accordance with the provisions of Section 7 and Fourth Schedule to the Constitution of the Federal Republic of Nigeria, 1999 (as amended), and Part XIII of the Area Council Act, Laws of the Federal Capital Territory Abuja 2006 and other enabling Laws, Bwari Area Council hereby promulgates the Area Council Bye-Law as follows.</p>
+    <p>This Bye-Law shall apply to all Parts and on all Persons in Bwari Area Council. The Area Council shall perform the Government functions assigned to it under Part VII of the Area Council Act and any other functions assigned to it by law or any applicable legislation.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 1 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part II</span></div>
+      <div class="bylaw-meta-item"><label>Authority</label><span>Bwari Area Council, FCT Abuja</span></div>
+      <div class="bylaw-meta-item"><label>Legal Basis</label><span>Section 7, Fourth Schedule — 1999 Constitution</span></div>
+    </div>
+  </div>
+
+  <!-- Departments -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-sitemap"></i></div>
+      <div>
+        <h2>Established Departments</h2>
+        <span>Eight (8) Departments and the Office of Director of Administration</span>
+      </div>
+    </div>
+    <p>The following office and departments are hereby established for Bwari Area Council:</p>
+    <div class="bylaw-dept-grid">
+      <div class="bylaw-dept-item"><i class="fas fa-user-tie"></i> Office of Director of Administration &amp; General Services</div>
+      <div class="bylaw-dept-item"><i class="fas fa-seedling"></i> Agricultural &amp; Natural Resources</div>
+      <div class="bylaw-dept-item"><i class="fas fa-coins"></i> Treasury, Finance, Accounts, Commerce &amp; Budget</div>
+      <div class="bylaw-dept-item"><i class="fas fa-graduation-cap"></i> Education, Social Development, Information, Sports &amp; Culture</div>
+      <div class="bylaw-dept-item"><i class="fas fa-tree"></i> Environment &amp; Forestry</div>
+      <div class="bylaw-dept-item"><i class="fas fa-users"></i> Personnel Management</div>
+      <div class="bylaw-dept-item"><i class="fas fa-stethoscope"></i> Medical &amp; Primary Health Care</div>
+      <div class="bylaw-dept-item"><i class="fas fa-road"></i> Works, Transport, Housing, Lands &amp; Survey</div>
+      <div class="bylaw-dept-item"><i class="fas fa-magnifying-glass-chart"></i> Internal Audit</div>
+    </div>
+  </div>
+
+  <!-- Office of Director -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-user-tie"></i></div>
+      <div>
+        <h2>I. Office of Director of Administration &amp; General Services</h2>
+        <span>Head of Service — Three Service Units</span>
+      </div>
+    </div>
+    <p>The Director of Administration and General Services (DOAGS) is the Area Council's Head of Service. Three Service Units function directly under the Director of Administration: the <strong>Logistics Unit</strong>, the <strong>Legal Unit</strong>, and the <strong>Store Unit</strong>.</p>
+
+    <h3>Functions of Logistics Unit</h3>
+    <ul class="bylaw-func-list">
+      <li>Compile and collate public procurement requests of works, goods and services as approved by Council authority.</li>
+      <li>Ensure public procurements are carried out in accordance with extant guidelines and laws on public procurement.</li>
+      <li>Document properly the various processes undertaken for procurement of works, goods and services.</li>
+      <li>Liaise with Council Procurement Planning Committee and Tenders Board in planning Council's procurement needs.</li>
+      <li>Issue Job Order/Procurement Order or Authorization as approved by relevant Council Authority.</li>
+      <li>Take record of Minutes of Meetings of Council Executive Cabinet.</li>
+    </ul>
+
+    <h3>Functions of Legal Unit</h3>
+    <ul class="bylaw-func-list">
+      <li>Rendering legal advice to all offices, departments, divisions and Units in the Council.</li>
+      <li>Advocacy and litigations — representing or defending the Council in suits before courts of law.</li>
+      <li>Drafting and vetting all forms of legal documentation such as agreements and memoranda.</li>
+      <li>Analyzing and advising on legal aspects of government policies and programmes.</li>
+    </ul>
+
+    <h3>Functions of Store Unit</h3>
+    <ul class="bylaw-func-list">
+      <li>Costing of items and supplies to be procured by the Council.</li>
+      <li>Receiving of items purchased with government funds through Store Receiving Voucher.</li>
+      <li>Record keeping — ledger, asset register, tally/bin card.</li>
+      <li>Issuing of items received through Requisition Voucher and Store Issuing Voucher.</li>
+      <li>Numbering of Council assets for easy identification and periodic check of items issued.</li>
+    </ul>
+  </div>
+
+  <!-- Agricultural -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-seedling"></i></div>
+      <div>
+        <h2>II. Agricultural &amp; Natural Resources Department</h2>
+        <span>Five Sections: Agricultural, Veterinary, Cooperative, Fishery</span>
+      </div>
+    </div>
+    <h3>Functions of the Agricultural Section</h3>
+    <ul class="bylaw-func-list">
+      <li>Tractor hiring service and oversight of seed germination and improvement programmes.</li>
+      <li>Inspection and co-ordination of farm crops and organizing general training on farming practices.</li>
+      <li>Furtherance of development of agricultural and natural resources and control of erosion and farm hazards.</li>
+    </ul>
+    <h3>Functions of the Veterinary Section</h3>
+    <ul class="bylaw-func-list">
+      <li>Creation of veterinary clinic and provision of animal health services including vaccines and vaccination.</li>
+      <li>Isolation and treatment of disease-infected animals and supervision and control of slaughter houses.</li>
+    </ul>
+    <h3>Functions of the Fisheries Section</h3>
+    <ul class="bylaw-func-list">
+      <li>Performing fisheries extension duties and giving advice to fish farmers and fishermen in the locality.</li>
+      <li>Performing such other related duties as may be directed by the FCT Department of Agriculture and Natural Resources.</li>
+    </ul>
+  </div>
+
+  <!-- Education -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div>
+        <h2>III. Education, Social Development, Information, Sports &amp; Culture</h2>
+        <span>Eight Units — Community, Social Welfare, Information, Sports, Education, Marriage Registry, Library, Culture</span>
+      </div>
+    </div>
+    <h3>Community Development Unit</h3>
+    <ul class="bylaw-func-list">
+      <li>Registration, supervision and co-ordination of voluntary, self-help and social organisations within the Area Council.</li>
+      <li>Liaising and collaborating with clubs and organisations when the Council embarks on any community development project.</li>
+    </ul>
+    <h3>Social Welfare Unit</h3>
+    <ul class="bylaw-func-list">
+      <li>Assessment of natural disaster outbreaks such as flood, fire, storm and earthquake.</li>
+      <li>Providing welfare services and support to vulnerable persons within the Area Council.</li>
+    </ul>
+  </div>
+
+  <!-- Medical -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-stethoscope"></i></div>
+      <div>
+        <h2>V. Medical &amp; Primary Health Care Department</h2>
+        <span>Curative, Preventive, and Rehabilitation Units</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Treatment of persons afflicted with ailments and organising rehabilitation programmes.</li>
+      <li>Keeping and conducting preventive enlightenment programmes within the Area Council.</li>
+      <li>Prevention and control of infectious diseases in collaboration with the State Department of Health.</li>
+      <li>Inspection of food stores, restaurants, fast food joints, bars and all places of public resort.</li>
+      <li>Inspection of dwelling houses to reveal unsound conditions and forestall outbreak of diseases.</li>
+      <li>Inspection of medicines, drugs and related products to detect and prevent sale of fakes.</li>
+    </ul>
+  </div>
+
+  <!-- Environment and Forestry -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-tree"></i></div>
+      <div>
+        <h2>VI. Environmental &amp; Forestry Department</h2>
+        <span>Waste Management, Inspectorate, Vector Control, Monitoring, Forestry</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Waste Management Division: oversees evacuation and clearing of refuse/waste and blocked drainages.</li>
+      <li>Inspectorate: carries out inspection of premises and training of food vendors and handlers.</li>
+      <li>Vector Control: fumigation and disinfestation of premises and control of public health vectors.</li>
+      <li>Forestry Section: conservation through afforestation, landscaping and environmental protection programmes.</li>
+    </ul>
+  </div>
+
+  <!-- Treasury -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-coins"></i></div>
+      <div>
+        <h2>VIII. Treasury, Finance, Accounts, Commerce &amp; Budget</h2>
+        <span>Revenue Collection, Accounts, Salary Payment, Licensing</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Collection of revenues for the Area Council directly or through technical partners and agents.</li>
+      <li>Keep and maintain regular records of the Area Council's accounts.</li>
+      <li>Payment of all staff salaries, allowances and gratuities.</li>
+      <li>Keep accounts for recurrent and capital expenditures of the Area Council.</li>
+    </ul>
+    <p style="margin-top:16px;">Any person or organisation undertaking business as listed in the Schedule to this Bye-Law shall obtain a License from the Area Council. Licenses are renewable every two years upon payment of 75% of the prescribed fees. Application for a license shall be made in writing to the relevant authority of the Area Council.</p>
+  </div>
+
+  <!-- Other bye-laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_preliminary' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Preliminary</strong><span>Part I — General Provisions</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_marriages' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-rings-wedding"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Registration of Marriages, Births &amp; Deaths</strong><span>Part III — Bye-Law No. 2</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_motor_parks' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-bus"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Motor Parks</strong><span>Part IV — Bye-Law No. 3</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_environmental_sanitation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-leaf"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Environmental Sanitation</strong><span>Part V — Bye-Law No. 4</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

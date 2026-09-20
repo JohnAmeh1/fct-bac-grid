@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pay Bypass | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#ffffff;--surface-2:#f7f8fa;--border:#e5e7eb;
+    --green:#16a34a;--green-dim:#dcfce7;--green-dk:#15803d;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --amber:#d97706;--amber-dim:#fef3c7;--amber-dk:#b45309;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--radius-xl:20px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.08);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface-2);}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .fade{animation:fadein .35s ease both;}
+  .fade-1{animation-delay:.05s;}.fade-2{animation-delay:.1s;}.fade-3{animation-delay:.15s;}
+
+  .pb-wrap{max-width:900px;margin:0 auto;padding:44px 24px 72px;}
+
+  .back-link{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;margin-bottom:28px;transition:color var(--transition);}
+  .back-link:hover{color:var(--ink);}
+
+  /* Header */
+  .pb-header{margin-bottom:28px;}
+  .pb-badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--amber);background:var(--amber-dim);padding:3px 10px;border-radius:99px;margin-bottom:12px;}
+  .pb-header h1{font-size:1.7rem;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+  .pb-header p{font-size:.9rem;color:var(--ink-3);}
+
+  /* Warning */
+  .warning-box{display:flex;align-items:flex-start;gap:12px;background:var(--amber-dim);border:1px solid #fde68a;border-radius:var(--radius);padding:14px 16px;margin-bottom:28px;font-size:.855rem;color:#92400e;}
+  .warning-box i{flex-shrink:0;margin-top:2px;}
+
+  /* Search card */
+  .search-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:24px;}
+  .search-card-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .search-icon{width:34px;height:34px;background:var(--amber-dim);color:var(--amber);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+  .search-card-head-text .title{font-weight:700;font-size:.95rem;}
+  .search-card-head-text .sub{font-size:.78rem;color:var(--ink-3);}
+  .search-card-body{padding:24px;}
+
+  .search-row{display:flex;gap:12px;align-items:flex-end;}
+  @media(max-width:540px){.search-row{flex-direction:column;}}
+  .search-fld{flex:1;}
+  .search-fld label{font-size:.78rem;font-weight:600;color:var(--ink-2);margin-bottom:6px;display:block;}
+  .search-fld-inner{position:relative;}
+  .search-fld-inner i.ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--ink-4);}
+  .search-fld input{
+    width:100%;padding:11px 14px 11px 36px;border:1.5px solid var(--border);border-radius:var(--radius);
+    font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--ink);background:var(--surface-2);outline:none;
+    transition:border-color var(--transition),box-shadow var(--transition);
+  }
+  .search-fld input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.12);}
+  .btn-search{
+    padding:11px 22px;background:var(--amber);color:white;border:none;border-radius:var(--radius);
+    font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;gap:8px;white-space:nowrap;
+    transition:background var(--transition),transform var(--transition);
+  }
+  .btn-search:hover{background:var(--amber-dk);transform:translateY(-1px);}
+
+  /* User profile card */
+  .user-profile-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
+    box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:24px;
+  }
+  .upc-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .upc-info{display:flex;align-items:center;gap:14px;}
+  .upc-avatar{
+    width:48px;height:48px;border-radius:50%;background:var(--amber-dim);
+    display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--amber);font-weight:700;flex-shrink:0;
+  }
+  .upc-name{font-weight:700;font-size:1rem;margin-bottom:2px;}
+  .upc-meta{font-size:.8rem;color:var(--ink-3);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .upc-meta span{display:flex;align-items:center;gap:4px;}
+  .upc-badge{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:99px;}
+  .upc-badge.landlord{background:var(--green-dim);color:var(--green);}
+
+  /* Table */
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .table-card-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .table-card-title{font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:8px;}
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--surface-2);padding:11px 16px;text-align:left;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-4);border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td{padding:13px 16px;font-size:.865rem;vertical-align:middle;}
+
+  .prop-name{font-weight:600;color:var(--ink);}
+  .prop-meta{font-size:.75rem;color:var(--ink-3);margin-top:2px;}
+  .rate-name{font-weight:500;}
+  .amount{font-family:'DM Mono',monospace;font-size:.88rem;color:var(--red);font-weight:600;}
+  .status-pill{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;}
+  .status-pill.unpaid{background:var(--red-dim);color:var(--red);}
+  .status-pill.pending{background:var(--amber-dim);color:var(--amber);}
+
+  .btn-mark-paid{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 14px;background:var(--green-dim);color:var(--green);
+    border:1.5px solid #86efac;border-radius:var(--radius-sm);
+    font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;
+    transition:all var(--transition);white-space:nowrap;
+  }
+  .btn-mark-paid:hover{background:var(--green);color:white;border-color:var(--green);}
+
+  /* Empty state */
+  .empty-state{text-align:center;padding:48px 24px;color:var(--ink-3);}
+  .empty-state i{font-size:2rem;margin-bottom:12px;display:block;color:var(--border-2);}
+  .empty-state p{font-size:.88rem;line-height:1.6;}
+  .empty-state strong{color:var(--ink-2);}
+
+  /* All paid */
+  .all-paid-state{text-align:center;padding:40px 24px;}
+  .all-paid-state .checkmark{width:56px;height:56px;background:var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:1.3rem;color:var(--green);}
+  .all-paid-state p{font-size:.9rem;color:var(--ink-3);}
+  .all-paid-state strong{color:var(--green);font-size:1rem;}
+
+  /* Messages */
+  .msg-error{background:var(--red-dim);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:.845rem;color:var(--red);display:flex;align-items:center;gap:8px;}
+  .msg-success{background:var(--green-dim);border:1px solid #86efac;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:.845rem;color:var(--green);display:flex;align-items:center;gap:8px;}
+</style>
+
+<div class="pb-wrap">
+  <a href="{% url 'admin_manage_users' %}" class="back-link fade">
+    <i class="fas fa-arrow-left"></i> Back to Manage Users
+  </a>
+
+  <div class="pb-header fade fade-1">
+    <div class="pb-badge"><i class="fas fa-hand-holding-dollar"></i> Admin Tool</div>
+    <h1>Pay Bypass</h1>
+    <p>Search for a user and manually override outstanding payment statuses.</p>
+  </div>
+
+  <div class="warning-box fade fade-1">
+    <i class="fas fa-triangle-exclamation"></i>
+    <span>This tool bypasses the normal payment gateway. Use only for verified offline payments or administrative corrections. All overrides are irreversible and logged.</span>
+  </div>
+
+  {% if messages %}
+  <div class="fade">
+    {% for message in messages %}
+      {% if message.tags == 'error' %}
+        <div class="msg-error"><i class="fas fa-circle-xmark"></i> {{ message }}</div>
+      {% else %}
+        <div class="msg-success"><i class="fas fa-circle-check"></i> {{ message }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Search -->
+  <div class="search-card fade fade-2">
+    <div class="search-card-head">
+      <div class="search-icon"><i class="fas fa-magnifying-glass"></i></div>
+      <div class="search-card-head-text">
+        <div class="title">Search User</div>
+        <div class="sub">Enter exact username or email address</div>
+      </div>
+    </div>
+    <div class="search-card-body">
+      <form method="GET">
+        <div class="search-row">
+          <div class="search-fld">
+            <label for="q">Username or Email Address</label>
+            <div class="search-fld-inner">
+              <i class="fas fa-user ico"></i>
+              <input type="text" id="q" name="q" value="{{ search_query }}"
+                     placeholder="e.g. john_doe or john@example.com" autocomplete="off">
+            </div>
+          </div>
+          <button type="submit" class="btn-search">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Results -->
+  {% if search_query %}
+    {% if search_user %}
+
+    <!-- User profile info -->
+    <div class="user-profile-card fade">
+      <div class="upc-head">
+        <div class="upc-info">
+          <div class="upc-avatar">{{ search_user.username|first|upper }}</div>
+          <div>
+            <div class="upc-name">{{ search_user.get_full_name|default:search_user.username }}</div>
+            <div class="upc-meta">
+              <span><i class="fas fa-at"></i> {{ search_user.username }}</span>
+              <span><i class="fas fa-envelope"></i> {{ search_user.email }}</span>
+              {% if search_user.userprofile.phone_number %}
+              <span><i class="fas fa-phone"></i> {{ search_user.userprofile.phone_number }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <span class="upc-badge landlord">{{ search_user.userprofile.get_user_type_display }}</span>
+      </div>
+    </div>
+
+    {% if user_payments or sanitation_payments %}
+
+    <!-- Property-based outstanding payments table -->
+    {% if user_payments %}
+    <div class="table-card fade">
+      <div class="table-card-head">
+        <div class="table-card-title">
+          <i class="fas fa-file-invoice-dollar" style="color:var(--amber);"></i>
+          Property Payments Outstanding
+          <span style="background:var(--red-dim);color:var(--red);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:4px;">{{ user_payments|length }}</span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Type</th>
+              <th>District</th>
+              <th>Rate Name</th>
+              <th>Amount Due</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in user_payments %}
+            <tr>
+              <td>
+                <div class="prop-name">{{ item.property.name }}</div>
+                <div class="prop-meta">{{ item.property.address }}</div>
+              </td>
+              <td>{{ item.property.get_property_type_display }}</td>
+              <td>{{ item.property.district|title }}</td>
+              <td class="rate-name">{{ item.rate.name }}</td>
+              <td class="amount">₦{{ item.rate.amount|floatformat:2 }}</td>
+              <td>
+                {% if item.payment %}
+                  <span class="status-pill pending"><i class="fas fa-clock"></i> Pending</span>
+                {% else %}
+                  <span class="status-pill unpaid"><i class="fas fa-xmark"></i> Unpaid</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{% url 'admin_pay_bypass_update' item.property.id item.rate.id %}"
+                      onsubmit="return confirm('Mark payment for \'{{ item.property.name }}\' / \'{{ item.rate.name }}\' as PAID? This cannot be undone.');">
+                  {% csrf_token %}
+                  <input type="hidden" name="q" value="{{ search_query }}">
+                  <button type="submit" class="btn-mark-paid">
+                    <i class="fas fa-check-circle"></i> Mark as Paid
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Sanitation levy outstanding payments table -->
+    {% if sanitation_payments %}
+    <div class="table-card fade" style="margin-top:20px;">
+      <div class="table-card-head">
+        <div class="table-card-title">
+          <i class="fas fa-recycle" style="color:var(--green);"></i>
+          Sanitation Levy Outstanding
+          <span style="background:var(--red-dim);color:var(--red);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:4px;">{{ sanitation_payments|length }}</span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Levy Name</th>
+              <th>Amount Due</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in sanitation_payments %}
+            <tr>
+              <td class="rate-name">{{ item.rate.name }}</td>
+              <td class="amount">₦{{ item.rate.amount|floatformat:2 }}</td>
+              <td>
+                {% if item.payment %}
+                  <span class="status-pill pending"><i class="fas fa-clock"></i> Pending</span>
+                {% else %}
+                  <span class="status-pill unpaid"><i class="fas fa-xmark"></i> Unpaid</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{% url 'admin_pay_bypass_update' 0 item.rate.id %}"
+                      onsubmit="return confirm('Mark sanitation levy \'{{ item.rate.name }}\' for {{ search_user.username }} as PAID? This cannot be undone.');">
+                  {% csrf_token %}
+                  <input type="hidden" name="q" value="{{ search_query }}">
+                  <input type="hidden" name="landlord_id" value="{{ search_user.id }}">
+                  <button type="submit" class="btn-mark-paid">
+                    <i class="fas fa-check-circle"></i> Mark as Paid
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- All paid -->
+    <div class="table-card fade">
+      <div class="all-paid-state">
+        <div class="checkmark"><i class="fas fa-check"></i></div>
+        <strong>All payments are up to date</strong>
+        <p style="margin-top:8px;">{{ search_user.get_full_name|default:search_user.username }} has no outstanding payments.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="table-card fade">
+      <div class="empty-state">
+        <i class="fas fa-user-slash"></i>
+        <p><strong>No user found</strong><br>No account matched the username or email "<strong>{{ search_query }}</strong>".<br>Please check and try again.</p>
+      </div>
+    </div>
+    {% endif %}
+
+  {% else %}
+  <div class="table-card fade fade-3">
+    <div class="empty-state">
+      <i class="fas fa-search"></i>
+      <p><strong>Search for a user above</strong><br>Enter a username or email address to find their account and view outstanding payments.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sanitation Records | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#ffffff;--surface-2:#f7f8fa;--border:#e5e7eb;--border-2:#d1d5db;
+    --green:#16a34a;--green-dim:#dcfce7;--green-dk:#15803d;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--radius-xl:20px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.08);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface-2);}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .fade{animation:fadein .35s ease both;}
+  .fade-1{animation-delay:.05s;}.fade-2{animation-delay:.1s;}.fade-3{animation-delay:.15s;}
+
+  .dl-wrap{max-width:1380px;margin:0 auto;padding:44px 28px 72px;}
+  @media(max-width:640px){.dl-wrap{padding:24px 16px 48px;}}
+
+  .back-link{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;margin-bottom:28px;transition:color var(--transition);}
+  .back-link:hover{color:var(--ink);}
+
+  .dl-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;}
+  .dl-badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--purple);background:var(--purple-dim);padding:3px 10px;border-radius:99px;margin-bottom:12px;}
+  .dl-header h1{font-size:1.7rem;font-weight:700;letter-spacing:-.4px;margin-bottom:4px;}
+  .dl-header p{font-size:.88rem;color:var(--ink-3);}
+
+  .export-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .btn-export{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.845rem;font-weight:600;text-decoration:none;transition:background var(--transition),transform var(--transition),box-shadow var(--transition);white-space:nowrap;}
+  .btn-export-all{background:var(--accent);color:white;}
+  .btn-export-all:hover{background:#1558cc;transform:translateY(-1px);box-shadow:0 4px 14px rgba(30,108,240,.3);}
+  .btn-export-defaulters{background:var(--green);color:white;}
+  .btn-export-defaulters:hover{background:var(--green-dk);transform:translateY(-1px);box-shadow:0 4px 14px rgba(22,163,74,.3);}
+
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  @media(max-width:768px){.stat-strip{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:420px){.stat-strip{grid-template-columns:1fr;}}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;}
+  .stat-pill::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+  .sp-blue::before{background:var(--accent);}
+  .sp-red::before{background:var(--red);}
+  .sp-green::before{background:var(--green);}
+  .sp-purple::before{background:var(--purple);}
+  .stat-ico{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+  .sp-blue .stat-ico{background:var(--accent-dim);color:var(--accent);}
+  .sp-red .stat-ico{background:var(--red-dim);color:var(--red);}
+  .sp-green .stat-ico{background:var(--green-dim);color:var(--green);}
+  .sp-purple .stat-ico{background:var(--purple-dim);color:var(--purple);}
+  .stat-num{font-size:1.8rem;font-weight:700;line-height:1;letter-spacing:-.8px;}
+  .stat-lbl{font-size:.72rem;color:var(--ink-3);font-weight:500;margin-top:3px;}
+
+  .filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .filter-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:99px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-3);transition:all var(--transition);}
+  .filter-tab:hover{border-color:var(--border-2);color:var(--ink);}
+  .filter-tab.active-all{background:var(--accent);border-color:var(--accent);color:white;}
+  .filter-tab.active-defaulters{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+  .filter-tab.active-paid{background:var(--green-dim);border-color:var(--green);color:var(--green-dk);}
+  .filter-tab .tab-count{background:rgba(255,255,255,.35);padding:1px 7px;border-radius:99px;font-size:.68rem;}
+  .filter-tab:not([class*="active"]) .tab-count{background:var(--surface-2);color:var(--ink-4);}
+
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .table-card-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .tch-title{font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .tch-count{background:var(--purple-dim);color:var(--purple);font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;}
+  .tbl-search-wrap{position:relative;}
+  .tbl-search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.75rem;color:var(--ink-4);}
+  .tbl-search{padding:8px 12px 8px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.845rem;color:var(--ink);background:var(--surface-2);outline:none;width:220px;transition:border-color var(--transition),box-shadow var(--transition);}
+  .tbl-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,108,240,.1);}
+
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--surface-2);padding:11px 14px;text-align:left;font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-4);border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#fafafa;}
+  tbody tr.hidden-row{display:none;}
+  td{padding:12px 14px;font-size:.845rem;vertical-align:middle;}
+
+  .chip{display:inline-flex;align-items:center;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:capitalize;}
+  .chip.landlord{background:#d1fae5;color:#065f46;}
+  .chip.resident{background:#ede9fe;color:#7c3aed;}
+
+  .status-badge{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:99px;}
+  .status-paid{background:var(--green-dim);color:var(--green-dk);}
+  .status-outstanding{background:var(--red-dim);color:var(--red);}
+
+  .amount{font-family:'DM Mono',monospace;font-size:.85rem;font-weight:700;}
+  .amount-due{color:var(--red);}
+  .amount-paid{color:var(--green-dk);}
+  .row-num{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--ink-4);text-align:center;}
+  .date-cell{font-size:.75rem;color:var(--ink-3);}
+
+  /* Address cell — truncate long addresses gracefully */
+  .addr-cell{font-size:.77rem;color:var(--ink-2);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .addr-cell[title]:hover{white-space:normal;overflow:visible;background:var(--surface);position:relative;z-index:1;box-shadow:var(--shadow);}
+
+  .empty-state{text-align:center;padding:64px 24px;}
+  .empty-state .icon-wrap{width:64px;height:64px;background:var(--purple-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5rem;color:var(--purple);}
+  .empty-state h3{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+  .empty-state p{font-size:.875rem;color:var(--ink-3);}
+
+  #noResultsMsg{display:none;text-align:center;padding:40px 24px;color:var(--ink-3);font-size:.875rem;}
+</style>
+
+<div class="dl-wrap fade fade-1">
+  <a href="{% url 'dashboard' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+
+  <div class="dl-header">
+    <div class="dl-header-left">
+      <div class="dl-badge"><i class="fas fa-leaf"></i> Sanitation</div>
+      <h1>Sanitation Records</h1>
+      <p>All landlords with their sanitation levy payment status.</p>
+    </div>
+    <div class="export-group">
+      <a href="{% url 'admin_export_sanitation_defaulters' %}?mode=defaulters" class="btn-export btn-export-defaulters">
+        <i class="fas fa-file-excel"></i> Export Defaulters
+      </a>
+      <a href="{% url 'admin_export_sanitation_defaulters' %}?mode=all" class="btn-export btn-export-all">
+        <i class="fas fa-file-excel"></i> Export All Users
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-strip fade fade-2">
+    <div class="stat-pill sp-blue">
+      <div class="stat-ico"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="stat-num">{{ all_records|length }}</div>
+        <div class="stat-lbl">Total Records</div>
+      </div>
+    </div>
+    <div class="stat-pill sp-red">
+      <div class="stat-ico"><i class="fas fa-exclamation-circle"></i></div>
+      <div>
+        <div class="stat-num">{{ defaulters_count }}</div>
+        <div class="stat-lbl">Outstanding</div>
+      </div>
+    </div>
+    <div class="stat-pill sp-green">
+      <div class="stat-ico"><i class="fas fa-check-circle"></i></div>
+      <div>
+        <div class="stat-num">{{ paid_count }}</div>
+        <div class="stat-lbl">Paid &amp; Current</div>
+      </div>
+    </div>
+    <div class="stat-pill sp-purple">
+      <div class="stat-ico"><i class="fas fa-naira-sign"></i></div>
+      <div>
+        <div class="stat-num" id="totalAmountDue">—</div>
+        <div class="stat-lbl">Total Outstanding (&#8358;)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="filter-bar fade fade-2">
+    <button class="filter-tab active-all" id="tab-all" onclick="setFilter('all')">
+      <i class="fas fa-list"></i> All Records <span class="tab-count" id="cnt-all">{{ all_records|length }}</span>
+    </button>
+    <button class="filter-tab" id="tab-defaulters" onclick="setFilter('defaulters')">
+      <i class="fas fa-exclamation-circle"></i> Defaulters <span class="tab-count" id="cnt-defaulters">{{ defaulters_count }}</span>
+    </button>
+    <button class="filter-tab" id="tab-paid" onclick="setFilter('paid')">
+      <i class="fas fa-check-circle"></i> Paid <span class="tab-count" id="cnt-paid">{{ paid_count }}</span>
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card fade fade-3">
+    <div class="table-card-head">
+      <div class="tch-title">
+        <i class="fas fa-list-check" style="color:var(--purple);"></i>
+        Sanitation Records
+        {% if all_records %}<span class="tch-count" id="visibleCount">{{ all_records|length }}</span>{% endif %}
+      </div>
+      <div class="tbl-search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" class="tbl-search" id="tableSearch" placeholder="Filter table…" oninput="applyFilters()">
+      </div>
+    </div>
+
+    {% if all_records %}
+    <div class="tbl-wrap">
+      <table id="recordsTable">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>User</th>
+            <th>Contact</th>
+            <th>Address</th>
+            <th>Type</th>
+            <th>Rate</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Paid On</th>
+            <th>Expires On</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for item in all_records %}
+          <tr
+            data-username="{{ item.user.username }}"
+            data-paid="{{ item.has_paid|yesno:'true,false' }}"
+            data-amount="{{ item.amount }}"
+          >
+            <td class="row-num">{{ forloop.counter }}</td>
+
+            <!-- User -->
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:{% if item.has_paid %}var(--green-dim){% else %}var(--purple-dim){% endif %};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:{% if item.has_paid %}var(--green-dk){% else %}var(--purple){% endif %};flex-shrink:0;">
+                  {{ item.user.username|first|upper }}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:.865rem;">{{ item.user.get_full_name|default:item.user.username }}</div>
+                  <div style="font-size:.73rem;color:var(--ink-3);">@{{ item.user.username }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Contact -->
+            <td>
+              <div style="font-size:.78rem;">{{ item.user.email }}</div>
+              <div style="font-size:.75rem;color:var(--ink-3);">{{ item.profile.phone_number|default:'—' }}</div>
+            </td>
+
+            <!-- Address -->
+            <td>
+              {% if item.profile.address %}
+                <div class="addr-cell" title="{{ item.profile.address }}">{{ item.profile.address }}</div>
+              {% else %}
+                <span style="font-size:.78rem;color:var(--ink-4);">—</span>
+              {% endif %}
+            </td>
+
+            <!-- User type -->
+            <td><span class="chip {{ item.profile.user_type }}">{{ item.profile.get_user_type_display }}</span></td>
+
+            <!-- Rate -->
+            <td style="font-size:.78rem;color:var(--ink-2);">{{ item.rate.name }}</td>
+
+            <!-- Amount -->
+            <td>
+              <span class="amount {% if item.has_paid %}amount-paid{% else %}amount-due{% endif %}">
+                &#8358;{{ item.amount|floatformat:2 }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td>
+              {% if item.has_paid %}
+                <span class="status-badge status-paid"><i class="fas fa-check-circle"></i> Paid</span>
+              {% else %}
+                <span class="status-badge status-outstanding"><i class="fas fa-clock"></i> Outstanding</span>
+              {% endif %}
+            </td>
+
+            <!-- Paid on -->
+            <td class="date-cell">
+              {% if item.has_paid and item.payment.paid_at %}
+                {{ item.payment.paid_at|date:"d M Y" }}
+              {% else %}
+                <span style="color:var(--ink-4);">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Expires on -->
+            <td class="date-cell">
+              {% if item.has_paid and item.payment.expires_at %}
+                {{ item.payment.expires_at|date:"d M Y" }}
+              {% else %}
+                <span style="color:var(--ink-4);">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div id="noResultsMsg">
+      <i class="fas fa-search" style="font-size:1.5rem;margin-bottom:8px;display:block;color:var(--ink-4);"></i>
+      No records match your current filter.
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="icon-wrap"><i class="fas fa-users"></i></div>
+      <h3>No sanitation records found</h3>
+      <p>There are currently no landlord accounts in the system.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  let currentFilter = 'all';
+
+  // Compute total outstanding on page load
+  document.addEventListener('DOMContentLoaded', function () {
+    let total = 0;
+    document.querySelectorAll('#tableBody tr').forEach(row => {
+      if (row.dataset.paid === 'false') {
+        const amt = parseFloat(row.dataset.amount || '0');
+        if (!isNaN(amt)) total += amt;
+      }
+    });
+    document.getElementById('totalAmountDue').textContent =
+      total.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  });
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    const tabs = {
+      all:        document.getElementById('tab-all'),
+      defaulters: document.getElementById('tab-defaulters'),
+      paid:       document.getElementById('tab-paid'),
+    };
+    Object.entries(tabs).forEach(([key, el]) => {
+      el.className = 'filter-tab';
+      if (key === filter) {
+        el.classList.add(
+          filter === 'all'        ? 'active-all' :
+          filter === 'defaulters' ? 'active-defaulters' : 'active-paid'
+        );
+      }
+    });
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const q = document.getElementById('tableSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const isPaid = row.dataset.paid === 'true';
+      const matchFilter =
+        currentFilter === 'all' ||
+        (currentFilter === 'defaulters' && !isPaid) ||
+        (currentFilter === 'paid' && isPaid);
+      const matchSearch = !q || row.textContent.toLowerCase().includes(q);
+
+      if (matchFilter && matchSearch) {
+        row.classList.remove('hidden-row');
+        visible++;
+      } else {
+        row.classList.add('hidden-row');
+      }
+    });
+
+    const badge = document.getElementById('visibleCount');
+    if (badge) badge.textContent = visible;
+
+    const noMsg = document.getElementById('noResultsMsg');
+    if (noMsg) noMsg.style.display = visible === 0 ? 'block' : 'none';
+  }
+</script>
+{% endblock %}

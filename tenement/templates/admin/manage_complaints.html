@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Complaints | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;
+    --border:#e5e7eb;--border-2:#d1d5db;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;--accent-dk:#1558c8;
+    --green:#16a34a;--green-dim:#dcfce7;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.07);--shadow-md:0 8px 24px rgba(0,0,0,.09);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:1200px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .fade{animation:fadein .35s ease both;}.fade-1{animation-delay:.05s;}
+
+  .pg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px;flex-wrap:wrap;}
+  .pg-header-left{display:flex;align-items:center;gap:14px;}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);transition:all var(--transition);flex-shrink:0;}
+  .back-btn:hover{background:var(--surface-3);color:var(--ink);}
+  .pg-title{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin:0;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+
+  /* stat cards */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:480px){.stats-grid{grid-template-columns:1fr;}}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;}
+  .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+  .stat-card.c-blue::after{background:var(--accent);}
+  .stat-card.c-green::after{background:var(--green);}
+  .stat-card.c-amber::after{background:var(--amber);}
+  .stat-card.c-red::after{background:var(--red);}
+  .stat-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:6px;}
+  .stat-val{font-size:2rem;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-1px;}
+
+  /* filters */
+  .filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px;box-shadow:var(--shadow-sm);}
+  .filter-bar input,.filter-bar select{font-family:'DM Sans',sans-serif;font-size:.845rem;padding:9px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--ink);outline:none;transition:border-color var(--transition);}
+  .filter-bar input{flex:1;min-width:180px;}
+  .filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,108,240,.12);}
+  .btn-filter{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;padding:9px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;transition:background var(--transition);}
+  .btn-filter:hover{background:var(--accent-dk);}
+  .btn-reset{display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:9px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--ink-3);text-decoration:none;transition:all var(--transition);}
+  .btn-reset:hover{background:var(--surface-3);color:var(--ink);}
+
+  /* table */
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.845rem;}
+  thead th{background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:12px 18px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td{padding:14px 18px;vertical-align:middle;color:var(--ink-2);}
+
+  .subject-cell{font-weight:600;color:var(--ink);max-width:300px;}
+  .subject-cell small{display:block;font-weight:400;font-size:.75rem;color:var(--ink-4);margin-top:2px;}
+
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:700;}
+  .chip.green{background:var(--green-dim);color:var(--green);}
+  .chip.blue{background:var(--accent-dim);color:var(--accent);}
+  .chip.amber{background:var(--amber-dim);color:var(--amber);}
+  .chip.red{background:var(--red-dim);color:var(--red);}
+  .chip.gray{background:var(--surface-3);color:var(--ink-3);}
+  .chip.purple{background:var(--purple-dim);color:var(--purple);}
+
+  .status-dot::before{content:'';width:6px;height:6px;background:currentColor;border-radius:50%;display:inline-block;margin-right:4px;}
+
+  .btn-view-sm{display:inline-flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);text-decoration:none;background:var(--accent-dim);color:var(--accent);transition:all var(--transition);}
+  .btn-view-sm:hover{background:#bfdbfe;}
+
+  .empty-row td{text-align:center;padding:60px 24px;color:var(--ink-4);}
+  .empty-row td i{font-size:2rem;display:block;margin-bottom:10px;opacity:.4;}
+
+  /* pagination */
+  .pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:20px;}
+  .pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid var(--border);color:var(--ink-2);transition:all var(--transition);}
+  .pagination a:hover{background:var(--surface-3);}
+  .pagination .current{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .pagination .disabled{opacity:.4;pointer-events:none;}
+</style>
+
+<div class="pg-wrap">
+
+  <div class="pg-header fade">
+    <div class="pg-header-left">
+      <a href="{% url 'dashboard' %}" class="back-btn"><i class="fas fa-chevron-left"></i> Dashboard</a>
+      <div>
+        <h1 class="pg-title">Reports &amp; Complaints</h1>
+        <p class="pg-sub">Review and respond to landlord complaints</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid fade">
+    <div class="stat-card c-blue">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ total_complaints }}</div>
+    </div>
+    <div class="stat-card c-red">
+      <div class="stat-label">Open</div>
+      <div class="stat-val">{{ open_count }}</div>
+    </div>
+    <div class="stat-card c-amber">
+      <div class="stat-label">In Review</div>
+      <div class="stat-val">{{ in_review_count }}</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="stat-label">Resolved</div>
+      <div class="stat-val">{{ resolved_count }}</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="filter-bar fade fade-1">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search subject or landlord…">
+    <select name="status">
+      <option value="">All Statuses</option>
+      {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="category">
+      <option value="">All Categories</option>
+      {% for val, label in category_choices %}
+        <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-filter"><i class="fas fa-search"></i> Filter</button>
+    <a href="{% url 'admin_manage_complaints' %}" class="btn-reset"><i class="fas fa-times"></i> Reset</a>
+  </form>
+
+  <!-- Table -->
+  <div class="table-card fade fade-1">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Subject</th>
+            <th>Submitted By</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for complaint in complaints %}
+          <tr>
+            <td style="font-family:'DM Mono',monospace;font-size:.78rem;color:var(--ink-4);">#{{ complaint.id }}</td>
+            <td class="subject-cell">
+              {{ complaint.subject|truncatechars:60 }}
+              <small>{{ complaint.description|truncatechars:80 }}</small>
+            </td>
+            <td>
+              <strong>{{ complaint.submitted_by.get_full_name|default:complaint.submitted_by.username }}</strong><br>
+              <span style="font-size:.75rem;color:var(--ink-4);">@{{ complaint.submitted_by.username }}</span>
+            </td>
+            <td>
+              {% if complaint.category == 'billing' %}<span class="chip blue">{{ complaint.get_category_display }}</span>
+              {% elif complaint.category == 'property' %}<span class="chip green">{{ complaint.get_category_display }}</span>
+              {% elif complaint.category == 'technical' %}<span class="chip amber">{{ complaint.get_category_display }}</span>
+              {% elif complaint.category == 'general' %}<span class="chip purple">{{ complaint.get_category_display }}</span>
+              {% else %}<span class="chip gray">{{ complaint.get_category_display }}</span>{% endif %}
+            </td>
+            <td>
+              {% if complaint.status == 'open' %}<span class="chip red status-dot">Open</span>
+              {% elif complaint.status == 'in_review' %}<span class="chip amber status-dot">In Review</span>
+              {% elif complaint.status == 'resolved' %}<span class="chip green status-dot">Resolved</span>
+              {% else %}<span class="chip gray status-dot">Closed</span>{% endif %}
+            </td>
+            <td style="font-size:.78rem;color:var(--ink-4);white-space:nowrap;">{{ complaint.created_at|date:"d M Y" }}</td>
+            <td>
+              <a href="{% url 'admin_view_complaint' complaint.id %}" class="btn-view-sm">
+                <i class="fas fa-eye"></i> Review
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row">
+            <td colspan="7">
+              <i class="fas fa-inbox"></i>
+              No complaints found{% if search or status_filter or category_filter %} matching your filters{% endif %}.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if complaints.has_other_pages %}
+    <div class="pagination">
+      {% if complaints.has_previous %}
+        <a href="?page={{ complaints.previous_page_number }}&search={{ search }}&status={{ status_filter }}&category={{ category_filter }}"><i class="fas fa-chevron-left"></i></a>
+      {% else %}
+        <span class="disabled"><i class="fas fa-chevron-left"></i></span>
+      {% endif %}
+      {% for num in complaints.paginator.page_range %}
+        {% if complaints.number == num %}<span class="current">{{ num }}</span>
+        {% elif num > complaints.number|add:'-3' and num < complaints.number|add:'3' %}
+          <a href="?page={{ num }}&search={{ search }}&status={{ status_filter }}&category={{ category_filter }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if complaints.has_next %}
+        <a href="?page={{ complaints.next_page_number }}&search={{ search }}&status={{ status_filter }}&category={{ category_filter }}"><i class="fas fa-chevron-right"></i></a>
+      {% else %}
+        <span class="disabled"><i class="fas fa-chevron-right"></i></span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Announcements | Admin{% endblock %}
+
+{% block content %}
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     BWARI UNIQUE ANNOUNCEMENT STYLES — NO CONFLICTS WITH BASE.CSS
+     ═══════════════════════════════════════════════════════════════ */
+  .bw-announce-wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 40px 32px 64px;
+    font-family: 'DM Sans', sans-serif;
+    color: #0f1117;
+    background: #f7f8fa;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+  @media (max-width: 640px) {
+    .bw-announce-wrap { padding: 24px 16px 48px; }
+  }
+
+  .bw-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .bw-page-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f1117;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .bw-page-header p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .bw-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #16a34a;
+    color: white !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .bw-btn-primary i { color: white; }
+  .bw-btn-primary:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+  }
+
+  .bw-announce-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .bw-announce-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .bw-announce-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+    transform: translateY(-2px);
+  }
+
+  .bw-announce-content { flex: 1; }
+
+  .bw-announce-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .bw-announce-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f1117;
+    margin: 0;
+  }
+
+  .bw-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .bw-status-badge.bw-active {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  .bw-status-badge.bw-inactive {
+    background: #f0f2f5;
+    color: #6b7280;
+  }
+
+  .bw-announce-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 12px;
+  }
+  .bw-announce-meta i { margin-right: 4px; }
+
+  .bw-announce-message {
+    font-size: 0.9rem;
+    color: #3b3f4a;
+    line-height: 1.65;
+    white-space: pre-line;
+  }
+
+  .bw-delete-form { flex-shrink: 0; }
+  .bw-btn-icon {
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+  .bw-btn-icon:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #dc2626;
+  }
+
+  .bw-empty-state {
+    background: #ffffff;
+    border: 1px dashed #e5e7eb;
+    border-radius: 16px;
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .bw-empty-state i {
+    font-size: 2.5rem;
+    color: #9ca3af;
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+  .bw-empty-state p {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+</style>
+
+<div class="bw-announce-wrap">
+  <div class="bw-page-header">
+    <div>
+      <h1>Manage Announcements</h1>
+      <p>Create and publish system‑wide notifications for all users.</p>
+    </div>
+    <a href="{% url 'admin_create_announcement' %}" class="bw-btn-primary">
+      <i class="fas fa-plus-circle"></i> New Announcement
+    </a>
+  </div>
+
+  <div class="bw-announce-list">
+    {% for ann in announcements %}
+    <div class="bw-announce-card">
+      <div class="bw-announce-content">
+        <div class="bw-announce-header">
+          <h3 class="bw-announce-title">{{ ann.title }}</h3>
+          <span class="bw-status-badge {% if ann.is_active %}bw-active{% else %}bw-inactive{% endif %}">
+            {% if ann.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
+        </div>
+        <div class="bw-announce-meta">
+          <span><i class="far fa-calendar-alt"></i> {{ ann.created_at|date:"M d, Y" }} at {{ ann.created_at|date:"H:i" }}</span>
+          <span><i class="far fa-user"></i> {{ ann.created_by.get_full_name|default:ann.created_by.username }}</span>
+        </div>
+        <div class="bw-announce-message">{{ ann.message|linebreaksbr }}</div>
+      </div>
+      <form method="POST" action="{% url 'admin_delete_announcement' ann.id %}" class="bw-delete-form" onsubmit="return confirm('Permanently delete this announcement?');">
+        {% csrf_token %}
+        <button type="submit" class="bw-btn-icon" title="Delete announcement">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="bw-empty-state">
+      <i class="fas fa-bullhorn"></i>
+      <p>No announcements have been created yet.<br>Click "New Announcement" to publish your first update.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

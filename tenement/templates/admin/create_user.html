@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create User | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Fraunces:wght@600;700&display=swap');
+
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#ffffff;--surface-2:#f7f8fa;--border:#e5e7eb;--border-2:#d1d5db;
+    --green:#16a34a;--green-dim:#dcfce7;--green-dk:#15803d;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --purple:#7c3aed;--purple-dim:#ede9fe;
+    --amber:#d97706;--amber-dim:#fef3c7;
+    --red:#dc2626;--red-dim:#fee2e2;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--radius-xl:20px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow:0 4px 12px rgba(0,0,0,.08);
+    --transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface-2);}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .fade{animation:fadein .35s ease both;}
+  .fade-1{animation-delay:.05s;}.fade-2{animation-delay:.1s;}.fade-3{animation-delay:.15s;}
+
+  .cu-wrap{max-width:780px;margin:0 auto;padding:44px 24px 72px;}
+
+  /* Back */
+  .back-link{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;margin-bottom:28px;transition:color var(--transition);}
+  .back-link:hover{color:var(--ink);}
+
+  /* Header */
+  .cu-header{margin-bottom:32px;}
+  .cu-badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--purple);background:var(--purple-dim);padding:3px 10px;border-radius:99px;margin-bottom:12px;}
+  .cu-header h1{font-size:1.7rem;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+  .cu-header p{font-size:.9rem;color:var(--ink-3);}
+
+  /* Alert */
+  .alert-admin{display:flex;align-items:flex-start;gap:12px;background:var(--amber-dim);border:1px solid #fde68a;border-radius:var(--radius);padding:14px 16px;margin-bottom:28px;font-size:.855rem;color:#92400e;}
+  .alert-admin i{margin-top:1px;flex-shrink:0;}
+
+  /* Card */
+  .cu-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .cu-card-head{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .cu-card-head-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--purple-dim);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+  .cu-card-head-title{font-weight:700;font-size:1rem;}
+  .cu-card-head-sub{font-size:.8rem;color:var(--ink-3);margin-top:1px;}
+  .cu-card-body{padding:28px;}
+
+  /* Form sections */
+  .form-section{margin-bottom:28px;}
+  .form-section:last-child{margin-bottom:0;}
+  .section-head{font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-4);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:560px){.form-grid{grid-template-columns:1fr;}}
+  .span2{grid-column:span 2;}
+  @media(max-width:560px){.span2{grid-column:span 1;}}
+
+  .fld{display:flex;flex-direction:column;gap:5px;}
+  .fld label{font-size:.78rem;font-weight:600;color:var(--ink-2);}
+  .req{color:var(--red);margin-left:2px;}
+  .fld-inner{position:relative;}
+  .fld-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--ink-4);pointer-events:none;transition:color var(--transition);}
+  .fld input,.fld select{
+    width:100%;padding:10px 14px 10px 36px;border:1.5px solid var(--border);border-radius:var(--radius);
+    font-family:'DM Sans',sans-serif;font-size:.875rem;color:var(--ink);background:var(--surface-2);outline:none;
+    transition:border-color var(--transition),box-shadow var(--transition);
+  }
+  .fld input:focus,.fld select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.12);}
+  .fld-inner:focus-within .fld-ico{color:var(--purple);}
+  .fld select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
+  .field-error{font-size:.73rem;color:var(--red);margin-top:3px;display:flex;align-items:center;gap:4px;}
+
+  /* User type selector */
+  .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+  .type-opt{position:relative;cursor:pointer;}
+  .type-opt input[type="radio"]{position:absolute;opacity:0;width:0;height:0;}
+  .type-card{
+    border:2px solid var(--border);border-radius:var(--radius);padding:14px 16px;
+    display:flex;align-items:center;gap:12px;transition:border-color var(--transition),background var(--transition);
+    cursor:pointer;
+  }
+  .type-opt input:checked ~ .type-card{border-color:var(--purple);background:var(--purple-dim);}
+  .type-icon{width:34px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+  .type-staff .type-icon{background:var(--purple-dim);color:var(--purple);}
+  .type-admin .type-icon{background:var(--accent-dim);color:var(--accent);}
+  .type-opt input:checked ~ .type-card .type-icon{background:white;}
+  .type-name{font-weight:600;font-size:.88rem;}
+  .type-desc{font-size:.73rem;color:var(--ink-3);margin-top:2px;}
+
+  /* Password hint */
+  .pwd-hint{font-size:.72rem;color:var(--ink-4);margin-top:4px;}
+
+  /* Errors */
+  .form-errors{background:var(--red-dim);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:20px;font-size:.845rem;color:var(--red);}
+
+  /* Submit row */
+  .submit-row{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding-top:20px;border-top:1px solid var(--border);margin-top:28px;}
+  .btn-cancel{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:var(--surface-2);border:1.5px solid var(--border);color:var(--ink-3);font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:600;border-radius:var(--radius);text-decoration:none;transition:all var(--transition);}
+  .btn-cancel:hover{background:var(--surface);color:var(--ink);}
+  .btn-submit{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:var(--purple);color:white;font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:600;border-radius:var(--radius);border:none;cursor:pointer;transition:background var(--transition),transform var(--transition),box-shadow var(--transition);}
+  .btn-submit:hover{background:#6d28d9;transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.3);}
+</style>
+
+<div class="cu-wrap">
+  <a href="{% url 'admin_manage_users' %}" class="back-link fade">
+    <i class="fas fa-arrow-left"></i> Back to Manage Users
+  </a>
+
+  <div class="cu-header fade fade-1">
+    <div class="cu-badge"><i class="fas fa-shield-halved"></i> Admin Only</div>
+    <h1>Create New User</h1>
+    <p>Create a landlord, staff, field staff, or admin account. Only administrators can access this page.</p>
+  </div>
+
+  <div class="alert-admin fade fade-1">
+    <i class="fas fa-triangle-exclamation"></i>
+    <span>Admin-created accounts are verified immediately on creation so they can log in without any database workaround.</span>
+  </div>
+
+  {% if messages %}
+  <div class="form-errors fade">
+    {% for message in messages %}{{ message }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="cu-card fade fade-2">
+    <div class="cu-card-head">
+      <div class="cu-card-head-icon"><i class="fas fa-user-plus"></i></div>
+      <div>
+        <div class="cu-card-head-title">Account Information</div>
+        <div class="cu-card-head-sub">Fill in all required fields to create the account.</div>
+      </div>
+    </div>
+    <div class="cu-card-body">
+      <form method="POST">
+        {% csrf_token %}
+
+        <!-- User Type -->
+        <div class="form-section">
+          <div class="section-head"><i class="fas fa-id-badge"></i> Account Role</div>
+          <div class="type-grid">
+            <label class="type-opt type-staff">
+              <input type="radio" name="user_type" value="landlord">
+              <div class="type-card">
+                <div class="type-icon"><i class="fas fa-house-user"></i></div>
+                <div>
+                  <div class="type-name">Landlord</div>
+                  <div class="type-desc">Property owner access</div>
+                </div>
+              </div>
+            </label>
+            <label class="type-opt type-staff">
+              <input type="radio" name="user_type" value="staff" checked>
+              <div class="type-card">
+                <div class="type-icon"><i class="fas fa-user-tie"></i></div>
+                <div>
+                  <div class="type-name">Staff</div>
+                  <div class="type-desc">Administrative office tasks</div>
+                </div>
+              </div>
+            </label>
+            <label class="type-opt type-staff">
+              <input type="radio" name="user_type" value="field_staff">
+              <div class="type-card">
+                <div class="type-icon"><i class="fas fa-map-location-dot"></i></div>
+                <div>
+                  <div class="type-name">Field Staff</div>
+                  <div class="type-desc">View all properties, edit details, add images, and create properties</div>
+                </div>
+              </div>
+            </label>
+            <label class="type-opt type-admin">
+              <input type="radio" name="user_type" value="admin">
+              <div class="type-card">
+                <div class="type-icon"><i class="fas fa-shield-halved"></i></div>
+                <div>
+                  <div class="type-name">Admin</div>
+                  <div class="type-desc">Full system access &amp; management</div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Personal Info -->
+        <div class="form-section">
+          <div class="section-head"><i class="fas fa-circle-user"></i> Personal Details</div>
+          <div class="form-grid">
+            <div class="fld">
+              <label>First Name</label>
+              <div class="fld-inner">
+                {{ form.first_name }}
+                <i class="fas fa-user fld-ico"></i>
+              </div>
+              {% if form.first_name.errors %}<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ form.first_name.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="fld">
+              <label>Last Name</label>
+              <div class="fld-inner">
+                {{ form.last_name }}
+                <i class="fas fa-user fld-ico"></i>
+              </div>
+              {% if form.last_name.errors %}<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ form.last_name.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="fld">
+              <label>Phone Number</label>
+              <div class="fld-inner">
+                {{ form.phone_number }}
+                <i class="fas fa-phone fld-ico"></i>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Address</label>
+              <div class="fld-inner">
+                {{ form.address }}
+                <i class="fas fa-location-dot fld-ico"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Details -->
+        <div class="form-section">
+          <div class="section-head"><i class="fas fa-at"></i> Account Credentials</div>
+          <div class="form-grid">
+            <div class="fld">
+              <label>Username <span class="req">*</span></label>
+              <div class="fld-inner">
+                {{ form.username }}
+                <i class="fas fa-at fld-ico"></i>
+              </div>
+              {% if form.username.errors %}<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ form.username.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="fld">
+              <label>Email <span class="req">*</span></label>
+              <div class="fld-inner">
+                {{ form.email }}
+                <i class="fas fa-envelope fld-ico"></i>
+              </div>
+              {% if form.email.errors %}<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ form.email.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="fld">
+              <label>Password <span class="req">*</span></label>
+              <div class="fld-inner">
+                {{ form.password1 }}
+                <i class="fas fa-lock fld-ico"></i>
+              </div>
+              {% if form.password1.errors %}<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ form.password1.errors|striptags }}</p>{% endif %}
+              <div class="pwd-hint">Min. 8 characters. Include letters &amp; numbers.</div>
+            </div>
+            <div class="fld">
+              <label>Confirm Password <span class="req">*</span></label>
+              <div class="fld-inner">
+                {{ form.password2 }}
+                <i class="fas fa-lock fld-ico"></i>
+              </div>
+              {% if form.password2.errors %}<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ form.password2.errors|striptags }}</p>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <a href="{% url 'admin_manage_users' %}" class="btn-cancel">
+            <i class="fas fa-xmark"></i> Cancel
+          </a>
+          <button type="submit" class="btn-submit">
+            <i class="fas fa-user-plus"></i> Create User Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Override Django form styles */
+  #id_username,#id_email,#id_first_name,#id_last_name,#id_phone_number,#id_address,
+  #id_password1,#id_password2{
+    width:100%;padding:10px 14px 10px 36px;border:1.5px solid var(--border);border-radius:var(--radius);
+    font-family:'DM Sans',sans-serif;font-size:.875rem;color:var(--ink);background:var(--surface-2);outline:none;
+  }
+  #id_username:focus,#id_email:focus,#id_first_name:focus,#id_last_name:focus,
+  #id_phone_number:focus,#id_address:focus,#id_password1:focus,#id_password2:focus{
+    border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.12);
+  }
+</style>
+{% endblock %}

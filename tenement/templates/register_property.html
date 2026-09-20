@@ -1,0 +1,709 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register Property | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --accent: #1e6cf0; --accent-dim: #dbeafe; --accent-dk: #1558c8;
+    --red: #dc2626; --red-dim: #fee2e2;
+    --amber: #d97706; --amber-dim: #fef3c7;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow: 0 4px 12px rgba(0,0,0,.07);
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface-2); }
+
+  @keyframes fadein { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .fade   { animation: fadein .38s ease both; }
+  .fade-1 { animation-delay: .05s; }
+  .fade-2 { animation-delay: .10s; }
+  .fade-3 { animation-delay: .15s; }
+
+  .reg-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  @media(max-width:640px){ .reg-page{ padding: 28px 16px 60px; } }
+
+  .reg-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--green); background: var(--green-dim);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 12px;
+  }
+  .reg-title {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem; font-weight: 700; color: var(--ink);
+    letter-spacing: -.03em; margin-bottom: 6px;
+  }
+  .reg-sub { font-size: .875rem; color: var(--ink-3); margin-bottom: 32px; }
+  .reg-back {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .82rem; font-weight: 600; color: var(--ink-3);
+    text-decoration: none; margin-bottom: 24px;
+    transition: color var(--transition);
+  }
+  .reg-back:hover { color: var(--ink); }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px;
+    box-shadow: var(--shadow);
+  }
+  @media(max-width:540px){ .form-card{ padding: 20px 16px; } }
+
+  .form-section-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-4);
+    margin: 28px 0 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-section-head:first-of-type { margin-top: 0; }
+
+  .form-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-span2 { grid-column: span 2; }
+  @media(max-width:560px){
+    .form-grid  { grid-template-columns: 1fr; }
+    .form-span2 { grid-column: span 1; }
+  }
+
+  .fld { display: flex; flex-direction: column; gap: 5px; }
+  .fld label {
+    font-size: .78rem; font-weight: 600; color: var(--ink-2); letter-spacing: .01em;
+  }
+  .fld label .req { color: var(--red); margin-left: 2px; }
+  .fld-inner { position: relative; }
+  .fld-ico {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    font-size: .78rem; color: var(--ink-4); pointer-events: none;
+    transition: color var(--transition);
+  }
+
+  .fld input, .fld select, .fld textarea,
+  .fld-inner input, .fld-inner select {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .875rem; color: var(--ink);
+    background: var(--surface-2);
+    outline: none;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    -webkit-appearance: none; appearance: none;
+  }
+  .fld textarea { padding: 10px 14px; resize: vertical; min-height: 80px; }
+  .fld input:focus, .fld select:focus, .fld textarea:focus,
+  .fld-inner input:focus, .fld-inner select:focus {
+    border-color: var(--green); background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+  }
+  .fld-inner:focus-within .fld-ico { color: var(--green); }
+
+  .fld select, .fld-inner select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    background-color: var(--surface-2); padding-right: 36px;
+  }
+
+  .field-error { font-size: .73rem; color: var(--red); margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+
+  /* GPS block */
+  .gps-block {
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+  .gps-block-title {
+    font-size: .8rem; font-weight: 700; color: var(--ink-2);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-gps {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--green); color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .855rem; font-weight: 700;
+    padding: 11px 20px; border-radius: var(--radius);
+    border: none; cursor: pointer;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    align-self: flex-start; margin-top: 14px;
+  }
+  .btn-gps:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,.25); }
+  .btn-gps:disabled { background: var(--ink-4); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .gps-status {
+    display: none;
+    align-items: center; gap: 8px;
+    font-size: .82rem; color: var(--ink-3);
+    padding: 8px 12px;
+    background: var(--surface-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin: 12px 0;
+  }
+  .gps-status.visible { display: flex; }
+  .gps-status.success { color: var(--green); background: var(--green-dim); border-color: #bbf7d0; }
+  .gps-status.error   { color: var(--red);   background: var(--red-dim);   border-color: #fca5a5; }
+  .gps-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid currentColor; border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .accuracy-warning {
+    background: var(--amber-dim);
+    border: 1px solid var(--amber);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin: 12px 0;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--amber);
+  }
+
+  .device-warning {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: var(--red);
+  }
+
+  #gpsMapContainer {
+    height: 260px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    margin: 16px 0;
+  }
+
+  .coords-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gps-locked-note { font-size: .75rem; color: var(--ink-3); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+  .gps-required-badge {
+    background: var(--green-dim); color: var(--green-dk);
+    padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 700;
+  }
+
+  .btn-submit {
+    width: 100%; margin-top: 28px;
+    background: var(--green); color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem; font-weight: 600;
+    padding: 14px 24px; border-radius: var(--radius); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  }
+  .btn-submit:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(22,163,74,.3); }
+  .btn-submit:disabled { background: var(--ink-4); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Property type card grid */
+  .type-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin-top: 4px;
+  }
+  @media(max-width:560px){ .type-grid{ grid-template-columns: repeat(2,1fr); } }
+  .type-card {
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 14px 10px; cursor: pointer; text-align: center;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    background: var(--surface-2); user-select: none;
+  }
+  .type-card:hover { border-color: var(--green); background: var(--green-dim); }
+  .type-card.selected { border-color: var(--green); background: var(--green-dim); box-shadow: 0 0 0 3px rgba(22,163,74,.15); }
+  .type-card i { font-size: 1.4rem; color: var(--ink-3); margin-bottom: 6px; display: block; }
+  .type-card.selected i { color: var(--green); }
+  .type-card span { font-size: .75rem; font-weight: 600; color: var(--ink-3); }
+  .type-card.selected span { color: var(--green-dk); }
+  #id_property_type { display: none; }
+
+  /* ── Number of Flats (residential only) ── */
+  .flats-field {
+    display: none;
+    margin-top: 16px;
+    animation: fadein .3s ease both;
+  }
+  .flats-field.visible { display: block; }
+  .flats-inner {
+    background: var(--green-dim);
+    border: 1.5px solid #86efac;
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+  }
+  .flats-label {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--green-dk);
+    display: flex; align-items: center; gap: 7px; margin-bottom: 10px;
+  }
+  .flats-inner .fld label { color: var(--green-dk); }
+  .flats-inner .fld input {
+    border-color: #86efac !important;
+    background: white !important;
+  }
+  .flats-inner .fld input:focus {
+    border-color: var(--green) !important;
+    box-shadow: 0 0 0 3px rgba(22,163,74,.15) !important;
+  }
+  .flats-note {
+    font-size: .76rem; color: var(--green-dk); margin-top: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+</style>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="reg-page">
+  <a href="{% url 'dashboard' %}" class="reg-back fade">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+  </a>
+
+  <div class="fade">
+    <div class="reg-eyebrow"><i class="fas fa-home"></i> Landlord Portal</div>
+    <h1 class="reg-title">Register Your Property</h1>
+    <p class="reg-sub">Fill in the details below to register your property. GPS location is required.</p>
+  </div>
+
+  <!-- Device warning (shown if GPS unavailable) -->
+  <div id="deviceWarning" class="device-warning fade">
+    <i class="fas fa-mobile-alt"></i>
+    <div>
+      <strong>This device cannot provide an accurate GPS location.</strong><br>
+      To register a property, please use a <strong>smartphone or tablet</strong> with GPS enabled.
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+    <div style="background:var(--red-dim);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:.845rem;color:var(--red);">
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="form-card fade fade-1">
+    <form method="post" id="propertyForm" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" id="id_gps_accuracy" name="gps_accuracy" value="">
+
+      <!-- Property Info -->
+      <div class="form-section-head"><i class="fas fa-building"></i> Property Information</div>
+
+      <div class="form-grid">
+        <div class="fld form-span2">
+          <label for="id_name">Property Name <span class="req">*</span></label>
+          <div class="fld-inner">
+            {{ form.name }}
+            <i class="fas fa-tag fld-ico"></i>
+          </div>
+          {% if form.name.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.name.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="fld form-span2">
+          <label for="id_address">Address <span class="req">*</span></label>
+          <div class="fld-inner">
+            {{ form.address }}
+            <i class="fas fa-map-pin fld-ico"></i>
+          </div>
+          {% if form.address.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.address.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="fld">
+          <label for="id_district">District / Area <span class="req">*</span></label>
+          <div class="fld-inner">
+            {{ form.district }}
+            <i class="fas fa-map fld-ico"></i>
+          </div>
+          {% if form.district.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.district.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="fld">
+          <label for="id_num_units">Number of Units</label>
+          <div class="fld-inner">
+            {{ form.num_units }}
+            <i class="fas fa-door-open fld-ico"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Property Type -->
+      <div class="form-section-head"><i class="fas fa-layer-group"></i> Property Type <span class="req" style="font-size:.8rem;">*</span></div>
+
+      {{ form.property_type }}
+      <div class="type-grid" id="typeGrid">
+        <div class="type-card" data-value="residential">
+          <i class="fas fa-house"></i><span>Residential</span>
+        </div>
+        <div class="type-card" data-value="commercial">
+          <i class="fas fa-store"></i><span>Commercial</span>
+        </div>
+        <div class="type-card" data-value="industrial">
+          <i class="fas fa-industry"></i><span>Industrial</span>
+        </div>
+        <div class="type-card" data-value="land">
+          <i class="fas fa-mountain-sun"></i><span>Land</span>
+        </div>
+      </div>
+      {% if form.property_type.errors %}<p class="field-error" style="margin-top:8px;"><i class="fas fa-circle-exclamation"></i>{{ form.property_type.errors|striptags }}</p>{% endif %}
+
+      <!-- Number of Flats — shown only for Residential -->
+      <div class="flats-field" id="flatsField">
+        <div class="flats-inner">
+          <div class="flats-label"><i class="fas fa-house"></i> Residential Details</div>
+          <div class="fld">
+            <label for="id_num_flats">Number of Flats <span class="req">*</span></label>
+            <div class="fld-inner">
+              <input type="number" id="id_num_flats" name="num_flats" min="1"
+                     placeholder="e.g. 4"
+                     value="{{ form.num_flats.value|default:'' }}">
+              <i class="fas fa-door-open fld-ico" style="color:var(--green);"></i>
+            </div>
+            <div class="flats-note">
+              <i class="fas fa-info-circle"></i>
+              Fixed residential rates are multiplied by this number to calculate your total payment.
+            </div>
+          </div>
+          {% if form.num_flats.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.num_flats.errors|striptags }}</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- GPS Location -->
+      <div class="form-section-head"><i class="fas fa-location-crosshairs"></i> GPS Location <span class="gps-required-badge">REQUIRED</span></div>
+
+      <div class="gps-block">
+        <div class="gps-block-title">
+          <i class="fas fa-satellite-dish"></i>
+          Capture Live GPS Coordinates
+        </div>
+        <p style="font-size:.82rem;color:var(--ink-3);margin:8px 0 0;">
+          <i class="fas fa-info-circle"></i> Please ensure you are physically at the property location.
+        </p>
+
+        <button type="button" class="btn-gps" id="getGpsBtn">
+          <i class="fas fa-location-crosshairs"></i> Capture Current Location
+        </button>
+
+        <div class="gps-status" id="gpsStatus">
+          <span class="gps-spinner" id="gpsSpinner"></span>
+          <span id="gpsStatusText"></span>
+        </div>
+
+        <div id="accuracyWarning" class="accuracy-warning">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span id="accuracyWarningText"></span>
+        </div>
+
+        <div id="gpsMapContainer"></div>
+
+        <div class="coords-row">
+          <div class="fld">
+            <label>Latitude</label>
+            <div class="fld-inner">
+              {{ form.latitude }}
+              <i class="fas fa-globe fld-ico"></i>
+            </div>
+          </div>
+          <div class="fld">
+            <label>Longitude</label>
+            <div class="fld-inner">
+              {{ form.longitude }}
+              <i class="fas fa-globe fld-ico"></i>
+            </div>
+          </div>
+        </div>
+        <div class="gps-locked-note">
+          <i class="fas fa-lock"></i> Location is automatically set by GPS.
+        </div>
+      </div>
+
+      <!-- Property Images -->
+      <div class="form-section-head"><i class="fas fa-images"></i> Property Images <span class="req">*</span> (Main + 3 Required)</div>
+
+      <div class="form-grid">
+        <div class="fld form-span2">
+          <label for="id_main_image">Main Property Image <span class="req">*</span></label>
+          <input type="file" id="id_main_image" name="main_image" accept="image/*" required>
+          {% if form.main_image.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.main_image.errors|striptags }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="fld">
+          <label for="id_image_1">Additional Image 1 <span class="req">*</span></label>
+          <input type="file" id="id_image_1" name="image_1" accept="image/*" required>
+          {% if form.image_1.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.image_1.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="fld">
+          <label for="id_image_2">Additional Image 2 <span class="req">*</span></label>
+          <input type="file" id="id_image_2" name="image_2" accept="image/*" required>
+          {% if form.image_2.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.image_2.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="fld">
+          <label for="id_image_3">Additional Image 3 <span class="req">*</span></label>
+          <input type="file" id="id_image_3" name="image_3" accept="image/*" required>
+          {% if form.image_3.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.image_3.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="fld">
+          <label for="id_image_4">Additional Image 4 <span style="font-size:.75rem;color:var(--ink-3);">(Optional)</span></label>
+          <input type="file" id="id_image_4" name="image_4" accept="image/*">
+        </div>
+        <div class="fld">
+          <label for="id_image_5">Additional Image 5 <span style="font-size:.75rem;color:var(--ink-3);">(Optional)</span></label>
+          <input type="file" id="id_image_5" name="image_5" accept="image/*">
+        </div>
+        <div class="fld">
+          <label for="id_image_6">Additional Image 6 <span style="font-size:.75rem;color:var(--ink-3);">(Optional)</span></label>
+          <input type="file" id="id_image_6" name="image_6" accept="image/*">
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-section-head"><i class="fas fa-note-sticky"></i> Additional Notes</div>
+      <div class="fld">
+        <label for="id_notes">Notes (optional)</label>
+        {{ form.notes }}
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn" disabled>
+        <i class="fas fa-floppy-disk"></i> Register Property
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // ----- GPS variables -----
+    const latInput      = document.getElementById('id_latitude');
+    const lngInput      = document.getElementById('id_longitude');
+    const accuracyInput = document.getElementById('id_gps_accuracy');
+    const addressInput  = document.getElementById('id_address');
+    const getGpsBtn     = document.getElementById('getGpsBtn');
+    const submitBtn     = document.getElementById('submitBtn');
+    const gpsStatus     = document.getElementById('gpsStatus');
+    const gpsStatusTxt  = document.getElementById('gpsStatusText');
+    const gpsSpinner    = document.getElementById('gpsSpinner');
+    const accuracyWarning     = document.getElementById('accuracyWarning');
+    const accuracyWarningText = document.getElementById('accuracyWarningText');
+
+    const DEFAULT_LAT = 9.2797;
+    const DEFAULT_LNG = 7.3815;
+    const DEFAULT_ZOOM = 15;
+    const REQUIRED_ACCURACY = 30;
+
+    let currentAccuracy = null;
+    let locationCaptured = false;
+
+    // ----- Initialise map -----
+    const map = L.map('gpsMapContainer').setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    const markerIcon = L.divIcon({
+      html: `<div style="width:32px;height:32px;background:var(--green);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32]
+    });
+
+    let marker = L.marker([DEFAULT_LAT, DEFAULT_LNG], {
+      draggable: false,
+      icon: markerIcon
+    }).addTo(map);
+
+    let accuracyCircle = null;
+
+    // ----- Helper functions -----
+    function updateCoords(lat, lng) {
+      latInput.value = lat.toFixed(6);
+      lngInput.value = lng.toFixed(6);
+    }
+
+    function setLocation(lat, lng, accuracy) {
+      marker.setLatLng([lat, lng]);
+      map.setView([lat, lng], 18);
+      updateCoords(lat, lng);
+
+      if (accuracyCircle) map.removeLayer(accuracyCircle);
+      if (accuracy) {
+        accuracyCircle = L.circle([lat, lng], {
+          radius: accuracy,
+          color: 'var(--green)',
+          opacity: 0.2,
+          fillOpacity: 0.1
+        }).addTo(map);
+      }
+
+      // Reverse geocode to fill address
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.display_name) {
+            addressInput.value = data.display_name;
+          }
+        })
+        .catch(() => {});
+
+      map.invalidateSize();
+    }
+
+    function showStatus(msg, type) {
+      gpsStatus.className = 'gps-status visible ' + (type || '');
+      gpsSpinner.style.display = (type === 'loading') ? 'block' : 'none';
+      gpsStatusTxt.textContent = msg;
+    }
+
+    function enableSubmit(enable) {
+      // In landlord form there's no landlord selection, so just use locationCaptured
+      submitBtn.disabled = !enable;
+    }
+
+    // ----- Initial coordinates (if already filled) -----
+    let initLat = parseFloat(latInput.value);
+    let initLng = parseFloat(lngInput.value);
+    if (!isNaN(initLat) && !isNaN(initLng) && initLat !== 0 && initLng !== 0) {
+      setLocation(initLat, initLng, null);
+      locationCaptured = true;
+      enableSubmit(true);
+    } else {
+      latInput.value = '';
+      lngInput.value = '';
+      enableSubmit(false);
+    }
+
+    // ----- GPS capture button -----
+    getGpsBtn.addEventListener('click', function () {
+      if (!navigator.geolocation) {
+        showStatus('Geolocation is not supported by this browser.', 'error');
+        return;
+      }
+
+      getGpsBtn.disabled = true;
+      getGpsBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Capturing GPS…';
+      showStatus('Requesting high‑accuracy GPS signal…', 'loading');
+      accuracyWarning.style.display = 'none';
+      enableSubmit(false);
+
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy;
+          currentAccuracy = accuracy;
+          accuracyInput.value = accuracy;
+
+          setLocation(lat, lng, accuracy);
+
+          if (accuracy > REQUIRED_ACCURACY) {
+            showStatus(`Accuracy is ${Math.round(accuracy)}m (needs <${REQUIRED_ACCURACY}m). Try again in an open area.`, 'error');
+            accuracyWarningText.textContent =
+              `Accuracy is ${Math.round(accuracy)} metres. Required accuracy is less than ${REQUIRED_ACCURACY}m. Please move to an open area and try again.`;
+            accuracyWarning.style.display = 'flex';
+            getGpsBtn.disabled = false;
+            getGpsBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Capture Current Location';
+            enableSubmit(false);
+          } else {
+            showStatus(`Location captured (accuracy ${Math.round(accuracy)}m).`, 'success');
+            accuracyWarning.style.display = 'none';
+            getGpsBtn.innerHTML = '<i class="fas fa-check"></i> Location Captured';
+            getGpsBtn.disabled = false;  // allow recapture if needed
+            locationCaptured = true;
+            enableSubmit(true);
+          }
+        },
+        function (err) {
+          let msg = 'Unable to get location.';
+          if (err.code === 1) msg = 'Permission denied. Please allow location access in your browser settings.';
+          else if (err.code === 2) msg = 'Location unavailable. Check that GPS is turned on.';
+          else if (err.code === 3) msg = 'Request timed out. Please try again.';
+          showStatus(msg, 'error');
+          getGpsBtn.disabled = false;
+          getGpsBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Capture Current Location';
+          enableSubmit(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        }
+      );
+    });
+
+    // ----- Form validation -----
+    const form = document.getElementById('propertyForm');
+    form.addEventListener('submit', (e) => {
+      const lat = latInput.value;
+      const lng = lngInput.value;
+      if (!lat || !lng || parseFloat(lat) === 0 || parseFloat(lng) === 0) {
+        e.preventDefault();
+        alert('Please capture your GPS location before submitting.');
+        return false;
+      }
+      if (!locationCaptured || (currentAccuracy && currentAccuracy > REQUIRED_ACCURACY)) {
+        e.preventDefault();
+        alert('GPS accuracy is insufficient. Please recapture in an open area.');
+        return false;
+      }
+    });
+
+    // ----- Property type selector (existing functionality retained) -----
+    const typeSelect = document.getElementById('id_property_type');
+    const typeCards  = document.querySelectorAll('.type-card');
+    const flatsField = document.getElementById('flatsField');
+    const flatsInput = document.getElementById('id_num_flats');
+
+    function toggleFlatsField(val) {
+      if (val === 'residential') {
+        flatsField.classList.add('visible');
+        if (flatsInput) flatsInput.required = true;
+      } else {
+        flatsField.classList.remove('visible');
+        if (flatsInput) { flatsInput.required = false; flatsInput.value = ''; }
+      }
+    }
+
+    function syncTypeCards(val) {
+      typeCards.forEach(c => c.classList.toggle('selected', c.dataset.value === val));
+      toggleFlatsField(val);
+    }
+    syncTypeCards(typeSelect ? typeSelect.value : '');
+    typeCards.forEach(card => {
+      card.addEventListener('click', function () {
+        if (typeSelect) typeSelect.value = this.dataset.value;
+        syncTypeCards(this.dataset.value);
+      });
+    });
+
+    // Fix map size after layout
+    setTimeout(() => map.invalidateSize(), 200);
+  });
+</script>
+
+{% endblock %}

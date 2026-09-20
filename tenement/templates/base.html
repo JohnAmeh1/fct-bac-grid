@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Bwari Area Council — Digital Tenement Rate System{% endblock %}</title>
+  {% load static %}
+  <link rel="icon" type="image/jpeg" href="{% static 'images/download.jpg' %}">
+  <link rel="shortcut icon" type="image/jpeg" href="{% static 'images/download.jpg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <!-- Notification bell styles: permanent, never overridden by child templates -->
+  <style>
+  /* ===== NOTIFICATION BELL — global, hardcoded values (no CSS vars) ===== */
+  .notification-bell-wrapper { position: relative; }
+
+  .notification-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 10px; font-weight: 700;
+    min-width: 16px; height: 16px;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #fff;
+    line-height: 1;
+  }
+  .notification-badge.mobile { position: static; margin-left: 8px; }
+
+  #notificationDropdown {
+    position: fixed;
+    width: min(360px, 90vw);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+    z-index: 9999;
+    overflow: hidden;
+  }
+  #notificationDropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .notif-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #0f1117;
+  }
+  .notif-dropdown-body {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .notification-item {
+    display: flex;
+    padding: 14px 18px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .notification-item.unread { background: #eff6ff; }
+  .notification-item:hover { background: #f9fafb; }
+  .notification-item:last-child { border-bottom: none; }
+  .notification-content { flex: 1; }
+  .notification-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: #0f1117; }
+  .notification-message { font-size: 0.78rem; color: #6b7280; line-height: 1.4; }
+  .notification-time { font-size: 0.7rem; color: #9ca3af; margin-top: 6px; }
+  .empty-notifications { padding: 32px 24px; text-align: center; color: #9ca3af; font-size: 0.85rem; }
+  .notif-text-btn {
+    background: none; border: none;
+    color: #15803d; font-size: 0.78rem;
+    cursor: pointer; font-weight: 500;
+    padding: 0;
+  }
+  .notif-text-btn:hover { text-decoration: underline; }
+
+  .navbar, .nav-container, .nav-links, .notification-bell-wrapper { overflow: visible !important; }
+
+  /* ===== MEGA MENU STYLES ===== */
+  .bylaw-mega-menu {
+    width: min(820px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    padding: 16px 12px;
+    /* Clamp right edge so it never exits the viewport */
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  /* If the dropdown would clip the right edge, anchor it right instead */
+  @media (max-width: 1100px) {
+    .bylaw-mega-menu {
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+  }
+  .mega-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .mega-menu-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* prevent grid blowout */
+  }
+  .mega-menu-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #15803d;
+    padding: 6px 14px 4px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: normal; /* allow label to wrap on tight columns */
+  }
+  .mega-menu-col .dropdown-item {
+    font-size: 0.78rem;
+    padding: 7px 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (max-width: 960px) {
+    .bylaw-mega-menu {
+      width: min(520px, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+    .mega-menu-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .mega-menu-col .dropdown-item {
+      white-space: normal;
+    }
+  }
+  @media (max-width: 640px) {
+    .bylaw-mega-menu {
+      width: calc(100vw - 16px);
+      max-width: calc(100vw - 16px);
+    }
+    .mega-menu-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ===== BYLAW PAGE STYLES (shared) ===== */
+  .bylaw-hero {
+    position: relative;
+    background: linear-gradient(135deg, #0f1117 0%, #1a1f2e 50%, #0f1117 100%);
+    padding: 80px 0 56px;
+    overflow: hidden;
+  }
+  .bylaw-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: url("{% static 'images/pattern.png' %}") center/cover;
+    opacity: 0.04;
+  }
+  .bylaw-hero-content {
+    position: relative;
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .bylaw-badge {
+    display: inline-block;
+    background: rgba(21, 128, 61, 0.15);
+    color: #22c55e;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+    letter-spacing: 0.03em;
+  }
+  .bylaw-hero-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 12px;
+    line-height: 1.25;
+  }
+  .bylaw-hero-subtitle {
+    font-size: 1.05rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+  .bylaw-hero-meta {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .bylaw-hero-meta span {
+    color: #6b7280;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bylaw-hero-meta i { color: #15803d; }
+  .bylaw-content-section {
+    padding: 56px 0 80px;
+    background: #f8fafc;
+  }
+  .bylaw-content-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .bylaw-sidebar { position: sticky; top: 90px; }
+  .bylaw-sidebar-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .bylaw-sidebar-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f1117;
+    padding: 14px 18px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .bylaw-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  .bylaw-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    font-size: 0.82rem;
+    color: #4b5563;
+    text-decoration: none;
+    transition: all 0.18s;
+    border-left: 3px solid transparent;
+  }
+  .bylaw-sidebar-link:hover {
+    background: #f0fdf4;
+    color: #15803d;
+    border-left-color: #86efac;
+  }
+  .bylaw-sidebar-link.active {
+    background: #f0fdf4;
+    color: #15803d;
+    font-weight: 600;
+    border-left-color: #15803d;
+  }
+  .bylaw-sidebar-link i {
+    width: 18px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+  .bylaw-sidebar-link:hover i,
+  .bylaw-sidebar-link.active i { color: #15803d; }
+  .bylaw-main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0; /* prevent content blowing out its grid cell */
+  }
+  .bylaw-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .bylaw-card-header {
+    padding: 18px 24px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .bylaw-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f1117;
+    margin: 0;
+  }
+  .bylaw-card-body { padding: 24px; }
+  .bylaw-card-body p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #374151;
+    margin-bottom: 14px;
+  }
+  .bylaw-card-body p:last-child { margin-bottom: 0; }
+  .bylaw-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .bylaw-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .bylaw-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 8px;
+  }
+  .definition-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .definition-item {
+    display: flex;
+    gap: 8px;
+    font-size: 0.93rem;
+    line-height: 1.6;
+    flex-wrap: wrap;
+  }
+  .definition-term {
+    font-weight: 700;
+    color: #0f1117;
+    white-space: normal; /* was nowrap — caused horizontal scroll on mobile */
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  .definition-desc { color: #4b5563; min-width: 0; flex: 1; }
+  .bylaw-table-wrapper { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+  .bylaw-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 420px; /* table scrolls rather than crushing */
+  }
+  .bylaw-table thead th {
+    background: #15803d;
+    color: #fff;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+  }
+  .bylaw-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+    vertical-align: top;
+  }
+  .bylaw-table tbody tr:nth-child(even) { background: #f9fafb; }
+  .bylaw-table tbody tr:hover { background: #f0fdf4; }
+  .bylaw-signature-block {
+    text-align: center;
+    padding: 24px;
+    background: #fff;
+    border: 2px solid #15803d;
+    border-radius: 12px;
+  }
+  .bylaw-passed-stamp {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #15803d;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .bylaw-card-body ul, .bylaw-card-body ol {
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+  .bylaw-card-body li {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+  .bylaw-schedule-note {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    color: #92400e;
+    margin-top: 16px;
+  }
+  .bylaw-schedule-note strong { color: #78350f; }
+
+  /* ── Bylaw responsive ── */
+  @media (max-width: 900px) {
+    .bylaw-content-grid { grid-template-columns: 1fr; }
+    .bylaw-sidebar { position: static; order: -1; }
+    .bylaw-sidebar-nav { max-height: 300px; }
+    .bylaw-hero-title { font-size: clamp(1.3rem, 4vw, 1.8rem); }
+    .bylaw-hero { padding: 56px 0 36px; }
+    .bylaw-content-section { padding: 32px 0 48px; }
+    .bylaw-card-body { padding: 18px 16px; }
+    .bylaw-card-header { padding: 14px 18px; }
+  }
+  @media (max-width: 480px) {
+    .bylaw-hero-title { font-size: 1.3rem; }
+    .bylaw-hero-subtitle { font-size: 0.9rem; }
+    .bylaw-card-body { padding: 14px 12px; }
+    .bylaw-card-body p, .bylaw-card-body li { font-size: 0.9rem; }
+    .bylaw-card-title { font-size: 1rem; }
+    .definition-item { flex-direction: column; gap: 2px; }
+  }
+
+  /* ── Global overflow guard ── */
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  /* ── Announcement bar wrapping ── */
+  .announce-bar .announce-inner {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    text-align: center;
+  }
+  @media (max-width: 640px) {
+    .announce-bar .announce-inner { padding: 8px 12px; font-size: 0.78rem; }
+    .announce-bar .announce-link { white-space: nowrap; }
+  }
+
+  /* ── Navbar tablet squeeze fix (768–1024px) ── */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    .nav-container { gap: 8px; }
+    .logo-sub { display: none; } /* drop long subtitle to prevent nav squeeze */
+    .nav-links { gap: 2px; }
+    .nav-link { font-size: 0.82rem; padding: 6px 8px; }
+    .nav-actions .btn { padding: 7px 14px; font-size: 0.82rem; }
+  }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- ===== TOP ANNOUNCEMENT BAR ===== -->
+  <div class="announce-bar">
+    <div class="announce-inner">
+      <i class="fas fa-circle-info"></i>
+      <span>2026 Digital rate assessment is now open.</span>
+      {% comment %} <span>2026 tenement and business rate assessment is now open. Pay before the deadline to avoid penalties.</span> {% endcomment %}
+      <a href="{% url 'signup' %}" class="announce-link">Register Now &rarr;</a>
+    </div>
+  </div>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+
+      <!-- Logo -->
+      <a href="{% url 'home' %}" class="nav-logo">
+        <div class="logo-emblem">
+          <img src="{% static 'images/download.jpg' %}" alt="Bwari Area Council Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="logo-fallback" style="display:none">
+            <span>B</span>
+          </div>
+        </div>
+        <div class="logo-text">
+          <span class="logo-main">Bwari Area Council</span>
+          <span class="logo-sub">Digital Tenement Rate System</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <ul class="nav-links" id="navLinks">
+        <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
+        <li class="has-dropdown">
+          <a href="#" class="nav-link dropdown-toggle">How It Works <i class="fas fa-chevron-down fa-xs"></i></a>
+          <div class="dropdown-menu">
+            <a href="{% url 'register_property' %}" class="dropdown-item"><i class="fas fa-user-plus"></i> Register Property</a>
+            <a href="{% url 'landlord_payments' %}" class="dropdown-item"><i class="fas fa-file-invoice-dollar"></i> Generate Bill</a>
+            <a href="{% url 'landlord_payments' %}" class="dropdown-item"><i class="fas fa-credit-card"></i> Pay Online</a>
+            <a href="{% url 'landlord_properties' %}" class="dropdown-item"><i class="fas fa-chart-bar"></i> Track Compliance</a>
+          </div>
+        </li>
+
+        <!-- ===== BY LAWS MEGA MENU (DESKTOP) ===== -->
+        <li class="has-dropdown">
+          <a href="{% url 'bylaw_preliminary' %}" class="nav-link dropdown-toggle">Gazette <i class="fas fa-chevron-down fa-xs"></i></a>
+          <div class="dropdown-menu bylaw-mega-menu">
+            <div class="mega-menu-grid">
+
+              <!-- Column 1: General & Administration -->
+              <div class="mega-menu-col">
+                <span class="mega-menu-label">General &amp; Administration</span>
+                <a href="{% url 'bylaw_preliminary' %}" class="dropdown-item"><i class="fas fa-scale-balanced"></i> Preliminary</a>
+                <a href="{% url 'bylaw_enabling_law' %}" class="dropdown-item"><i class="fas fa-building-columns"></i> Enabling Law</a>
+                <a href="{% url 'bylaw_allied_matters' %}" class="dropdown-item"><i class="fas fa-file-contract"></i> Allied Matters</a>
+                <a href="{% url 'bylaw_community_tax' %}" class="dropdown-item"><i class="fas fa-hand-holding-dollar"></i> Community Tax</a>
+                <a href="{% url 'bylaw_tenement_rate' %}" class="dropdown-item"><i class="fas fa-file-invoice-dollar"></i> Tenement Rate</a>
+                <a href="{% url 'bylaw_house_numbering' %}" class="dropdown-item"><i class="fas fa-house-chimney"></i> House Numbering</a>
+                <a href="{% url 'bylaw_marriages' %}" class="dropdown-item"><i class="fas fa-rings-wedding"></i> Marriages, Births &amp; Deaths</a>
+              </div>
+
+              <!-- Column 2: Transportation & Infrastructure -->
+              <div class="mega-menu-col">
+                <span class="mega-menu-label">Transport &amp; Infrastructure</span>
+                <a href="{% url 'bylaw_motor_parks' %}" class="dropdown-item"><i class="fas fa-bus"></i> Motor Parks</a>
+                <a href="{% url 'bylaw_mobile_advertisement' %}" class="dropdown-item"><i class="fas fa-ad"></i> Mobile Advertisement</a>
+                <a href="{% url 'bylaw_motorcycle_uses' %}" class="dropdown-item"><i class="fas fa-motorcycle"></i> Motorcycle/Tricycle</a>
+                <a href="{% url 'bylaw_parking_traffic_control' %}" class="dropdown-item"><i class="fas fa-parking"></i> Parking &amp; Traffic Control</a>
+                <a href="{% url 'bylaw_wrong_parking' %}" class="dropdown-item"><i class="fas fa-circle-xmark"></i> Wrong Parking</a>
+                <a href="{% url 'bylaw_cutting_road_tar' %}" class="dropdown-item"><i class="fas fa-road"></i> Cutting of Road Tar</a>
+                <a href="{% url 'bylaw_construction_permits' %}" class="dropdown-item"><i class="fas fa-hard-hat"></i> Construction Permits</a>
+                <a href="{% url 'bylaw_borehole_drilling' %}" class="dropdown-item"><i class="fas fa-water"></i> Borehole Drilling</a>
+              </div>
+
+              <!-- Column 4: Business, Media & Others -->
+              <div class="mega-menu-col">
+                <span class="mega-menu-label">Business, Media &amp; Others</span>
+                <a href="{% url 'bylaw_commercial_pos_operators' %}" class="dropdown-item"><i class="fas fa-cash-register"></i> Commercial POS Operators</a>
+                <a href="{% url 'bylaw_contractors' %}" class="dropdown-item"><i class="fas fa-trowel-bricks"></i> Contractors</a>
+                <a href="{% url 'bylaw_control_of_advertisement' %}" class="dropdown-item"><i class="fas fa-sign-hanging"></i> Control of Advertisement</a>
+                <a href="{% url 'bylaw_tv_license' %}" class="dropdown-item"><i class="fas fa-tv"></i> TV/Radio License</a>
+                <a href="{% url 'bylaw_movement_keeping_dogs' %}" class="dropdown-item"><i class="fas fa-dog"></i> Movement &amp; Keeping of Dogs</a>
+              </div>
+
+              <!-- Column 3: Commerce, Health & Environment -->
+              <div class="mega-menu-col">
+                <span class="mega-menu-label">Commerce, Health &amp; Environment</span>
+                <a href="{% url 'bylaw_foodstuff_regulation' %}" class="dropdown-item"><i class="fas fa-utensils"></i> Foodstuff Regulation</a>
+                <a href="{% url 'bylaw_liquor_licensing' %}" class="dropdown-item"><i class="fas fa-wine-glass"></i> Liquor Licensing</a>
+                <a href="{% url 'bylaw_market_regulation' %}" class="dropdown-item"><i class="fas fa-store"></i> Market Regulation</a>
+                <a href="{% url 'bylaw_regulated_premises' %}" class="dropdown-item"><i class="fas fa-hotel"></i> Regulated Premises</a>
+                <a href="{% url 'bylaw_laundry_registration' %}" class="dropdown-item"><i class="fas fa-shirt"></i> Laundry Registration</a>
+                <a href="{% url 'bylaw_environmental_sanitation' %}" class="dropdown-item"><i class="fas fa-leaf"></i> Environmental Health</a>
+                <a href="{% url 'bylaw_pest_control' %}" class="dropdown-item"><i class="fas fa-bug"></i> Pest Control</a>
+                <a href="{% url 'bylaw_public_toilet' %}" class="dropdown-item"><i class="fas fa-restroom"></i> Public Toilet</a>
+                <a href="{% url 'bylaw_refuse_operation' %}" class="dropdown-item"><i class="fas fa-trash-can"></i> Refuse Operation</a>
+              </div>
+
+
+            </div>
+          </div>
+        </li>
+
+        <li><a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a></li>
+        <li><a href="{% url 'sanitation' %}" class="nav-link {% if request.resolver_match.url_name == 'sanitation' %}active{% endif %}">Sanitation</a></li>
+        <li><a href="{% url 'contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
+        <li class="notification-bell-wrapper">
+          <a href="#" class="nav-link" id="notificationBell">
+            <i class="far fa-bell"></i>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+          </a>
+          <div id="notificationDropdown">
+            <div class="notif-dropdown-header">
+              <span>Notifications</span>
+              <button id="markAllReadBtn" class="notif-text-btn">Mark all read</button>
+            </div>
+            <div class="notif-dropdown-body" id="notificationList">
+              <div class="empty-notifications">Loading...</div>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Desktop CTA Buttons -->
+      <div class="nav-actions" id="navActions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="btn btn-ghost">Dashboard</a>
+          <a href="{% url 'logout' %}" class="btn btn-primary">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-ghost">Login</a>
+          <a href="{% url 'signup' %}" class="btn btn-primary">Register</a>
+        {% endif %}
+      </div>
+
+      <!-- Mobile Hamburger -->
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span class="ham-bar"></span>
+        <span class="ham-bar"></span>
+        <span class="ham-bar"></span>
+      </button>
+    </div>
+
+    <!-- ===== MOBILE DRAWER ===== -->
+    <div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-inner">
+
+    <ul class="mobile-nav-links">
+
+      <!-- Home -->
+      <li>
+        <a href="{% url 'home' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+          <span>Home</span>
+          <i class="fas fa-house nav-icon"></i>
+        </a>
+      </li>
+
+      <!-- How It Works (Accordion) -->
+      <li class="accordion-item">
+        <button type="button" class="mobile-nav-link mobile-accordion-btn" onclick="toggleAccordion(this)">
+          <div class="nav-left">
+            <span>How It Works</span>
+          </div>
+          <i class="fas fa-chevron-down acc-icon"></i>
+        </button>
+        <ul class="mobile-accordion-content">
+          <li><a href="{% url 'register_property' %}" class="mobile-sub-link"><i class="fas fa-user-plus"></i><span>Register Property</span></a></li>
+          <li><a href="{% url 'landlord_payments' %}" class="mobile-sub-link"><i class="fas fa-file-invoice-dollar"></i><span>Generate Bill</span></a></li>
+          <li><a href="{% url 'landlord_payments' %}" class="mobile-sub-link"><i class="fas fa-credit-card"></i><span>Pay Online</span></a></li>
+          <li><a href="{% url 'landlord_properties' %}" class="mobile-sub-link"><i class="fas fa-chart-bar"></i><span>Track Compliance</span></a></li>
+        </ul>
+      </li>
+
+      <!-- ===== BY LAWS ACCORDION (MOBILE) ===== -->
+      <li class="accordion-item">
+        <button type="button" class="mobile-nav-link mobile-accordion-btn" onclick="toggleAccordion(this)">
+          <div class="nav-left">
+            {% comment %} <i class="fas fa-scale-balanced"></i> {% endcomment %}
+            <span>Gazette</span>
+          </div>
+          <i class="fas fa-chevron-down acc-icon"></i>
+        </button>
+        <ul class="mobile-accordion-content">
+          <!-- General & Administration -->
+          <li><a href="{% url 'bylaw_preliminary' %}" class="mobile-sub-link"><span>Preliminary</span></a></li>
+          <li><a href="{% url 'bylaw_enabling_law' %}" class="mobile-sub-link"><span>Enabling Law</span></a></li>
+          <li><a href="{% url 'bylaw_allied_matters' %}" class="mobile-sub-link"><span>Allied Matters</span></a></li>
+          <li><a href="{% url 'bylaw_community_tax' %}" class="mobile-sub-link"><span>Community Tax</span></a></li>
+          <li><a href="{% url 'bylaw_tenement_rate' %}" class="mobile-sub-link"><span>Tenement Rate</span></a></li>
+          <li><a href="{% url 'bylaw_house_numbering' %}" class="mobile-sub-link"><span>House Numbering</span></a></li>
+          <li><a href="{% url 'bylaw_marriages' %}" class="mobile-sub-link"><span>Marriages, Births &amp; Deaths</span></a></li>
+          <!-- Transport & Infrastructure -->
+          <li><a href="{% url 'bylaw_motor_parks' %}" class="mobile-sub-link"><span>Motor Parks</span></a></li>
+          <li><a href="{% url 'bylaw_mobile_advertisement' %}" class="mobile-sub-link"><span>Mobile Advertisement</span></a></li>
+          <li><a href="{% url 'bylaw_motorcycle_uses' %}" class="mobile-sub-link"><span>Motorcycle/Tricycle</span></a></li>
+          <li><a href="{% url 'bylaw_parking_traffic_control' %}" class="mobile-sub-link"><span>Parking &amp; Traffic Control</span></a></li>
+          <li><a href="{% url 'bylaw_wrong_parking' %}" class="mobile-sub-link"><span>Wrong Parking</span></a></li>
+          <li><a href="{% url 'bylaw_cutting_road_tar' %}" class="mobile-sub-link"><span>Cutting of Road Tar</span></a></li>
+          <li><a href="{% url 'bylaw_construction_permits' %}" class="mobile-sub-link"><span>Construction Permits</span></a></li>
+          <li><a href="{% url 'bylaw_borehole_drilling' %}" class="mobile-sub-link"><span>Borehole Drilling</span></a></li>
+          <!-- Commerce, Health & Environment -->
+          <li><a href="{% url 'bylaw_foodstuff_regulation' %}" class="mobile-sub-link"><span>Foodstuff Regulation</span></a></li>
+          <li><a href="{% url 'bylaw_liquor_licensing' %}" class="mobile-sub-link"><span>Liquor Licensing</span></a></li>
+          <li><a href="{% url 'bylaw_market_regulation' %}" class="mobile-sub-link"><span>Market Regulation</span></a></li>
+          <li><a href="{% url 'bylaw_regulated_premises' %}" class="mobile-sub-link"><span>Regulated Premises</span></a></li>
+          <li><a href="{% url 'bylaw_laundry_registration' %}" class="mobile-sub-link"><span>Laundry Registration</span></a></li>
+          <li><a href="{% url 'bylaw_environmental_sanitation' %}" class="mobile-sub-link"><span>Environmental Sanitation</span></a></li>
+          <li><a href="{% url 'bylaw_pest_control' %}" class="mobile-sub-link"><span>Pest Control</span></a></li>
+          <li><a href="{% url 'bylaw_public_toilet' %}" class="mobile-sub-link"><span>Public Toilet</span></a></li>
+          <li><a href="{% url 'bylaw_refuse_operation' %}" class="mobile-sub-link"><span>Refuse Operation</span></a></li>
+          <!-- Business, Media & Others -->
+          <li><a href="{% url 'bylaw_commercial_pos_operators' %}" class="mobile-sub-link"><span>Commercial POS Operators</span></a></li>
+          <li><a href="{% url 'bylaw_contractors' %}" class="mobile-sub-link"><span>Contractors</span></a></li>
+          <li><a href="{% url 'bylaw_control_of_advertisement' %}" class="mobile-sub-link"><span>Control of Advertisement</span></a></li>
+          <li><a href="{% url 'bylaw_tv_license' %}" class="mobile-sub-link"><span>TV/Radio License</span></a></li>
+          <li><a href="{% url 'bylaw_movement_keeping_dogs' %}" class="mobile-sub-link"><span>Movement &amp; Keeping of Dogs</span></a></li>
+        </ul>
+      </li>
+
+      <!-- About -->
+      <li>
+        <a href="{% url 'about' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+          <span>About</span>
+          <i class="fas fa-circle-info nav-icon"></i>
+        </a>
+      </li>
+
+      <!-- Sanitation -->
+      <li>
+        <a href="{% url 'sanitation' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'sanitation' %}active{% endif %}">
+          <span>Sanitation</span>
+          <i class="fas fa-leaf nav-icon"></i>
+        </a>
+      </li>
+
+      <!-- Contact -->
+      <li>
+        <a href="{% url 'contact' %}" class="mobile-nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+          <span>Contact</span>
+          <i class="fas fa-envelope nav-icon"></i>
+        </a>
+      </li>
+
+      <!-- Notifications -->
+      <li class="mobile-notification-bell">
+        <a href="#" class="mobile-nav-link" id="mobileNotificationBell">
+          <span class="nav-text">Notifications</span>
+          <div class="nav-left notification-icon-wrapper">
+            <div class="icon-badge">
+              <span id="mobileNotificationBadge" class="notification-badge mobile" style="display: none;">0</span>
+              <i class="far fa-bell nav-icon"></i>
+            </div>
+          </div>
+        </a>
+      </li>
+
+    </ul>
+
+    <!-- CTA Buttons -->
+    <div class="mobile-cta">
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="btn btn-ghost w-full">Dashboard</a>
+        <a href="{% url 'logout' %}" class="btn btn-primary w-full">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-ghost w-full">Login</a>
+        <a href="{% url 'signup' %}" class="btn btn-primary w-full">Register Now</a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main id="main-content">
+    {% if messages %}
+      <div class="messages-container">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="alert-close"><i class="fas fa-xmark"></i></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer-grid">
+
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <div class="logo-emblem small">
+              <img src="{% static 'images/download.jpg' %}" alt="Bwari" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+              <div class="logo-fallback small" style="display:none"><span>B</span></div>
+            </div>
+            <div>
+              <div class="footer-brand-name">Bwari Area Council</div>
+              <div class="footer-brand-sub">Digital Tenement And Business Rate System</div>
+            </div>
+          </div>
+          <p class="footer-desc">A modern, transparent, and automated revenue solution for Bwari Area Council, Abuja. Pay your tenement rates online — fast, secure, and stress-free.</p>
+          <div class="footer-badges">
+            <span class="f-badge"><i class="fas fa-shield-halved"></i> Secure Payments</span>
+            <span class="f-badge"><i class="fas fa-bolt"></i> Powered by Paystack</span>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'about' %}">About the System</a></li>
+            <li><a href="{% url 'signup' %}">Register</a></li>
+            <li><a href="{% url 'login' %}">Login to Portal</a></li>
+            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Services -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Services</h4>
+          <ul class="footer-links">
+            <li><a href="{% url 'dashboard' %}">Pay Tenement Rate</a></li>
+            <li><a href="{% url 'dashboard' %}">Generate Invoice</a></li>
+            <li><a href="{% url 'dashboard' %}">Submit Complaint</a></li>
+            <li><a href="{% url 'dashboard' %}">Download Receipt</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Contact</h4>
+          <ul class="footer-contact-list">
+            <li><i class="fas fa-location-dot"></i> Bwari Area Council Secretariat, Abuja</li>
+            <li><i class="fas fa-phone"></i> +234 800 000 0000</li>
+            <li><i class="fas fa-envelope"></i> info@bwaricouncil.gov.ng</li>
+            <li><i class="fas fa-clock"></i> Mon – Fri: 8am – 5pm</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-bottom-inner">
+        <p>&copy; {% now "Y" %} Bwari Area Council. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Use</a>
+          <a href="#">Support</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    /* ---- MOBILE ACCORDION ---- */
+function toggleAccordion(btn) {
+  const content = btn.nextElementSibling;
+  const isOpen = content.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+}
+
+(function() {
+  'use strict';
+
+  function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, 10) === 'csrftoken=') {
+          cookieValue = decodeURIComponent(cookie.substring(10));
+          break;
+        }
+      }
+    }
+    if (!cookieValue) {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta) cookieValue = meta.getAttribute('content');
+      if (!cookieValue) {
+        const input = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (input) cookieValue = input.value;
+      }
+    }
+    return cookieValue || '';
+  }
+
+  const bell       = document.getElementById('notificationBell');
+  const mobileBell = document.getElementById('mobileNotificationBell');
+  const dropdown   = document.getElementById('notificationDropdown');
+  const badge      = document.getElementById('notificationBadge');
+  const mobileBadge= document.getElementById('mobileNotificationBadge');
+  const listContainer = document.getElementById('notificationList');
+  const markAllBtn = document.getElementById('markAllReadBtn');
+
+  if (!bell || !dropdown || !listContainer) return;
+
+  document.body.appendChild(dropdown);
+
+  let currentAnchor = null;
+
+  function updateBadge(count) {
+    const displayCount = count > 9 ? '9+' : String(count);
+    [badge, mobileBadge].forEach(b => {
+      if (!b) return;
+      b.textContent = displayCount;
+      b.style.display = count > 0 ? 'flex' : 'none';
+    });
+  }
+
+  function positionDropdown(anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const dropW = Math.min(360, window.innerWidth * 0.9);
+    let left = rect.left + rect.width / 2 - dropW / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - dropW - 8));
+    dropdown.style.top   = (rect.bottom + window.scrollY + 10) + 'px';
+    dropdown.style.left  = left + 'px';
+    dropdown.style.width = dropW + 'px';
+    dropdown.style.transform = 'none';
+    dropdown.style.position = 'absolute';
+  }
+
+  function openDropdown(anchor) {
+    currentAnchor = anchor;
+    positionDropdown(anchor);
+    dropdown.classList.add('show');
+    fetchAnnouncements();
+  }
+
+  function closeDropdown() {
+    dropdown.classList.remove('show');
+    currentAnchor = null;
+  }
+
+  function toggleDropdown(anchor) {
+    if (dropdown.classList.contains('show') && currentAnchor === anchor) {
+      closeDropdown();
+    } else {
+      openDropdown(anchor);
+    }
+  }
+
+  function fetchAnnouncements() {
+    listContainer.innerHTML = '<div class="empty-notifications">Loading…</div>';
+    fetch('/announcements/list/')
+      .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+      .then(data => {
+        renderAnnouncements(data.announcements);
+        updateBadge(data.unread_count);
+      })
+      .catch(() => {
+        listContainer.innerHTML = '<div class="empty-notifications">Could not load notifications</div>';
+      });
+  }
+
+  function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
+
+  function renderAnnouncements(announcements) {
+    if (!announcements || !announcements.length) {
+      listContainer.innerHTML = '<div class="empty-notifications">No announcements yet</div>';
+      return;
+    }
+    let html = '';
+    announcements.forEach(ann => {
+      const cls = ann.read ? '' : 'unread';
+      const preview = ann.message.length > 100 ? escapeHtml(ann.message).substring(0, 100) + '…' : escapeHtml(ann.message);
+      html += `
+        <div class="notification-item ${cls}" data-id="${ann.id}">
+          <div class="notification-content">
+            <div class="notification-title">${escapeHtml(ann.title)}</div>
+            <div class="notification-message">${preview}</div>
+            <div class="notification-time">${ann.created_at}</div>
+          </div>
+        </div>`;
+    });
+    listContainer.innerHTML = html;
+
+    listContainer.querySelectorAll('.notification-item').forEach(item => {
+      item.addEventListener('click', function() {
+        if (this.classList.contains('unread')) {
+          markAsRead(this.dataset.id);
+          this.classList.remove('unread');
+        }
+      });
+    });
+  }
+
+  function markAsRead(id) {
+    fetch(`/announcements/${id}/read/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrfToken() },
+    }).then(() => fetchAnnouncements()).catch(console.warn);
+  }
+
+  function markAllAsRead() {
+    const unread = listContainer.querySelectorAll('.notification-item.unread');
+    if (!unread.length) return;
+    const csrf = getCsrfToken();
+    Promise.all(Array.from(unread).map(item =>
+      fetch(`/announcements/${item.dataset.id}/read/`, {
+        method: 'POST', headers: { 'X-CSRFToken': csrf },
+      })
+    )).then(() => fetchAnnouncements()).catch(console.warn);
+  }
+
+  bell.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggleDropdown(bell); });
+
+  if (mobileBell) {
+    mobileBell.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggleDropdown(mobileBell); });
+  }
+
+  document.addEventListener('click', e => {
+    if (
+      !e.target.closest('#notificationBell') &&
+      !e.target.closest('#mobileNotificationBell') &&
+      !e.target.closest('#notificationDropdown')
+    ) closeDropdown();
+  });
+
+  dropdown.addEventListener('click', e => e.stopPropagation());
+
+  if (markAllBtn) markAllBtn.addEventListener('click', markAllAsRead);
+
+  window.addEventListener('scroll', () => {
+    if (dropdown.classList.contains('show') && currentAnchor) positionDropdown(currentAnchor);
+  }, { passive: true });
+  window.addEventListener('resize', () => {
+    if (dropdown.classList.contains('show') && currentAnchor) positionDropdown(currentAnchor);
+  });
+
+  fetchAnnouncements();
+})();
+</script>
+  {% block extra_head %}{% endblock %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

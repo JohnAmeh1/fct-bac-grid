@@ -1,0 +1,1 @@
+web: gunicorn Digital_Tenement_Rate_Management_System.wsgi:application --bind 0.0.0.0:$PORT

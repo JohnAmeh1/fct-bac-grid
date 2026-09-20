@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Regulated Premises — Bwari Area Council Bye-Laws{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; font-size: 0.88rem; color: #991b1b; margin: 16px 0; }
+  .bylaw-alert i { color: #dc2626; margin-top: 2px; flex-shrink: 0; }
+  .bylaw-schedule-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85rem; }
+  .bylaw-schedule-table th { background: #f0fdf4; color: #065f46; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; text-align: left; border-bottom: 2px solid #d1fae5; }
+  .bylaw-schedule-table td { padding: 9px 14px; color: #374151; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-schedule-table tr:last-child td { border-bottom: none; }
+  .bylaw-schedule-table td:not(:first-child) { text-align: right; white-space: nowrap; }
+  .bylaw-schedule-table th:not(:first-child) { text-align: right; }
+  .bylaw-dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
+  .bylaw-dept-item { display: flex; align-items: center; gap: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; font-weight: 500; color: #374151; }
+  .bylaw-dept-item i { color: #059669; flex-shrink: 0; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } .bylaw-schedule-table { font-size: 0.78rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-utensils"></i>
+    Part XXVI — Bye-Law No. 25 of 2016
+  </div>
+  <h1>Regulated Premises</h1>
+  <p>Hotels, Restaurants, Bakeries, Dairies, Food Establishments &amp; Related Premises within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XXVI — Regulated Premises</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-hotel"></i></div>
+      <div>
+        <h2>Regulated Premises Bye-Law No. 25 of 2016</h2>
+        <span>Part XXVI — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>This Bye-Law governs hotels, guest inns, restaurants, eating houses, bakeries, aerated water manufacturers, food preserving establishments, dairies, and all places of sale of food to the public within the territorial jurisdiction of Bwari Area Council.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 25 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XXVI</span></div>
+      <div class="bylaw-meta-item"><label>Authority</label><span>Bwari Area Council, FCT Abuja</span></div>
+      <div class="bylaw-meta-item"><label>Legal Basis</label><span>Section 7, Fourth Schedule — 1999 Constitution</span></div>
+    </div>
+    <h3>Premises Covered by this Bye-Law</h3>
+    <div class="bylaw-dept-grid">
+      <div class="bylaw-dept-item"><i class="fas fa-hotel"></i> Hotels &amp; Guest Inns</div>
+      <div class="bylaw-dept-item"><i class="fas fa-utensils"></i> Restaurants &amp; Eating Houses</div>
+      <div class="bylaw-dept-item"><i class="fas fa-bread-slice"></i> Bakeries &amp; Confectioneries</div>
+      <div class="bylaw-dept-item"><i class="fas fa-droplet"></i> Aerated Water Manufacturers</div>
+      <div class="bylaw-dept-item"><i class="fas fa-box-open"></i> Food Preserving Establishments</div>
+      <div class="bylaw-dept-item"><i class="fas fa-store"></i> Places of Sale of Food to the Public</div>
+    </div>
+  </div>
+
+  <!-- Registration & Permit -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-file-circle-check"></i></div>
+      <div>
+        <h2>Registration &amp; Annual Renewal</h2>
+        <span>Sections 1–6 — Permit Conditions</span>
+      </div>
+    </div>
+    <p>All regulated premises shall be registered annually in the office of the Area Council by the proprietor or occupier. No person shall set up a regulated premises without prior permission from the Council.</p>
+    <ul class="bylaw-func-list">
+      <li>An Environmental Health Officer must certify the premises as hygienically fit for the intended purpose.</li>
+      <li>An Environmental Health Officer must certify the applicant and all workers as free from any communicable or food-transmissible diseases.</li>
+      <li>The applicant shall pay fees as specified under this Bye-Law.</li>
+      <li>Any premises not re-registered in January of each year shall be deemed unregistered premises.</li>
+      <li>A permit expires on 31st December of the year of payment and may be renewed annually on application by the holder.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Any holder who fails to renew their permit within two months of expiration and remains in business shall be guilty of an offence, liable to a fine of ₦50,000 or six months imprisonment or both.</span>
+    </div>
+  </div>
+
+  <!-- Health & Sanitation Standards -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-shield-virus"></i></div>
+      <div>
+        <h2>Health &amp; Sanitation Standards</h2>
+        <span>Sections 9–23 — Operational Requirements</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>A food handler suffering from an infectious disease or open wound shall cease to handle food until certified fit by a qualified medical officer.</li>
+      <li>All regulated premises shall be paved or concreted and drained to the satisfaction of the Environmental Health Officer. The area shall be no less than 200 square feet.</li>
+      <li>All regulated premises shall be lime-washed inside throughout once every six months, or thoroughly cleaned periodically.</li>
+      <li>No animal or bird shall be allowed on bakery, dairy or aerated water manufacturing premises, which shall be made fly-proof.</li>
+      <li>No room used for any regulated purpose shall be used as a sleeping apartment.</li>
+      <li>All flour, foodstuffs and water shall be kept adequately covered and all pans, moulds and utensils maintained clean.</li>
+      <li>Only water from a source approved by the Environmental Health Officer shall be used on regulated premises.</li>
+      <li>Premises shall be open for inspection by the Health Officer between 06:00 and 18:30 on any working day.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>Any hotel, guest inn or motel used to harbor commercial sex workers within the Council's jurisdiction shall be guilty of an offence, liable to a fine of ₦500,000 for an individual or ₦2,000,000 for a corporate body, without an option of fine.</span>
+    </div>
+  </div>
+
+  <!-- Schedule - License Fees -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-table-list"></i></div>
+      <div>
+        <h2>First Schedule — License Fees</h2>
+        <span>Annual Fee Ranges (₦) by Establishment Size</span>
+      </div>
+    </div>
+    <table class="bylaw-schedule-table">
+      <thead>
+        <tr>
+          <th>Establishment</th>
+          <th>Large (₦)</th>
+          <th>Medium (₦)</th>
+          <th>Small (₦)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Hotels</td><td>100,000 – 160,000</td><td>40,000 – 70,000</td><td>10,000 – 30,000</td></tr>
+        <tr><td>Guest Inn</td><td>20,000 – 30,000</td><td>15,000 – 20,000</td><td>10,000 – 15,000</td></tr>
+        <tr><td>Restaurant</td><td>30,000 – 70,000</td><td>10,000 – 30,000</td><td>5,000 – 10,000</td></tr>
+        <tr><td>Canteen</td><td>5,000 – 10,000</td><td>3,000 – 7,000</td><td>2,000 – 3,000</td></tr>
+        <tr><td>Joints / Bar</td><td>20,000 – 50,000</td><td>15,000 – 30,000</td><td>3,000 – 10,000</td></tr>
+        <tr><td>Bakery</td><td>50,000 – 100,000</td><td>30,000 – 50,000</td><td>10,000 – 25,000</td></tr>
+        <tr><td>Other Confectioneries</td><td>15,000 – 20,000</td><td>5,000 – 10,000</td><td>1,000 – 5,000</td></tr>
+        <tr><td>Yoghurt &amp; Dairy Foods</td><td>100,000 – 150,000</td><td>50,000 – 70,000</td><td>10,000 – 50,000</td></tr>
+        <tr><td>Portable Water Factory</td><td>120,000 – 250,000</td><td>100,000 – 150,000</td><td>50,000 – 100,000</td></tr>
+        <tr><td>Food Preserving Establishment</td><td>70,000 – 100,000</td><td>15,000 – 60,000</td><td>5,000 – 10,000</td></tr>
+        <tr><td>Food Related Warehouse</td><td>50,000 – 80,000</td><td>20,000 – 50,000</td><td>5,000 – 15,000</td></tr>
+        <tr><td>Food Hawkers</td><td>3,000 – 5,000</td><td>2,000 – 3,000</td><td>1,000 – 2,000</td></tr>
+        <tr><td>Food Related Establishment</td><td>20,000 – 40,000</td><td>10,000 – 30,000</td><td>2,000 – 10,000</td></tr>
+        <tr><td>Other</td><td>5,000 – 10,000</td><td>3,000 – 5,000</td><td>500 – 1,500</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px; font-size:0.82rem; color:#6b7280;"><i class="fas fa-info-circle"></i> These fees are subject to review by the Area Council when necessary.</p>
+  </div>
+
+  <!-- Sanitation Violations -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Third Schedule — Sanitation Violation Fines</h2>
+        <span>Penalties for Specific Sanitation Offences</span>
+      </div>
+    </div>
+    <table class="bylaw-schedule-table">
+      <thead>
+        <tr>
+          <th>Violation</th>
+          <th>Min. Fine (₦)</th>
+          <th>Max. Fine (₦)</th>
+          <th>Imprisonment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Failure to obtain permission</td><td>100,000</td><td>250,000</td><td>1 Year</td></tr>
+        <tr><td>Operating without sanitary conveniences</td><td>50,000</td><td>80,000</td><td>1 Month</td></tr>
+        <tr><td>Failure to clean sidewalk</td><td>2,000</td><td>4,000</td><td>1 Month</td></tr>
+        <tr><td>Littering / throwing out</td><td>3,000</td><td>6,500</td><td>1 Month</td></tr>
+        <tr><td>Sweep-out offence</td><td>1,500</td><td>3,500</td><td>1 Month</td></tr>
+        <tr><td>Failure to use proper dustbin</td><td>30,000</td><td>45,000</td><td>6 Months</td></tr>
+        <tr><td>Failure to cover dustbins</td><td>15,000</td><td>30,000</td><td>1 Month</td></tr>
+        <tr><td>Improper replacement of dustbins</td><td>15,000</td><td>30,000</td><td>1 Month</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_pest_control' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-bug"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Pest Control</strong><span>Part XIX — Bye-Law No. 18</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_public_toilet' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-restroom"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Public Toilet</strong><span>Part XVIII — Bye-Law No. 17</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_tv_license' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-tv"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Radio/TV &amp; Comm. Mast</strong><span>Part XVI — Bye-Law No. 15</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

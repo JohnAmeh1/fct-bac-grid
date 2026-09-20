@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+{% block title %}Contact Us | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --accent: #1e6cf0; --accent-dim: #dbeafe;
+    --amber: #d97706; --amber-dim: #fef3c7;
+    --purple: #7c3aed; --purple-dim: #ede9fe;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 16px; --radius-xl: 24px;
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); }
+
+  @keyframes fadein  { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes slidein { from { opacity:0; transform:translateX(-16px) } to { opacity:1; transform:translateX(0) } }
+  @keyframes pulse-ring {
+    0%   { transform: scale(1);   opacity: .6; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
+  .fade   { animation: fadein .55s ease both; }
+  .fade-1 { animation-delay: .07s; }
+  .fade-2 { animation-delay: .15s; }
+  .fade-3 { animation-delay: .23s; }
+  .fade-4 { animation-delay: .31s; }
+  .fade-5 { animation-delay: .39s; }
+
+  .pg { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+  @media(max-width:640px) { .pg { padding: 0 18px; } }
+
+  /* ─── HERO ────────────────────────────────────────────── */
+  .c-hero {
+    background: var(--ink);
+    padding: 80px 0 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  .c-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+    background-size: 52px 52px;
+  }
+  /* decorative blobs */
+  .c-hero-blob-1 {
+    position: absolute; top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(22,163,74,.2) 0%, transparent 68%);
+    pointer-events: none;
+  }
+  .c-hero-blob-2 {
+    position: absolute; bottom: -60px; left: -60px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(30,108,240,.14) 0%, transparent 68%);
+    pointer-events: none;
+  }
+  .c-hero-inner { position: relative; z-index: 1; text-align: center; }
+
+  .c-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.05);
+    padding: 5px 16px;
+    border-radius: 99px;
+    margin-bottom: 22px;
+  }
+  .c-hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+    font-weight: 700;
+    color: white;
+    line-height: 1.1;
+    letter-spacing: -.045em;
+    margin-bottom: 18px;
+  }
+  .c-hero h1 em { color: #4ade80; font-style: normal; }
+  .c-hero-sub {
+    font-size: 1rem; color: rgba(255,255,255,.55);
+    line-height: 1.8; max-width: 500px; margin: 0 auto 36px;
+  }
+
+  /* quick-action pills */
+  .c-hero-actions {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  }
+  .c-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px;
+    border-radius: 99px;
+    font-size: .82rem; font-weight: 600;
+    text-decoration: none;
+    transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+    cursor: pointer; border: none;
+  }
+  .c-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  .c-pill-green  { background: var(--green); color: white; }
+  .c-pill-ghost  { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); border: 1px solid rgba(255,255,255,.14); }
+  .c-pill-ghost:hover { background: rgba(255,255,255,.14); }
+
+  /* ─── STRIP ───────────────────────────────────────────── */
+  .c-strip {
+    background: var(--green);
+    padding: 14px 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px;
+    font-size: .82rem; font-weight: 600; color: white;
+  }
+  .c-strip i { opacity: .85; }
+  .c-strip-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,.45);
+  }
+
+  /* ─── MAIN ────────────────────────────────────────────── */
+  .c-main { padding: 72px 0 88px; background: var(--surface-2); }
+
+  /* section heading */
+  .c-section-label {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 8px;
+  }
+  .c-section-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700; color: var(--ink);
+    letter-spacing: -.03em; margin-bottom: 8px;
+  }
+  .c-section-sub { font-size: .9rem; color: var(--ink-3); line-height: 1.7; max-width: 480px; }
+
+  /* ─── CHANNELS GRID ───────────────────────────────────── */
+  .c-channels {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 36px;
+  }
+  @media(max-width:780px) { .c-channels { grid-template-columns: 1fr; } }
+
+  .c-channel {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 28px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    text-decoration: none;
+  }
+  .c-channel:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,.09);
+    transform: translateY(-2px);
+    border-color: var(--border-2);
+  }
+  /* accent stripe at top */
+  .c-channel::before {
+    content: '';
+    position: absolute; top: 0; left: 28px; right: 28px;
+    height: 3px; border-radius: 0 0 4px 4px;
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+  .c-channel:hover::before { opacity: 1; }
+  .c-channel.green::before  { background: var(--green); }
+  .c-channel.blue::before   { background: var(--accent); }
+  .c-channel.amber::before  { background: var(--amber); }
+  .c-channel.purple::before { background: var(--purple); }
+
+  .c-channel-head {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .c-ch-icon {
+    width: 44px; height: 44px; border-radius: var(--radius-lg); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem;
+  }
+  .c-ch-icon.green  { background: var(--green-dim);  color: var(--green); }
+  .c-ch-icon.blue   { background: var(--accent-dim); color: var(--accent); }
+  .c-ch-icon.amber  { background: var(--amber-dim);  color: var(--amber); }
+  .c-ch-icon.purple { background: var(--purple-dim); color: var(--purple); }
+
+  .c-ch-tag  { font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 2px; }
+  .c-ch-name { font-size: 1rem; font-weight: 700; color: var(--ink); }
+
+  .c-ch-val {
+    font-size: .92rem; font-weight: 600; color: var(--ink);
+    line-height: 1.5; margin-bottom: 6px;
+  }
+  .c-ch-note { font-size: .78rem; color: var(--ink-3); line-height: 1.6; }
+
+  .c-ch-action {
+    margin-top: auto; padding-top: 18px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .8rem; font-weight: 700; text-decoration: none;
+    transition: gap var(--transition);
+  }
+  .c-ch-action:hover { gap: 9px; }
+  .c-ch-action.green  { color: var(--green); }
+  .c-ch-action.blue   { color: var(--accent); }
+  .c-ch-action.amber  { color: var(--amber); }
+  .c-ch-action.purple { color: var(--purple); }
+
+  /* ─── TWO-COL LAYOUT ──────────────────────────────────── */
+  .c-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 56px;
+  }
+  @media(max-width:820px) { .c-layout { grid-template-columns: 1fr; } }
+
+  /* ─── ADDRESS CARD ────────────────────────────────────── */
+  .c-address-card {
+    background: var(--ink);
+    border-radius: var(--radius-xl);
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+    color: white;
+  }
+  .c-address-card::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(22,163,74,.22) 0%, transparent 68%);
+  }
+  .c-address-card::after {
+    content: '';
+    position: absolute; bottom: -40px; left: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(30,108,240,.15) 0%, transparent 68%);
+  }
+  .c-address-inner { position: relative; z-index: 1; }
+  .c-address-eyebrow {
+    font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: #4ade80; margin-bottom: 14px;
+  }
+  .c-address-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.45rem; font-weight: 700;
+    line-height: 1.25; letter-spacing: -.03em;
+    color: white; margin-bottom: 20px;
+  }
+  .c-address-line {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .c-address-line:last-of-type { border-bottom: none; }
+  .c-al-icon {
+    width: 32px; height: 32px; border-radius: var(--radius);
+    background: rgba(255,255,255,.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; color: rgba(255,255,255,.6);
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .c-al-label { font-size: .7rem; color: rgba(255,255,255,.4); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 3px; }
+  .c-al-val   { font-size: .88rem; color: rgba(255,255,255,.9); font-weight: 500; line-height: 1.55; }
+
+  /* map placeholder */
+  .c-map-wrap {
+    margin-top: 22px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.1);
+    height: 130px;
+    position: relative;
+    background: rgba(255,255,255,.04);
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    font-size: .82rem; font-weight: 600; color: rgba(255,255,255,.4);
+    cursor: pointer;
+    transition: background var(--transition);
+  }
+  .c-map-wrap:hover { background: rgba(255,255,255,.07); }
+
+  /* ─── HOURS CARD ──────────────────────────────────────── */
+  .c-hours-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px 28px;
+    height: 100%;
+  }
+  .c-hours-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .c-hours-icon {
+    width: 38px; height: 38px; border-radius: var(--radius);
+    background: var(--green-dim); color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem;
+  }
+  .c-hours-title { font-size: 1rem; font-weight: 700; color: var(--ink); }
+  .c-hours-subtitle { font-size: .78rem; color: var(--ink-4); margin-top: 1px; }
+
+  .c-hours-list { display: flex; flex-direction: column; gap: 0; }
+  .c-hr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--surface-3);
+  }
+  .c-hr:last-child { border-bottom: none; }
+  .c-hr-day { font-size: .855rem; font-weight: 500; color: var(--ink-3); display: flex; align-items: center; gap: 7px; }
+  .c-hr-day-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .c-hr-day-dot.open   { background: var(--green); }
+  .c-hr-day-dot.closed { background: #d1d5db; }
+  .c-hr-time { font-size: .8rem; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--ink); }
+  .c-closed-badge {
+    font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+    padding: 3px 10px; border-radius: 99px;
+    background: #fee2e2; color: #dc2626;
+    text-transform: uppercase;
+  }
+
+  /* today highlight */
+  .c-hr.today {
+    background: var(--green-dim);
+    border-radius: var(--radius);
+    padding: 11px 12px;
+    margin: 0 -12px;
+  }
+  .c-hr.today .c-hr-day { color: var(--green-dk); font-weight: 600; }
+  .c-hr.today .c-hr-time { color: var(--green-dk); }
+
+  .c-hours-note {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--amber-dim);
+    border-radius: var(--radius);
+    font-size: .78rem; color: #92400e;
+    display: flex; align-items: flex-start; gap: 8px;
+    line-height: 1.55;
+  }
+  .c-hours-note i { margin-top: 1px; flex-shrink: 0; }
+
+  /* ─── ONLINE PORTAL BAND ──────────────────────────────── */
+  .c-portal-band {
+    margin-top: 56px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #dbeafe 100%);
+    border: 1.5px solid #bbf7d0;
+    border-radius: var(--radius-xl);
+    padding: 32px 36px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    flex-wrap: wrap;
+  }
+  .c-portal-left { display: flex; align-items: center; gap: 16px; }
+  .c-portal-icon {
+    width: 52px; height: 52px; border-radius: var(--radius-lg);
+    background: var(--green-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; color: var(--green); flex-shrink: 0;
+    position: relative;
+  }
+  /* live pulse */
+  .c-portal-icon::after {
+    content: '';
+    position: absolute; top: 8px; right: 8px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+  }
+  .c-portal-pulse {
+    position: absolute; top: 8px; right: 8px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); z-index: 1;
+  }
+  .c-portal-pulse::before {
+    content: '';
+    position: absolute; inset: -2px;
+    border-radius: 50%; background: var(--green);
+    animation: pulse-ring 1.8s ease-out infinite;
+  }
+  .c-portal-title { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+  .c-portal-sub { font-size: .82rem; color: var(--ink-3); }
+  .c-portal-badge {
+    font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+    padding: 3px 9px; border-radius: 99px;
+    background: var(--green); color: white; text-transform: uppercase;
+    margin-left: 8px; vertical-align: middle;
+  }
+  .c-portal-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ink); color: white;
+    font-size: .85rem; font-weight: 600;
+    padding: 11px 22px; border-radius: var(--radius);
+    text-decoration: none;
+    transition: background var(--transition), transform var(--transition);
+    white-space: nowrap;
+  }
+  .c-portal-link:hover { background: #1c2030; transform: translateY(-1px); }
+
+  /* ─── RESPONSIVE FIXES ────────────────────────────────── */
+  @media(max-width:540px) {
+    .c-address-card, .c-hours-card { padding: 24px 20px; }
+    .c-portal-band { padding: 24px 20px; flex-direction: column; }
+    .c-portal-link { width: 100%; justify-content: center; }
+    .c-channels { gap: 14px; }
+  }
+</style>
+
+<!-- ─── HERO ──────────────────────────────────────────── -->
+<section class="c-hero">
+  <div class="c-hero-blob-1"></div>
+  <div class="c-hero-blob-2"></div>
+  <div class="pg">
+    <div class="c-hero-inner">
+      <div class="c-eyebrow fade"><i class="fas fa-headset"></i> Get in Touch</div>
+      <h1 class="fade fade-1">Reach <em>Bwari</em><br>Area Council</h1>
+      <p class="c-hero-sub fade fade-2">
+        Visit us at the Secretariat, call our support line, or use the online portal.
+        We're here to help every step of the way.
+      </p>
+      <div class="c-hero-actions fade fade-3">
+        <a href="tel:+2348003BWARITC" class="c-pill c-pill-green">
+          <i class="fas fa-phone"></i> Call Support
+        </a>
+        <a href="mailto:support@bwari.gov.ng" class="c-pill c-pill-ghost">
+          <i class="fas fa-envelope"></i> Send Email
+        </a>
+        <a href="https://maps.google.com/?q=Bwari+Area+Council+Secretariat" target="_blank" class="c-pill c-pill-ghost">
+          <i class="fas fa-location-dot"></i> Get Directions
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STRIP ─────────────────────────────────────────── -->
+<div class="c-strip">
+  <i class="fas fa-circle-check"></i>
+  Responses within 1–2 business days
+  <span class="c-strip-dot"></span>
+  Monday – Friday, 8am – 5pm WAT
+  <span class="c-strip-dot"></span>
+  Portal available 24 / 7
+</div>
+
+<!-- ─── MAIN ──────────────────────────────────────────── -->
+<section class="c-main">
+  <div class="pg">
+
+    <!-- Section heading -->
+    <div class="fade">
+      <div class="c-section-label">Contact Channels</div>
+      <div class="c-section-title">How to Reach Us</div>
+      <p class="c-section-sub">Choose the channel that works best for you. All enquiries are acknowledged within 24 hours.</p>
+    </div>
+
+    <!-- 2×2 channel cards -->
+    <div class="c-channels">
+
+      <!-- Phone -->
+      <div class="c-channel green fade fade-1">
+        <div class="c-channel-head">
+          <div class="c-ch-icon green"><i class="fas fa-phone"></i></div>
+          <div>
+            <div class="c-ch-tag">Fastest</div>
+            <div class="c-ch-name">Phone Support</div>
+          </div>
+        </div>
+        <div class="c-ch-val">+234 (0) 800 BWARI TC</div>
+        <div class="c-ch-note">Our support team is available Monday to Friday, 8:00 am – 5:00 pm WAT. Calls are handled in the order received.</div>
+        <a href="tel:+2348003BWARITC" class="c-ch-action green">
+          Call Now <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Email -->
+      <div class="c-channel blue fade fade-2">
+        <div class="c-channel-head">
+          <div class="c-ch-icon blue"><i class="fas fa-envelope"></i></div>
+          <div>
+            <div class="c-ch-tag">Recommended</div>
+            <div class="c-ch-name">Email Us</div>
+          </div>
+        </div>
+        <div class="c-ch-val">support@bwari.gov.ng</div>
+        <div class="c-ch-note">Send a detailed message and receive a written response within 1–2 business days. Best for formal enquiries and documentation.</div>
+        <a href="mailto:support@bwari.gov.ng" class="c-ch-action blue">
+          Compose Email <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- In Person -->
+      <div class="c-channel amber fade fade-3">
+        <div class="c-channel-head">
+          <div class="c-ch-icon amber"><i class="fas fa-building-columns"></i></div>
+          <div>
+            <div class="c-ch-tag">Walk-In</div>
+            <div class="c-ch-name">Visit the Secretariat</div>
+          </div>
+        </div>
+        <div class="c-ch-val">Bwari Town, FCT — Abuja</div>
+        <div class="c-ch-note">Attend in person for payment receipts, dispute resolution, or property registration assistance. Bring a valid ID.</div>
+        <a href="https://maps.google.com/?q=Bwari+Area+Council+Secretariat" target="_blank" class="c-ch-action amber">
+          Get Directions <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Submit Complaint -->
+      <div class="c-channel purple fade fade-4">
+        <div class="c-channel-head">
+          <div class="c-ch-icon purple"><i class="fas fa-comment-dots"></i></div>
+          <div>
+            <div class="c-ch-tag">Portal</div>
+            <div class="c-ch-name">Submit a Complaint</div>
+          </div>
+        </div>
+        <div class="c-ch-val">Use the Online Portal</div>
+        <div class="c-ch-note">Landlords can log complaints about billing, property issues, or technical problems directly via the dashboard — tracked and resolved online.</div>
+        <a href="{% url 'submit_complaint' %}" class="c-ch-action purple">
+          File a Complaint <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div><!-- /channels -->
+
+    <!-- Address + Hours -->
+    <div class="c-layout">
+
+      <!-- Address dark card -->
+      <div class="c-address-card fade fade-2">
+        <div class="c-address-inner">
+          <div class="c-address-eyebrow"><i class="fas fa-map-pin"></i> &nbsp;Physical Location</div>
+          <div class="c-address-title">Bwari Area Council<br>Secretariat</div>
+
+          <div class="c-address-line">
+            <div class="c-al-icon"><i class="fas fa-location-dot"></i></div>
+            <div>
+              <div class="c-al-label">Address</div>
+              <div class="c-al-val">Bwari Area Council Secretariat,<br>Bwari Town, FCT — Abuja, Nigeria</div>
+            </div>
+          </div>
+          <div class="c-address-line">
+            <div class="c-al-icon"><i class="fas fa-envelope"></i></div>
+            <div>
+              <div class="c-al-label">Email</div>
+              <div class="c-al-val">support@bwari.gov.ng</div>
+            </div>
+          </div>
+          <div class="c-address-line">
+            <div class="c-al-icon"><i class="fas fa-phone"></i></div>
+            <div>
+              <div class="c-al-label">Telephone</div>
+              <div class="c-al-val">+234 (0) 800 BWARI TC</div>
+            </div>
+          </div>
+          <div class="c-address-line">
+            <div class="c-al-icon"><i class="fas fa-globe"></i></div>
+            <div>
+              <div class="c-al-label">Online Portal</div>
+              <div class="c-al-val">tenement.bwari.gov.ng</div>
+            </div>
+          </div>
+
+          <a href="https://maps.google.com/?q=Bwari+Area+Council+Secretariat" target="_blank" class="c-map-wrap">
+            <i class="fas fa-map"></i> Open in Google Maps
+          </a>
+        </div>
+      </div>
+
+      <!-- Hours card -->
+      <div class="c-hours-card fade fade-3">
+        <div class="c-hours-head">
+          <div class="c-hours-icon"><i class="fas fa-clock"></i></div>
+          <div>
+            <div class="c-hours-title">Office Hours</div>
+            <div class="c-hours-subtitle">All times in West Africa Time (WAT, UTC+1)</div>
+          </div>
+        </div>
+
+        <div class="c-hours-list">
+          <div class="c-hr" id="hr-mon">
+            <span class="c-hr-day"><span class="c-hr-day-dot open"></span>Monday</span>
+            <span class="c-hr-time">08:00 – 17:00</span>
+          </div>
+          <div class="c-hr" id="hr-tue">
+            <span class="c-hr-day"><span class="c-hr-day-dot open"></span>Tuesday</span>
+            <span class="c-hr-time">08:00 – 17:00</span>
+          </div>
+          <div class="c-hr" id="hr-wed">
+            <span class="c-hr-day"><span class="c-hr-day-dot open"></span>Wednesday</span>
+            <span class="c-hr-time">08:00 – 17:00</span>
+          </div>
+          <div class="c-hr" id="hr-thu">
+            <span class="c-hr-day"><span class="c-hr-day-dot open"></span>Thursday</span>
+            <span class="c-hr-time">08:00 – 17:00</span>
+          </div>
+          <div class="c-hr" id="hr-fri">
+            <span class="c-hr-day"><span class="c-hr-day-dot open"></span>Friday</span>
+            <span class="c-hr-time">08:00 – 16:00</span>
+          </div>
+          <div class="c-hr">
+            <span class="c-hr-day"><span class="c-hr-day-dot closed"></span>Saturday</span>
+            <span class="c-closed-badge">Closed</span>
+          </div>
+          <div class="c-hr">
+            <span class="c-hr-day"><span class="c-hr-day-dot closed"></span>Sunday</span>
+            <span class="c-closed-badge">Closed</span>
+          </div>
+        </div>
+
+        <div class="c-hours-note">
+          <i class="fas fa-triangle-exclamation"></i>
+          Hours may vary on public holidays. Call ahead to confirm availability before visiting.
+        </div>
+      </div>
+
+    </div><!-- /layout -->
+
+    <!-- Online Portal band -->
+    <div class="c-portal-band fade fade-4">
+      <div class="c-portal-left">
+        <div class="c-portal-icon" style="position:relative;">
+          <i class="fas fa-globe"></i>
+          <span class="c-portal-pulse"></span>
+        </div>
+        <div>
+          <div class="c-portal-title">
+            Online Tenement Portal
+            <span class="c-portal-badge">Live</span>
+          </div>
+          <div class="c-portal-sub">Pay rates, register properties, track complaints — available 24 hours, 7 days a week.</div>
+        </div>
+      </div>
+      <a href="{% url 'dashboard' %}" class="c-portal-link">
+        Go to Dashboard <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // Highlight today's row in the hours table
+  (function () {
+    const map = { 1: 'hr-mon', 2: 'hr-tue', 3: 'hr-wed', 4: 'hr-thu', 5: 'hr-fri' };
+    const day = new Date().getDay();
+    const id  = map[day];
+    if (id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('today');
+    }
+  })();
+</script>
+
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submit a Complaint | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --accent: #1e6cf0; --accent-dim: #dbeafe; --accent-dk: #1558c8;
+    --green: #16a34a; --green-dim: #dcfce7;
+    --red: #dc2626; --red-dim: #fee2e2;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06); --shadow: 0 4px 12px rgba(0,0,0,.07);
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; }
+
+  .pg-wrap {
+    background: var(--surface-2); min-height: 100vh;
+    padding: 40px 32px 64px; max-width: 760px; margin: 0 auto; color: var(--ink);
+  }
+  @media (max-width: 640px) { .pg-wrap { padding: 24px 16px 48px; } }
+
+  @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .fade { animation: fadein .35s ease both; }
+
+  .pg-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .82rem; font-weight: 600; color: var(--ink-3);
+    text-decoration: none; padding: 7px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); transition: all var(--transition); flex-shrink: 0;
+  }
+  .back-btn:hover { background: var(--surface-3); color: var(--ink); }
+  .pg-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -.4px; margin: 0; }
+  .pg-sub   { font-size: .82rem; color: var(--ink-3); margin: 2px 0 0; }
+
+  /* ── Form card ── */
+  .form-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .form-header {
+    padding: 20px 28px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, var(--red-dim) 0%, #fff1f2 100%);
+  }
+  .form-header-icon {
+    width: 44px; height: 44px; background: var(--red-dim);
+    border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: var(--red); flex-shrink: 0;
+    border: 1px solid #fecaca;
+  }
+  .form-header h2 { font-size: 1rem; font-weight: 700; color: var(--ink); margin: 0 0 2px; }
+  .form-header p  { font-size: .8rem; color: var(--ink-3); margin: 0; }
+  .form-body { padding: 28px; }
+
+  .form-group { margin-bottom: 22px; }
+  .form-group label {
+    display: block; font-size: .82rem; font-weight: 600;
+    color: var(--ink-2); margin-bottom: 7px;
+  }
+  .form-group label .req { color: var(--red); margin-left: 2px; }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%; font-family: 'DM Sans', sans-serif; font-size: .88rem;
+    padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--surface-2);
+    color: var(--ink); outline: none; resize: vertical;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--accent); background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(30,108,240,.12);
+  }
+  .form-group .help { font-size: .75rem; color: var(--ink-4); margin-top: 5px; }
+  .error-msg { font-size: .77rem; color: var(--red); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+
+  .form-actions {
+    display: flex; align-items: center; gap: 12px;
+    padding-top: 8px; flex-wrap: wrap;
+  }
+  .btn-submit {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--red); color: white;
+    font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 600;
+    padding: 11px 28px; border-radius: var(--radius-sm);
+    border: none; cursor: pointer; transition: background var(--transition);
+  }
+  .btn-submit:hover { background: #b91c1c; }
+  .btn-cancel {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 500;
+    padding: 11px 20px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: transparent;
+    cursor: pointer; color: var(--ink-3); text-decoration: none;
+    transition: all var(--transition);
+  }
+  .btn-cancel:hover { background: var(--surface-3); color: var(--ink); }
+
+  /* ── Info box ── */
+  .info-box {
+    background: var(--accent-dim); border: 1px solid #bfdbfe;
+    border-radius: var(--radius); padding: 14px 18px;
+    font-size: .83rem; color: #1e40af; display: flex; gap: 10px; align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  .info-box i { flex-shrink: 0; margin-top: 1px; }
+  .info-box p { margin: 0; line-height: 1.6; }
+</style>
+
+<div class="pg-wrap fade">
+
+  <div class="pg-header">
+    <a href="{% url 'dashboard' %}" class="back-btn"><i class="fas fa-chevron-left"></i> Dashboard</a>
+    <div>
+      <h1 class="pg-title">Submit a Complaint</h1>
+      <p class="pg-sub">Report an issue or send an enquiry to administrators</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <i class="fas fa-circle-info"></i>
+    <p>Your complaint will be reviewed by an administrator. Please provide as much detail as possible so we can assist you effectively. You can track the status of your complaints from your <a href="{% url 'my_complaints' %}" style="color:inherit;font-weight:600;">complaints history</a>.</p>
+  </div>
+
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon"><i class="fas fa-circle-exclamation"></i></div>
+      <div>
+        <h2>New Complaint / Report</h2>
+        <p>Fill in the details below and submit your report</p>
+      </div>
+    </div>
+
+    <form method="POST" class="form-body">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="{{ form.category.id_for_label }}">Category <span class="req">*</span></label>
+        {{ form.category }}
+        {% if form.category.errors %}
+          {% for err in form.category.errors %}
+            <p class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ err }}</p>
+          {% endfor %}
+        {% endif %}
+        <p class="help">Choose the category that best describes your complaint.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.subject.id_for_label }}">Subject <span class="req">*</span></label>
+        {{ form.subject }}
+        {% if form.subject.errors %}
+          {% for err in form.subject.errors %}
+            <p class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ err }}</p>
+          {% endfor %}
+        {% endif %}
+        <p class="help">A brief, descriptive title for your complaint.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.description.id_for_label }}">Description <span class="req">*</span></label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          {% for err in form.description.errors %}
+            <p class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ err }}</p>
+          {% endfor %}
+        {% endif %}
+        <p class="help">Include relevant details such as property names, dates, or reference numbers.</p>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">
+          <i class="fas fa-paper-plane"></i> Submit Complaint
+        </button>
+        <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

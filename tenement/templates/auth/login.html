@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign In | Bwari Tenement System{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --accent: #1e6cf0;
+    --red: #dc2626; --red-dim: #fee2e2;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 16px;
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface-2); }
+  @keyframes fadein { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .fade   { animation: fadein .45s ease both; }
+  .fade-1 { animation-delay:.06s; } .fade-2 { animation-delay:.12s; } .fade-3 { animation-delay:.18s; }
+
+  /* ── Layout ───────────────────────────────────────────── */
+  .auth-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media(max-width:820px){ .auth-page{ grid-template-columns:1fr; } }
+
+  /* ── Left panel ───────────────────────────────────────── */
+  .auth-left {
+    background: var(--ink);
+    padding: 64px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  @media(max-width:820px){ .auth-left{ display:none; } }
+  .auth-left::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .auth-left::after {
+    content: ''; position: absolute; bottom: -80px; right: -80px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(22,163,74,.2) 0%, transparent 70%);
+  }
+  .auth-left-inner { position: relative; z-index: 1; }
+  .auth-brand {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 48px;
+  }
+  .auth-brand-icon {
+    width: 36px; height: 36px;
+    background: var(--green); border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; color: white;
+  }
+  .auth-brand-name { font-weight: 700; font-size: .95rem; color: white; }
+  .auth-brand-sub  { font-size: .72rem; color: rgba(255,255,255,.4); margin-top: 1px; }
+
+  .auth-left-title {
+    font-family: 'Fraunces', serif;
+    font-size: 2.4rem; font-weight: 700; color: white;
+    line-height: 1.15; letter-spacing: -.04em;
+    margin-bottom: 16px;
+  }
+  .auth-left-title span { color: #4ade80; }
+  .auth-left-desc { font-size: .95rem; color: rgba(255,255,255,.55); line-height: 1.75; margin-bottom: 40px; }
+
+  .auth-features { display: flex; flex-direction: column; gap: 14px; }
+  .auth-feat {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: var(--radius);
+  }
+  .auth-feat-icon {
+    width: 32px; height: 32px; flex-shrink: 0;
+    background: rgba(22,163,74,.15); color: #4ade80;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem;
+  }
+  .auth-feat-text  { font-size: .845rem; color: rgba(255,255,255,.6); font-weight: 500; }
+
+  /* ── Right panel (form) ───────────────────────────────── */
+  .auth-right {
+    background: var(--surface-2);
+    padding: 64px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  @media(max-width:640px){ .auth-right{ padding: 40px 24px; } }
+  .auth-form-wrap { max-width: 400px; width: 100%; margin: 0 auto; }
+  .auth-form-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--green); background: var(--green-dim);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 16px;
+  }
+  .auth-form-title {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem; font-weight: 700; color: var(--ink);
+    letter-spacing: -.03em; margin-bottom: 6px;
+  }
+  .auth-form-sub { font-size: .875rem; color: var(--ink-3); margin-bottom: 32px; }
+
+  /* Fields */
+  .fld { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+  .fld label { font-size: .78rem; font-weight: 600; color: var(--ink-2); letter-spacing: .01em; }
+  .fld-inner { position: relative; }
+  .fld-inner i.fld-ico {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: .82rem; color: var(--ink-4); pointer-events: none;
+    transition: color var(--transition);
+  }
+  .fld input[type="text"],
+  .fld input[type="password"],
+  .fld input[type="email"] {
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .88rem;
+    color: var(--ink);
+    background: var(--surface);
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .fld input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+  }
+  .fld input:focus + i.fld-ico,
+  .fld-inner:focus-within i.fld-ico { color: var(--green); }
+
+  .remember-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .remember-check { display: flex; align-items: center; gap: 8px; }
+  .remember-check input[type="checkbox"] { accent-color: var(--green); width:15px; height:15px; }
+  .remember-check label { font-size: .82rem; color: var(--ink-3); cursor: pointer; }
+  .forgot-link { font-size: .82rem; color: var(--green); font-weight: 600; text-decoration: none; }
+  .forgot-link:hover { color: var(--green-dk); }
+
+  .btn-auth {
+    width: 100%;
+    background: var(--green); color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem; font-weight: 600;
+    padding: 13px 24px;
+    border-radius: var(--radius); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    margin-bottom: 24px;
+  }
+  .btn-auth:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(22,163,74,.3); }
+
+  .auth-divider {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    font-size: .78rem; color: var(--ink-4);
+  }
+  .auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .auth-footer-link {
+    text-align: center;
+    font-size: .855rem; color: var(--ink-3);
+  }
+  .auth-footer-link a { color: var(--green); font-weight: 600; text-decoration: none; }
+  .auth-footer-link a:hover { color: var(--green-dk); }
+
+  /* Error messages */
+  .field-error { font-size: .75rem; color: var(--red); margin-top: 4px; }
+  .form-errors {
+    background: var(--red-dim);
+    border: 1px solid #fca5a5;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: .845rem;
+    color: var(--red);
+  }
+</style>
+
+<div class="auth-page">
+
+  <!-- Left: Branding -->
+  <div class="auth-left">
+    <div class="auth-left-inner">
+      <div class="auth-brand">
+        <div class="auth-brand-icon"><i class="fas fa-landmark"></i></div>
+        <div>
+          <div class="auth-brand-name">Bwari Area Council</div>
+          <div class="auth-brand-sub">Digital Tenement Rate System</div>
+        </div>
+      </div>
+
+      <h2 class="auth-left-title">Pay your<br><span>tenement rate</span><br>from anywhere.</h2>
+      <p class="auth-left-desc">Sign in to access your dashboard, view your bills, generate payment references, and download receipts — all in one place.</p>
+
+      <div class="auth-features">
+        <div class="auth-feat">
+          <div class="auth-feat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+          <div class="auth-feat-text">View and generate your tenement rate bills</div>
+        </div>
+        <div class="auth-feat">
+          <div class="auth-feat-icon"><i class="fas fa-credit-card"></i></div>
+          <div class="auth-feat-text">Pay securely via Remita — card, transfer, or USSD</div>
+        </div>
+        <div class="auth-feat">
+          <div class="auth-feat-icon"><i class="fas fa-download"></i></div>
+          <div class="auth-feat-text">Download your official payment receipts instantly</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Form -->
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+      <div class="auth-form-eyebrow fade"><i class="fas fa-arrow-right-to-bracket"></i> Welcome Back</div>
+      <h1 class="auth-form-title fade fade-1">Sign In</h1>
+      <p class="auth-form-sub fade fade-2">Enter your credentials to access your account.</p>
+
+      {% if form.non_field_errors %}
+      <div class="form-errors fade">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" class="fade fade-2">
+        {% csrf_token %}
+        <div class="fld">
+          <label for="id_username">Username</label>
+          <div class="fld-inner">
+            {{ form.username }}
+            <i class="fas fa-user fld-ico"></i>
+          </div>
+          {% if form.username.errors %}<p class="field-error">{{ form.username.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="fld">
+          <label for="id_password">Password</label>
+          <div class="fld-inner">
+            {{ form.password }}
+            <i class="fas fa-lock fld-ico"></i>
+          </div>
+          {% if form.password.errors %}<p class="field-error">{{ form.password.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="remember-row">
+          <div class="remember-check">
+            {{ form.remember_me }}
+            <label for="id_remember_me">Remember me</label>
+          </div>
+          <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-auth">
+          <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+        </button>
+      </form>
+
+      <div class="auth-divider">or</div>
+      <p class="auth-footer-link fade fade-3">
+        Don't have an account? <a href="{% url 'signup' %}">Register here</a>
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  /* Override Django form input styles */
+  #id_username, #id_password {
+    width: 100%; padding: 11px 14px 11px 40px;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: .88rem; color: var(--ink);
+    background: var(--surface); outline: none;
+    transition: border-color 160ms, box-shadow 160ms;
+  }
+  #id_username:focus, #id_password:focus {
+    border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+  }
+</style>
+
+{% endblock %}

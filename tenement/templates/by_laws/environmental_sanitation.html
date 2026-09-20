@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Environmental Sanitation Bye-Law — Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 640px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; } .bylaw-breadcrumb a:hover { text-decoration: underline; } .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .bylaw-alert { display: flex; align-items: flex-start; gap: 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 18px 20px; margin: 14px 0; }
+  .bylaw-alert-icon { color: #ea580c; font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+  .bylaw-alert p { font-size: 0.9rem; color: #7c2d12; margin: 0; line-height: 1.6; }
+  .bylaw-alert strong { color: #c2410c; }
+  .bylaw-alert.red { background: #fef2f2; border-color: #fecaca; }
+  .bylaw-alert.red .bylaw-alert-icon { color: #dc2626; }
+  .bylaw-alert.red p { color: #7f1d1d; }
+  .bylaw-def-list { margin: 10px 0 0; }
+  .bylaw-def-item { padding: 12px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; color: #374151; line-height: 1.6; }
+  .bylaw-def-item:last-child { border-bottom: none; }
+  .bylaw-def-item strong { color: #065f46; }
+  /* Fine/Penalty table */
+  .bylaw-table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 10px; border: 1px solid #e5e7eb; }
+  .bylaw-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .bylaw-table th { background: #065f46; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 0.76rem; letter-spacing: 0.03em; white-space: nowrap; }
+  .bylaw-table td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .bylaw-table tr:last-child td { border-bottom: none; }
+  .bylaw-table tr:nth-child(even) td { background: #f9fafb; }
+  .bylaw-table .fine-amount { font-weight: 700; color: #dc2626; }
+  .bylaw-table .prison { font-weight: 600; color: #7c3aed; }
+  .bylaw-purpose-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px; }
+  .bylaw-purpose-item { display: flex; align-items: flex-start; gap: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 14px 16px; font-size: 0.88rem; color: #374151; line-height: 1.5; }
+  .bylaw-purpose-item i { color: #059669; flex-shrink: 0; margin-top: 2px; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-leaf"></i>
+    Part V — Bye-Law No. 4 of 2016
+  </div>
+  <h1>Environmental Sanitation Bye-Law</h1>
+  <p>Premises Inspection &amp; Prohibition of Indiscriminate Dumping of Refuse and Other Environmental Health Offences</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part V — Environmental Sanitation</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-recycle"></i></div>
+      <div>
+        <h2>Environmental Sanitation, Premises Inspection &amp; Refuse Prohibition</h2>
+        <span>Part V — Bye-Law No. 4 of 2016</span>
+      </div>
+    </div>
+    <p>In accordance with the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria, 1999 (as amended), the National Environmental Health Practice Regulation 2016 and other relevant sections of the Local Government Act, Laws of the FCT Abuja, 2006 and other enabling Laws, Bwari Area Council hereby promulgates the following Bye-law.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 4 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part V</span></div>
+      <div class="bylaw-meta-item"><label>Road-Cutting Permit Fee</label><span>₦20,000</span></div>
+      <div class="bylaw-meta-item"><label>Authority</label><span>Bwari Area Council, FCT Abuja</span></div>
+    </div>
+  </div>
+
+  <!-- Purposes -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-bullseye"></i></div>
+      <div>
+        <h2>Purpose of this Bye-Law</h2>
+        <span>Objectives — Sections (a) to (f)</span>
+      </div>
+    </div>
+    <div class="bylaw-purpose-grid">
+      <div class="bylaw-purpose-item"><i class="fas fa-check-circle"></i> Provide law for enforcement of the regulatory powers in the Act.</div>
+      <div class="bylaw-purpose-item"><i class="fas fa-check-circle"></i> Prevent and abate nuisance; protect and promote the physical and social well-being of the public.</div>
+      <div class="bylaw-purpose-item"><i class="fas fa-check-circle"></i> Prevent and control the incidence of communicable diseases through environmental health intervention.</div>
+      <div class="bylaw-purpose-item"><i class="fas fa-check-circle"></i> Reduce environmental hazards to health and safeguard the aesthetic value of the environment.</div>
+      <div class="bylaw-purpose-item"><i class="fas fa-check-circle"></i> Promote general welfare by regulating the sanitary construction and sanitation of all premises.</div>
+      <div class="bylaw-purpose-item"><i class="fas fa-check-circle"></i> Regulate public and private sector collaboration for maintaining adequate sanitation and public health.</div>
+    </div>
+  </div>
+
+  <!-- Sanitation of Premises -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-house-chimney"></i></div>
+      <div>
+        <h2>Sanitation of Premises</h2>
+        <span>Part II — Obligations of Occupants, Tenants, Operators</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>Every premise shall conform to existing environmental health laws, regulations and approved building laws, and be maintained to prevent structural defects or nuisance.</li>
+      <li>Every tenant and occupier of any building shall ensure cleanliness of premises — particularly the backyard and courtyard.</li>
+      <li>Every owner or operator of a restaurant, hotel, night club, clinic/hospital or school shall ensure the cleanliness of all toilets and bathrooms within the premises.</li>
+      <li>Every operator of hotel, restaurant, bakery, factory shall on instruction of an Environmental Health Officer ensure immediate disinfection of premises to prevent mosquitoes, rats, mice and other parasites.</li>
+      <li>No pedestrian shall dispose of scrap paper, newspaper, candy wrappers, fruit peels or similar refuse anywhere except in litter bins.</li>
+      <li>Every commercial vehicle shall carry a litter bin for passengers' use. No passenger shall throw any litter onto the road from any vehicle.</li>
+      <li>No person shall dump any domestic, industrial or commercial waste indiscriminately along highways, roads, gorges, or vacant land except at designated refuse disposal sites.</li>
+    </ul>
+  </div>
+
+  <!-- Road and Structural Prohibitions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-road-barrier"></i></div>
+      <div>
+        <h2>Road &amp; Structural Prohibitions</h2>
+        <span>Sections 9–12 — Construction, Road Use, Road Cutting</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>No person shall construct or put up any structure on roads, rails or footpaths.</li>
+      <li>No person shall use any road, street or set-back as a mechanic workshop.</li>
+      <li>No person shall defecate or urinate in drainage or any open space.</li>
+      <li>No person shall organize or hold any social parties or religious activities on any major road.</li>
+      <li>No person shall dig across any road without prior written approval or permit from the Area Council Authority. The person who lawfully digs a road shall reinstate the part within <strong>seven days</strong>.</li>
+    </ul>
+    <div class="bylaw-alert">
+      <i class="fas fa-file-invoice bylaw-alert-icon"></i>
+      <p><strong>Road-Cutting Permit Fee:</strong> There shall be payment of <strong>₦20,000 (Twenty Thousand Naira)</strong> for any permit to dig across a road. This fee is subject to review by the Bwari Area Council as and when necessary.</p>
+    </div>
+  </div>
+
+  <!-- Waste Management -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-trash-can"></i></div>
+      <div>
+        <h2>Waste Management Rules</h2>
+        <span>Sections 15–22 — Handling, Disposal, and Private Operators</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>All vehicles or containers used for transporting refuse shall be securely covered such that the contents do not litter the road.</li>
+      <li>All domestic refuse must be packed in plastic waste bags before disposal.</li>
+      <li>All waste from markets, restaurants, schools, shops, religious premises and commercial institutions shall be packed in plastic waste bags before disposal.</li>
+      <li>No person shall burn or bury refuse on any tenement or open place, or throw or bury industrial or commercial waste on any tenement.</li>
+      <li>No obnoxious, toxic or poisonous waste shall be deposited in a waste dustbin.</li>
+      <li>No person shall dispose of domestic refuse or waste except through a private sector participation operator.</li>
+      <li>All tenements, markets, motor parks, stores and other places shall provide a standard waste bin with tyres for collection of refuse to designated landfill sites.</li>
+    </ul>
+  </div>
+
+  <!-- Offences & Penalties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div>
+        <h2>Offences &amp; Penalties</h2>
+        <span>Section 20 &amp; Third Schedule — Fines, Corporate Fines, Imprisonment</span>
+      </div>
+    </div>
+    <div class="bylaw-alert red">
+      <i class="fas fa-circle-xmark bylaw-alert-icon"></i>
+      <p><strong>General Offence:</strong> Any individual who contravenes or fails to comply with any provision of sections 1–18 of this By-law is guilty of an offence and shall on conviction be liable to the fine specified under the Second or Third Schedule.</p>
+    </div>
+    <div class="bylaw-alert red">
+      <i class="fas fa-circle-xmark bylaw-alert-icon"></i>
+      <p><strong>Obstruction:</strong> Any person who obstructs any authorised officer carrying out the provisions of this Bye-Law is guilty of an offence and upon conviction shall be liable to a fine of <strong>₦50,000 (Fifty Thousand Naira)</strong> or imprisonment of <strong>six months</strong>.</p>
+    </div>
+    <div class="bylaw-alert red">
+      <i class="fas fa-circle-xmark bylaw-alert-icon"></i>
+      <p><strong>Failure to Abate Nuisance:</strong> Any person who fails to abate a nuisance after being served with an Abatement Notice shall be liable to a fine of <strong>₦10,000 (individual)</strong> or <strong>₦50,000 (company)</strong>.</p>
+    </div>
+
+    <h3>Third Schedule — Premises Inspection Fines</h3>
+    <div class="bylaw-table-wrap">
+      <table class="bylaw-table">
+        <thead>
+          <tr><th>#</th><th>Violation</th><th>Fine (Individual)</th><th>Fine (Corporate)</th><th>Imprisonment</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Property occupied without Certificate of Habitation</td><td class="fine-amount">₦200,000</td><td class="fine-amount">₦500,000</td><td class="prison">3 Years</td></tr>
+          <tr><td>2</td><td>Loose rubbish</td><td class="fine-amount">₦7,000</td><td class="fine-amount">₦15,000</td><td class="prison">1 Month</td></tr>
+          <tr><td>3</td><td>Exposed material</td><td class="fine-amount">₦15,000</td><td class="fine-amount">₦30,000</td><td class="prison">1 Month</td></tr>
+          <tr><td>4</td><td>Failure to separate waste</td><td class="fine-amount">₦15,000</td><td class="fine-amount">₦30,000</td><td class="prison">6 Months</td></tr>
+          <tr><td>5</td><td>Sidewalk obstruction</td><td class="fine-amount">₦30,000</td><td class="fine-amount">₦45,000</td><td class="prison">1 Month</td></tr>
+          <tr><td>6</td><td>Street obstruction</td><td class="fine-amount">₦30,000</td><td class="fine-amount">₦45,000</td><td class="prison">1 Month</td></tr>
+          <tr><td>7</td><td>Commercial waste disposal offence</td><td class="fine-amount">₦100,000</td><td class="fine-amount">₦200,000</td><td class="prison">6 Months</td></tr>
+          <tr><td>8</td><td>Illegal dumping of refuse</td><td class="fine-amount">₦100,000</td><td class="fine-amount">₦200,000</td><td class="prison">2 Months</td></tr>
+          <tr><td>12</td><td>Failure to clean drains</td><td class="fine-amount">₦100,000</td><td class="fine-amount">₦80,000</td><td class="prison">6 Months</td></tr>
+          <tr><td>13</td><td>Sewage disposal offence</td><td class="fine-amount">₦150,000</td><td class="fine-amount">₦300,000</td><td class="prison">3 Years</td></tr>
+          <tr><td>14/16</td><td>Waste burning</td><td class="fine-amount">₦30,000</td><td class="fine-amount">₦60,000</td><td class="prison">6 Months</td></tr>
+          <tr><td>17</td><td>Silt disposal along drains</td><td class="fine-amount">₦35,000</td><td class="fine-amount">₦50,000</td><td class="prison">3 Years</td></tr>
+          <tr><td>19</td><td>Cutting of roads without approval</td><td class="fine-amount">₦400,000</td><td class="fine-amount">₦700,000</td><td class="prison">—</td></tr>
+          <tr><td>21</td><td>Hazardous material dumping</td><td class="fine-amount">₦50,000</td><td class="fine-amount">₦80,000</td><td class="prison">6 Months</td></tr>
+          <tr><td>22</td><td>Chemical waste dumping</td><td class="fine-amount">₦150,000</td><td class="fine-amount">₦400,000</td><td class="prison">3 Years</td></tr>
+          <tr><td>24</td><td>Medical waste dumping</td><td class="fine-amount">₦50,000</td><td class="fine-amount">₦80,000</td><td class="prison">6 Years</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Waste Disposal Rates - First Schedule -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+      <div>
+        <h2>First Schedule — Waste Disposal / Sanitation Service Rates</h2>
+        <span>Monthly &amp; Annual Chargeable Rates by Establishment Type</span>
+      </div>
+    </div>
+    <div class="bylaw-table-wrap">
+      <table class="bylaw-table">
+        <thead>
+          <tr><th>Establishment</th><th>Monthly (₦)</th><th>Annual (₦)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Factory / Industry</td><td>25,000</td><td>300,000</td></tr>
+          <tr><td>Corporate Organisation</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>Supermarket</td><td>30,000</td><td>360,000</td></tr>
+          <tr><td>Petrol Station</td><td>20,000</td><td>240,000</td></tr>
+          <tr><td>Hotel / Apartment</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>School</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>Hospital / Clinic</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>Restaurant / Cafeteria</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>Bakery / Printing Press</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>Shop / Workshop / Kiosk</td><td>10,000</td><td>120,000</td></tr>
+          <tr><td>Shops in Market</td><td>750</td><td>9,000</td></tr>
+          <tr><td>Bungalow</td><td>5,000</td><td>60,000</td></tr>
+          <tr><td>Duplex Apartment</td><td>4,000</td><td>48,000</td></tr>
+          <tr><td>Drink Joint / Bar</td><td>5,000</td><td>60,000</td></tr>
+          <tr><td>Shop in Plaza</td><td>20,000</td><td>240,000</td></tr>
+          <tr><td>Bio-Hazardous</td><td>50,000</td><td>150,000</td></tr>
+          <tr><td>Residential Apartment</td><td>50</td><td>600</td></tr>
+          <tr><td>Hawkers</td><td>50</td><td>600</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Interpretation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-spell-check"></i></div>
+      <div>
+        <h2>Interpretation</h2>
+        <span>Definitions of Key Terms</span>
+      </div>
+    </div>
+    <div class="bylaw-def-list">
+      <div class="bylaw-def-item"><strong>"Industrial waste"</strong> means waste generated from any premises used wholly or partially for manufacturing or servicing operations and includes waste from mines or quarries.</div>
+      <div class="bylaw-def-item"><strong>"Owner"</strong> means a landlord, state lessee, joint owner, tenant for life, mortgagee in possession, or any person in actual possession, including a person acting with the authority of the owner.</div>
+      <div class="bylaw-def-item"><strong>"Refuse"</strong> means garbage and other discarded solid material from agricultural operations and from community activities, and includes solid scrap building material.</div>
+      <div class="bylaw-def-item"><strong>"Structure"</strong> includes a fence, kiosk, or stationary vehicle used for the display of wares or as a cafeteria.</div>
+      <div class="bylaw-def-item"><strong>"Waste"</strong> includes waste of all descriptions of any substance which constitutes scrap materials, an effluent or other unwanted substances arising from the application of any process.</div>
+    </div>
+    <p style="margin-top:20px; font-size:0.85rem; color:#6b7280; font-style:italic;">Duly passed by the Bwari Area Council Legislative Arm.</p>
+  </div>
+
+  <!-- Other bye-laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_preliminary' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Preliminary</strong><span>Part I</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_marriages' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-rings-wedding"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Marriages, Births &amp; Deaths</strong><span>Part III — Bye-Law No. 2</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_motor_parks' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-bus"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Motor Parks</strong><span>Part IV — Bye-Law No. 3</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

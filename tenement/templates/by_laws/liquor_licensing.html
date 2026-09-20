@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Liquor Licensing Bye-Law | Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: #fff; padding: 72px 24px 56px; text-align: center; position: relative; overflow: hidden; }
+  .bylaw-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  .bylaw-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 10px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .license-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 16px 0; }
+  .license-item { display: flex; align-items: center; gap: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 16px; font-size: 0.88rem; font-weight: 500; color: #374151; }
+  .license-item i { color: #059669; width: 16px; text-align: center; flex-shrink: 0; }
+  .prohibited-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+  .prohibited-item { display: flex; align-items: center; gap: 10px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; font-weight: 500; color: #881337; }
+  .prohibited-item i { color: #e11d48; flex-shrink: 0; }
+  .alert-box { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; }
+  .alert-box i { color: #d97706; margin-top: 2px; flex-shrink: 0; }
+  .alert-box p { margin: 0; font-size: 0.88rem; color: #78350f; line-height: 1.6; }
+  .definition-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .definition-item { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #059669; border-radius: 8px; padding: 14px 18px; }
+  .definition-term { display: block; font-weight: 700; font-size: 0.88rem; color: #065f46; margin-bottom: 4px; }
+  .definition-desc { font-size: 0.88rem; color: #374151; line-height: 1.65; }
+  .schedule-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+  .schedule-table th { background: #065f46; color: #fff; text-align: left; padding: 12px 16px; font-weight: 600; font-size: 0.8rem; }
+  .schedule-table th:first-child { border-radius: 8px 0 0 0; }
+  .schedule-table th:last-child { border-radius: 0 8px 0 0; }
+  .schedule-table td { padding: 11px 16px; border-bottom: 1px solid #e5e7eb; color: #374151; }
+  .schedule-table tr:last-child td { border-bottom: none; }
+  .schedule-table tr:nth-child(even) td { background: #f9fafb; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .stamp-block { text-align: center; padding: 28px; background: #f0fdf4; border: 1px dashed #6ee7b7; border-radius: 12px; margin-top: 8px; }
+  .stamp-block p { margin: 0; font-size: 0.9rem; font-weight: 600; color: #065f46; letter-spacing: 0.03em; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-wine-glass"></i>
+    Part XXIII — Bye-Law No. 22 of 2016
+  </div>
+  <h1>Liquor Licensing Bye-Law 2016</h1>
+  <p>Regulation and control of the sale of liquor within Bwari Area Council jurisdiction</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XXIII — Liquor Licensing</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-wine-glass"></i></div>
+      <div>
+        <h2>Liquor Licensing Bye-Law — No. 22 of 2016</h2>
+        <span>Part XXIII — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant sections of the Local Government Act, Laws of FCT Abuja 2006 and all other laws enabling it in that behalf, the Bwari Area Council hereby makes the following Bye-Law.</p>
+    <p>As from the commencement of these Bye-Laws, no person shall carry out the sale of liquor without a license issued by the Bwari Area Council for that purpose.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 22 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XXIII</span></div>
+      <div class="bylaw-meta-item"><label>Effective Date</label><span>5th January, 2016</span></div>
+      <div class="bylaw-meta-item"><label>License Expiry</label><span>31st December (annually)</span></div>
+    </div>
+  </div>
+
+  <!-- License Types -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-id-card"></i></div>
+      <div>
+        <h2>Types of Liquor Licenses</h2>
+        <span>Section 2 — Eight License Categories</span>
+      </div>
+    </div>
+    <p>The following descriptions of licenses may be granted by the Area Council:</p>
+    <div class="license-grid">
+      <div class="license-item"><i class="fas fa-check-circle"></i> Tavern License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> Wine and Beer On-License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> Wine and Beer Off-License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> Hotel Liquor License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> Club Liquor License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> General Wholesale Liquor License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> General Retail Liquor License</div>
+      <div class="license-item"><i class="fas fa-check-circle"></i> Restaurant/Bar Liquor License</div>
+    </div>
+    <p>A license granted under this law <strong>shall not be transferred</strong> to a third party. Such license shall be surrendered to the Area Council if the holder winds up business.</p>
+  </div>
+
+  <!-- Permitted Hours -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-clock"></i></div>
+      <div>
+        <h2>Permitted Hours of Sale</h2>
+        <span>Section 9 — Authorized Trading Hours</span>
+      </div>
+    </div>
+    <p>The hours during which liquor may be sold under Tavern, Wine and Beer, Hotel, General Wholesale, and General Retail licenses shall be <strong>between 8:00am and 12 midnight</strong> on any day.</p>
+    <ul class="bylaw-func-list">
+      <li>Liquor may be sold under a hotel license to persons sleeping on the premises to be consumed thereon, on <strong>any day and at any hour</strong>.</li>
+      <li>Liquor may be sold under a <strong>club liquor license</strong> to club members on any day and at any hour.</li>
+      <li>A wine and beer on-license and wine and beer off-license shall not authorize the sale of wine or beer containing more than <strong>twenty percent (20%) of pure alcohol</strong>.</li>
+    </ul>
+  </div>
+
+  <!-- Prohibited Areas -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-ban"></i></div>
+      <div>
+        <h2>Prohibited Areas for Liquor Sale</h2>
+        <span>Section 12 — Restricted Locations</span>
+      </div>
+    </div>
+    <p>All alcoholic drinks of any description are <strong>prohibited for sale</strong> in the following areas:</p>
+    <div class="prohibited-grid">
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Schools</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Motor Parks</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Markets</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Residential Quarters</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Worship Centres</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Cinema Houses</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Hospitals</div>
+      <div class="prohibited-item"><i class="fas fa-circle-xmark"></i> Other Areas (as determined)</div>
+    </div>
+  </div>
+
+  <!-- Offences & Penalties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Offences &amp; Penalties</h2>
+        <span>Sections 14–16 — Fines and Imprisonment</span>
+      </div>
+    </div>
+
+    <h3>Selling Without a License</h3>
+    <p>A person shall not sell liquor unless he holds a valid license issued under these Bye-Laws, nor shall he sell liquor at any place except that at which the license authorizes sale.</p>
+    <div class="alert-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Penalty:</strong> Contravention is an offence liable on conviction to a fine of <strong>₦100,000.00</strong>.</p>
+    </div>
+
+    <h3 style="margin-top:24px;">Other Prohibited Conduct</h3>
+    <p>A license holder who permits drunkenness, sells to intoxicated persons, sells to children under 16, sells to uniformed officers on duty, permits the premises to be used as a brothel, or obstructs authorized inspectors is guilty of an offence and liable to a fine of <strong>₦100,000.00 or six months imprisonment</strong>.</p>
+
+    <h3>Impersonation and False Representation</h3>
+    <p>Any person who falsely represents himself to remain on licensed premises beyond 10pm or obtain liquor during prohibited hours shall be liable on conviction to a fine of <strong>₦50,000.00</strong>.</p>
+  </div>
+
+  <!-- Fee Schedule -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-table-list"></i></div>
+      <div>
+        <h2>First Schedule — License Fees</h2>
+        <span>Annual License Fees by Category (₦)</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th>S/N</th>
+            <th>Description</th>
+            <th>Large (A)</th>
+            <th>Medium (B)</th>
+            <th>Small (C)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Wholesale Liquor</td><td>200,000</td><td>100,000</td><td>50,000</td></tr>
+          <tr><td>2</td><td>Depot (Beer)</td><td>500,000</td><td>250,000</td><td>150,000</td></tr>
+          <tr><td>3</td><td>Departmental/Super Store Liquor</td><td>200,000</td><td>100,000</td><td>50,000</td></tr>
+          <tr><td>4</td><td>Supermarket/Shop</td><td>50,000</td><td>20,000</td><td>15,000</td></tr>
+          <tr><td>5</td><td>Restaurant Liquor</td><td>20,000</td><td>10,000</td><td>5,000</td></tr>
+          <tr><td>6</td><td>Hotels</td><td>500,000</td><td>200,000</td><td>70,000</td></tr>
+          <tr><td>7</td><td>Beer Parlor</td><td>20,000</td><td>10,000</td><td>5,000</td></tr>
+          <tr><td>8</td><td>Native Liquor</td><td>1,500</td><td>500</td><td>100</td></tr>
+          <tr><td>9</td><td>Club Liquor</td><td>150,000</td><td>100,000</td><td>50,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Interpretation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-book-open"></i></div>
+      <div>
+        <h2>Interpretation</h2>
+        <span>Key Definitions under this Bye-Law</span>
+      </div>
+    </div>
+    <div class="definition-grid">
+      <div class="definition-item">
+        <span class="definition-term">"Authorized Person"</span>
+        <span class="definition-desc">Means any official of the Area Council or any person who may be authorized to perform any function under these Bye-Laws.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Intoxicating Liquor" / "Liquor"</span>
+        <span class="definition-desc">Means any liquid which, if used as a beverage, may have an intoxicating effect, and includes wines and beers.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Beer"</span>
+        <span class="definition-desc">Includes every description of beer, porter, cider, and perry and fermented malt liquor.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Tavern License"</span>
+        <span class="definition-desc">Means a license granted to an inn.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Court of Competent Jurisdiction"</span>
+        <span class="definition-desc">Means magistrate courts.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Citation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-stamp"></i></div>
+      <div>
+        <h2>Citation &amp; Commencement</h2>
+        <span>Operational Date — 5th January, 2016</span>
+      </div>
+    </div>
+    <p>This Bye-Law may be cited as the <strong>Liquor Licensing Bye-Law</strong> and shall commence on the <strong>5th day of January, 2016</strong>. These Bye-Laws shall apply to all persons within the geographical sphere of the Bwari Area Council.</p>
+    <div class="stamp-block">
+      <p><i class="fas fa-gavel" style="margin-right:8px;"></i>DULY passed by the Bwari Area Council Legislative Arm.</p>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_market_regulation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-store"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Market Regulation</strong><span>Part XIV — Bye-Law No. 13</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_foodstuff_regulation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-utensils"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Foodstuff Regulation</strong><span>Part XXV — Bye-Law No. 24</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_mobile_advertisement' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-ad"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Mobile Advertisement</strong><span>Part VII — Bye-Law No. 6</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_parking_traffic_control' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-parking"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Parking &amp; Traffic Control</strong><span>Part IX — Bye-Law No. 8</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

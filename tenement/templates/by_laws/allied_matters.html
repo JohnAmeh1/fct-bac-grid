@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Allied Matters — Shops, Kiosks &amp; Trade License Bye-Law{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    color: #fff;
+    padding: 72px 24px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .bylaw-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bylaw-hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 100px; padding: 6px 16px;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .bylaw-hero h1 { font-size: clamp(1.6rem,4vw,2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap;
+  }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+    padding: 36px 40px; margin-bottom: 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .bylaw-card-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4;
+  }
+  .bylaw-card-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: #065f46; font-size: 1.2rem;
+  }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 {
+    font-size: 1rem; font-weight: 700; color: #065f46;
+    margin: 24px 0 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .bylaw-card h3::before {
+    content: ''; display: inline-block;
+    width: 4px; height: 16px; background: #059669; border-radius: 2px;
+  }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li {
+    display: flex; gap: 10px; padding: 8px 0;
+    font-size: 0.9rem; color: #374151; line-height: 1.6;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before {
+    content: counter(item); counter-increment: item;
+    min-width: 24px; height: 24px; background: #d1fae5; color: #065f46;
+    border-radius: 50%; font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 18px 20px; text-decoration: none; color: inherit;
+    transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .bylaw-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 12px; }
+  .bylaw-table thead { background: #f0fdf4; }
+  .bylaw-table th { padding: 10px 14px; text-align: left; font-weight: 700; color: #065f46; border-bottom: 2px solid #d1fae5; }
+  .bylaw-table td { padding: 9px 14px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .bylaw-table tbody tr:hover { background: #fafffe; }
+  .bylaw-table .amount { font-weight: 600; color: #065f46; }
+  .table-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid #e5e7eb; }
+  .notice-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+  .notice-box p { font-size: 0.88rem; color: #92400e; margin: 0; line-height: 1.7; }
+  .penalty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .penalty-item { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; }
+  .penalty-item label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #dc2626; margin-bottom: 4px; }
+  .penalty-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } .penalty-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-store"></i>
+    Part XV — Bye-Law No. 14 of 2016
+  </div>
+  <h1>Shops, Kiosks, Trade License &amp; Allied Matters</h1>
+  <p>Licensing requirements for businesses, workshops, and commercial operations within Bwari Area Council</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XV — Shops &amp; Allied Matters</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-store"></i></div>
+      <div>
+        <h2>Shops, Kiosks, Trade License &amp; Allied Matters — Bye-Law No. 14 of 2016</h2>
+        <span>Part XV — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant Sections of the Law Governing the Establishment of the Area Council, the Bwari Area Council hereby makes this Bye-Law.</p>
+    <p>As from the commencement of this Bye-Law it shall be an <strong>offence</strong> for any person to establish or operate a workshop or carry on any business, trade or occupation <strong>without obtaining a License</strong> from the Area Council.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 14 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XV</span></div>
+      <div class="bylaw-meta-item"><label>Authority</label><span>Bwari Area Council, FCT Abuja</span></div>
+      <div class="bylaw-meta-item"><label>Jurisdiction</label><span>Magistrate Court, Any Grade</span></div>
+    </div>
+  </div>
+
+  <!-- Licensing Provisions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-id-card"></i></div>
+      <div>
+        <h2>Licensing Provisions</h2>
+        <span>Application, Renewal and Enforcement</span>
+      </div>
+    </div>
+    <ul class="bylaw-func-list">
+      <li>A License may be obtained on application and payment of fees prescribed in the First Schedule depending on the business category.</li>
+      <li>Enforcement of payment for License or renewal shall be preceded by a Notice of Demand as in the Second Schedule; in default, a Notice of Intention to Sue shall issue per the Third Schedule.</li>
+      <li>Any License issued shall be renewed annually on payment of the prescribed fee.</li>
+      <li>Where the necessary permit has not been obtained, the Area Council may, on a Court order, seal the workshop or business premises. The premises shall remain sealed until the order is varied by the Court.</li>
+      <li>A penalty fee of <strong>twice the License amount</strong> for the affected category may be ordered by the Court.</li>
+    </ul>
+    <div class="notice-box">
+      <p><i class="fas fa-circle-info" style="margin-right:6px;"></i> <strong>"License"</strong> includes any permit issued under the authority of the Revenue Mobile Unit for trade being carried on within the Bwari Area Council.</p>
+    </div>
+  </div>
+
+  <!-- First Schedule: Shops & Kiosks -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-list-ol"></i></div>
+      <div>
+        <h2>First Schedule — Shops &amp; Kiosks on Business &amp; Commercial Premises</h2>
+        <span>Minimum Annual License Fees</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="bylaw-table">
+        <thead>
+          <tr><th>Establishment</th><th>Minimum Fee (₦)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Clinic / Private Hospitals</td><td class="amount">10,000.00</td></tr>
+          <tr><td>Patent Medicine Dealers</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Pharmacy</td><td class="amount">15,000.00</td></tr>
+          <tr><td>Blacksmith</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Goldsmith</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Printing Press</td><td class="amount">10,000.00</td></tr>
+          <tr><td>Dentist Shop</td><td class="amount">10,000.00</td></tr>
+          <tr><td>Herbal Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Optical Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Mechanic Workshop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Vulcanizing Shop</td><td class="amount">5,500.00</td></tr>
+          <tr><td>Watch Repairing Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Carwash</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Welding Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Electrical Appliances Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Electronic Workshop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Pool / Bet Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Panel Beater Workshop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Spare Parts (Motor)</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Spare Parts (Tricycle)</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Spare Parts (Motor Cycle)</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Spare Parts (Bicycle)</td><td class="amount">2,500.00</td></tr>
+          <tr><td>Airline Ticketing Office</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Media Houses (Print)</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Departmental Store</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Provision Store</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Super Store</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Supermarket</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Telephone Accessories Shop</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Car Stand</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Beauty Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Cosmetic Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Plastic Product Shop</td><td class="amount">5,500.00</td></tr>
+          <tr><td>Bookshop and Stationeries</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Electrical Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Electronic Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Gas Refilling Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Coffee Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Bicycle Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Tricycle Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Motor Cycle Shop</td><td class="amount">50,000.00</td></tr>
+          <tr><td>Kiosk</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Block Moulding Stand</td><td class="amount">10,000.00</td></tr>
+          <tr><td>Furniture / Carpentry Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Hair Dressing Salon</td><td class="amount">3,000.00</td></tr>
+          <tr><td>Barbing Salon Shop</td><td class="amount">3,000.00</td></tr>
+          <tr><td>Cinema Houses</td><td class="amount">20,000.00</td></tr>
+          <tr><td>Viewing Centres</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Rentals</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Photographic Studio</td><td class="amount">2,000.00</td></tr>
+          <tr><td>Business Centre / Cyber Cafe</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Curtain Material Shop</td><td class="amount">10,000.00</td></tr>
+          <tr><td>Boutique Shop</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Agro-Chemical Shop</td><td class="amount">10,000.00</td></tr>
+          <tr><td>Industrial Chemical Shop</td><td class="amount">30,000.00</td></tr>
+          <tr><td>Tools / Equipment Shop</td><td class="amount">15,000.00</td></tr>
+          <tr><td>Tailoring / Fashion Design Shop</td><td class="amount">30,000.00</td></tr>
+          <tr><td>Shoe Maker Shop</td><td class="amount">30,000.00</td></tr>
+          <tr><td>Spray / Painter Workshop</td><td class="amount">150,000.00</td></tr>
+          <tr><td>Mobile Phone Shop</td><td class="amount">15,000.00</td></tr>
+          <tr><td>Corporate Offices</td><td class="amount">20,000.00</td></tr>
+          <tr><td>Foam Shop</td><td class="amount">50,000.00</td></tr>
+          <tr><td>Foam Depot</td><td class="amount">20,000.00</td></tr>
+          <tr><td>Arts and Crafts Shop</td><td class="amount">20,000.00</td></tr>
+          <tr><td>Kerosene Shop</td><td class="amount">50,000.00</td></tr>
+          <tr><td>Soap and Detergent Depot</td><td class="amount">70,000.00</td></tr>
+          <tr><td>Tobacco Distribution Shop</td><td class="amount">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Second Schedule: Trade Licence -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-building"></i></div>
+      <div>
+        <h2>Second Schedule — Trade Licence (Operational Permit)</h2>
+        <span>Commercial &amp; Corporate Establishments</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="bylaw-table">
+        <thead>
+          <tr><th>Establishment</th><th>Minimum (₦)</th><th>Maximum (₦)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Commercial Banks</td><td class="amount">250,000.00</td><td class="amount">300,000.00</td></tr>
+          <tr><td>Micro Finance Banks</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Insurance Company</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Bureau de Change</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Mortgage Banks</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Construction Company (Multi-National)</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Construction Company (Local)</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Petrol Station</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Quarries</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Power Distribution Companies (DISCOs)</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Telecommunication Company</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Furniture Showroom</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Warehouses (excl. regulated &amp; building materials)</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Electrical/Electronic Equipment Installation Company</td><td class="amount">—</td><td class="amount">—</td></tr>
+          <tr><td>Manufacturing Company</td><td class="amount">—</td><td class="amount">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Notices / Schedules -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-envelope-open-text"></i></div>
+      <div>
+        <h2>Third &amp; Fourth Schedule — Demand &amp; Legal Notices</h2>
+        <span>Enforcement Procedure</span>
+      </div>
+    </div>
+    <h3>Third Schedule — Notice of Demand</h3>
+    <p>Payment in cash or cheque is to be made at the designated bank between the hours of 8:00 am and 4:00 pm. <strong>If payment is not made within 7 days of this Demand, legal proceedings shall commence.</strong> This demand note must be produced at the time of payment.</p>
+    <h3>Fourth Schedule — Notice of Intention to Sue</h3>
+    <p>Where records show that the outstanding trade permit bill has not been settled within 14 days of service, the Area Council shall give a further <strong>7 days</strong> from the date of the intention-to-sue notice to settle the bill, after which <strong>court action shall be taken without further notice</strong>.</p>
+    <div class="notice-box">
+      <p><i class="fas fa-triangle-exclamation" style="margin-right:6px;"></i> Refusal to pay is viewed as a deliberate act of defrauding the Government and a failure to comply with the conditions of the Trade License Bye-Law 2016.</p>
+    </div>
+  </div>
+
+  <!-- Other bye-laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_preliminary' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Preliminary</strong><span>Part I — General Provisions</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_control_of_advertisement' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-rectangle-ad"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Control of Advertisement</strong><span>Part VI — Bye-Law No. 5</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_community_tax' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Community Tax &amp; Development Levy</strong><span>Part XXVIII — Bye-Law No. 27</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

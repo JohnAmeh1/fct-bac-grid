@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found - Bwari Tenement System</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:wght@700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #0f1117;
+      --ink-2: #3b3f4a;
+      --ink-3: #6b7280;
+      --ink-4: #9ca3af;
+      --surface: #ffffff;
+      --surface-2: #f7f8fa;
+      --surface-3: #f0f2f5;
+      --border: #e5e7eb;
+      --green: #16a34a;
+      --green-dim: #dcfce7;
+      --green-dk: #15803d;
+      --red: #dc2626;
+      --red-dim: #fee2e2;
+      --radius: 10px;
+      --radius-lg: 16px;
+      --shadow: 0 4px 12px rgba(0,0,0,.07);
+      --transition: 160ms cubic-bezier(.4,0,.2,1);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      background: linear-gradient(135deg, #f7f8fa 0%, #f0f2f5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .error-container {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 60px 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      animation: slideUp .5s ease both;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      background: var(--red-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: var(--red);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .error-code {
+      font-family: 'Fraunces', serif;
+      font-size: 72px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      letter-spacing: -2px;
+    }
+
+    .error-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+
+    .error-message {
+      font-size: 14px;
+      color: var(--ink-3);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .error-details {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 32px;
+      text-align: left;
+      font-size: 13px;
+      color: var(--ink-3);
+      font-family: 'DM Mono', monospace;
+      overflow-x: auto;
+    }
+
+    .error-details strong {
+      color: var(--ink);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--transition);
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--green-dk);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(22, 163, 74, .3);
+    }
+
+    .btn-secondary {
+      background: var(--surface-3);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: var(--ink-3);
+    }
+
+    .error-footer {
+      font-size: 12px;
+      color: var(--ink-4);
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .error-container {
+        padding: 40px 24px;
+      }
+
+      .error-code {
+        font-size: 56px;
+      }
+
+      .error-title {
+        font-size: 20px;
+      }
+
+      .error-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="error-icon">🔍</div>
+
+    <div class="error-code">404</div>
+    <div class="error-title">Page Not Found</div>
+
+    <p class="error-message">
+      The page you're looking for doesn't exist or has been moved. It might be a typo in the URL or the resource was deleted.
+    </p>
+
+    <div class="error-details">
+      <strong>Requested:</strong>
+      {{ request.path }}
+    </div>
+
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Go to Home
+      </a>
+      <a href="/dashboard/" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Go to Dashboard
+      </a>
+    </div>
+
+    <div class="error-footer">
+      Bwari Tenement Rate Management System &copy; 2026. Contact support if you need help.
+    </div>
+  </div>
+</body>
+</html>

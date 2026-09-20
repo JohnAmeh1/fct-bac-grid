@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Foodstuff Regulation Bye-Law | Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    color: #fff;
+    padding: 72px 24px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .bylaw-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bylaw-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .bylaw-hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin: 0 0 12px; }
+  .bylaw-hero p { font-size: 1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .bylaw-body { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+  .bylaw-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-bottom: 40px; flex-wrap: wrap; }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 36px 40px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+  .bylaw-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0fdf4; }
+  .bylaw-card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1.2rem; }
+  .bylaw-card-header h2 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p { font-size: 0.95rem; color: #374151; line-height: 1.75; margin: 0 0 14px; }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 { font-size: 1rem; font-weight: 700; color: #065f46; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .bylaw-card h3::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #059669; border-radius: 2px; }
+  .bylaw-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bylaw-meta-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .bylaw-meta-item label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 6px; }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-func-list { list-style: none; padding: 0; margin: 10px 0 0; counter-reset: item; }
+  .bylaw-func-list li { display: flex; gap: 10px; padding: 10px 0; font-size: 0.9rem; color: #374151; line-height: 1.6; border-bottom: 1px solid #f3f4f6; }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before { content: counter(item); counter-increment: item; min-width: 24px; height: 24px; background: #d1fae5; color: #065f46; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .definition-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .definition-item { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #059669; border-radius: 8px; padding: 14px 18px; }
+  .definition-term { display: block; font-weight: 700; font-size: 0.88rem; color: #065f46; margin-bottom: 4px; }
+  .definition-desc { font-size: 0.88rem; color: #374151; line-height: 1.65; }
+  .alert-box { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; }
+  .alert-box i { color: #d97706; margin-top: 2px; flex-shrink: 0; }
+  .alert-box p { margin: 0; font-size: 0.88rem; color: #78350f; line-height: 1.6; }
+  .schedule-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 12px; }
+  .schedule-table th { background: #065f46; color: #fff; text-align: left; padding: 12px 16px; font-weight: 600; font-size: 0.8rem; }
+  .schedule-table th:first-child { border-radius: 8px 0 0 0; }
+  .schedule-table th:last-child { border-radius: 0 8px 0 0; }
+  .schedule-table td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #374151; line-height: 1.5; vertical-align: top; }
+  .schedule-table tr:last-child td { border-bottom: none; }
+  .schedule-table tr:nth-child(even) td { background: #f9fafb; }
+  .bylaw-section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin: 40px 0 16px; }
+  .bylaw-nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .bylaw-nav-card { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #065f46; font-size: 1rem; }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .stamp-block { text-align: center; padding: 28px; background: #f0fdf4; border: 1px dashed #6ee7b7; border-radius: 12px; margin-top: 8px; }
+  .stamp-block p { margin: 0; font-size: 0.9rem; font-weight: 600; color: #065f46; letter-spacing: 0.03em; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-utensils"></i>
+    Part XXV — Bye-Law No. 24 of 2016
+  </div>
+  <h1>Foodstuff Regulation Bye-Law 2016</h1>
+  <p>Preservation, processing and sale of foodstuffs within Bwari Area Council jurisdiction</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XXV — Foodstuff Regulation</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-utensils"></i></div>
+      <div>
+        <h2>Foodstuff Regulation Bye-Law — No. 24 of 2016</h2>
+        <span>Part XXV — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the provisions of Section 7 and the Fourth Schedule to the Constitution of the Federal Republic of Nigeria 1999, and other relevant sections of the Local Government Act, Laws of the Federal Capital Territory, Abuja, 2006 and all other laws enabling it in that behalf, the Bwari Area Council hereby makes the following Bye-Laws.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 24 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XXV</span></div>
+      <div class="bylaw-meta-item"><label>Individual Fine</label><span>₦5,000</span></div>
+      <div class="bylaw-meta-item"><label>Corporate Fine</label><span>₦50,000</span></div>
+    </div>
+  </div>
+
+  <!-- Key Provisions -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-clipboard-list"></i></div>
+      <div>
+        <h2>Key Provisions — Food Safety Standards</h2>
+        <span>Display, Storage, Handling and Transportation</span>
+      </div>
+    </div>
+
+    <h3>Display and Sale Requirements</h3>
+    <p>No person shall display or offer for sale to the public in any market or any other public place any of the foodstuffs specified in the First Schedule to this Bye-Law unless these foodstuffs are suitable, protected from contamination, and kept in the appropriate containers specified in the Schedule.</p>
+
+    <h3>General Hygiene Standards</h3>
+    <ul class="bylaw-func-list">
+      <li>Foodstuffs, including flour and other confectioneries, shall be kept clean at all times.</li>
+      <li>Every foodstuff premises shall be adequately ventilated and all openings screened to ward off flies and other vermin.</li>
+      <li>Every foodstuff handler shall maintain high levels of personal hygiene at all times.</li>
+      <li>Vehicles for use in the transportation of flour, meat and other confectioneries shall be clearly painted and branded in a form approved by the Area Council.</li>
+      <li>No person(s) shall display or offer for sale foodstuff meant for human consumption on verges, setbacks of roads, tops of drains, canals, or open spaces in a manner that exposes such food to contamination.</li>
+      <li>Vegetables that are dangerous to children or adults either by their effluvia or through eating their leaves, seeds, fruits or flowers should not be sold.</li>
+    </ul>
+  </div>
+
+  <!-- Inspection Powers -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-magnifying-glass"></i></div>
+      <div>
+        <h2>Inspection &amp; Enforcement Powers</h2>
+        <span>Environmental Health Officers — Area Council</span>
+      </div>
+    </div>
+    <p>An Environmental Health Officer from the Council shall:</p>
+    <ul class="bylaw-func-list">
+      <li>Have the right to inspect any premises where foodstuffs are being sold at all reasonable times.</li>
+      <li>Carry out inspection of such premises where foodstuffs are being sold, stored and processed.</li>
+    </ul>
+    <p style="margin-top:16px;">The Council shall institute charges against any act or omission which appears or is deemed to be illegal, dangerous, injurious and against social norms, welfare, health and hygiene or in violation of this Bye-Law.</p>
+    <p>Where any foodstuff seller has been prosecuted and convicted for a second or subsequent offence, the council may revoke the licenses given to such foodstuff seller and handlers, if considered necessary in the interest of public health.</p>
+
+    <div class="alert-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Obstruction:</strong> Anybody who obstructs an Environmental Health Officer (or his delegate) in the process of performing his/her duty shall be guilty of an offence.</p>
+    </div>
+  </div>
+
+  <!-- Penalties -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Penalties &amp; Sanctions</h2>
+        <span>Fines, Imprisonment and Sealing of Premises</span>
+      </div>
+    </div>
+    <p>Any person who contravenes or fails to comply with any of the provisions of this Bye-Law shall be guilty of an offence and on conviction shall be liable to:</p>
+    <ul class="bylaw-func-list">
+      <li>A fine of <strong>₦5,000 (Five Thousand Naira)</strong> for an individual or, in default of payment, to imprisonment not exceeding three months.</li>
+      <li>A fine of <strong>₦50,000 (Fifty Thousand Naira)</strong> for departmental stores or warehouses or, in default of payment, to imprisonment not exceeding three months.</li>
+    </ul>
+    <p style="margin-top:16px;">Without prejudice to the foregoing, in deserving cases such foodstuff premises as departmental stores, supermarkets and warehouses may be <strong>ordered sealed up</strong> unless conditions imposed are complied with.</p>
+    <p>A Magistrate Court established under the law of FCT shall have jurisdiction for the trial of offences under this Bye-Law.</p>
+  </div>
+
+  <!-- First Schedule -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-table-list"></i></div>
+      <div>
+        <h2>First Schedule — Foodstuffs &amp; Containers</h2>
+        <span>Approved Storage Containers for Each Category</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th style="width:60%">Varieties of Foodstuff</th>
+            <th>Container and Covering</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Akara (all varieties), Ojojo, Moza or Masa, Moyinmoyin, Abala, Idele, Igbala, Abodo, Boiled or Roasted Maize, Boiled or Fried Plantain, Roasted or Fried Yam, Cocoyam, Sweet Potato, Puff-Puff, Boiled/Fried/Roasted Meat/Fish or Poultry, peeled and/or Sliced Fruits, Chinchin, Adur, Fura, Ogi, Milgao, Bread, Rice, Sugar, Sliced Coconut or Coconut Cake, Shelled/Boiled/Roasted Groundnuts, Tuwo, Stews, and Soups.</td>
+            <td>To be kept in a calabash bowl, dish or similar container fitted with a close-fitting lid or cover, or in baskets or trays (metal or wooden) covered by a white cloth.</td>
+          </tr>
+          <tr>
+            <td>All varieties of stew or soup and all other foodstuffs referred to above in the course of preparation for sale by cooking.</td>
+            <td>To be prepared in earthenware or metal cooking pots fitted with a suitable close-fitting lid or cover.</td>
+          </tr>
+          <tr>
+            <td>Sugar, sweets, meat and other sugar products.</td>
+            <td>To be kept in covered glass jars or containers.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Interpretation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-book-open"></i></div>
+      <div>
+        <h2>Interpretation</h2>
+        <span>Key Definitions under this Bye-Law</span>
+      </div>
+    </div>
+    <div class="definition-grid">
+      <div class="definition-item">
+        <span class="definition-term">"The Council"</span>
+        <span class="definition-desc">Means the Bwari Area Council which has adopted this Bye-Law.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Foodstuff Premises"</span>
+        <span class="definition-desc">Includes corn mills and rice mills.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Corn-Mill"</span>
+        <span class="definition-desc">Means any premises set apart or intended for the preparation of flour and similar food for sale.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Rice-Mill"</span>
+        <span class="definition-desc">Means any premises set apart for the clearing and preparation of rice for sale.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">"Medical Officer of Health"</span>
+        <span class="definition-desc">Means a medical officer of health having authority in the area of the Area Council in accordance with Sections 3 or 4 of the Public Health Laws.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Citation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-stamp"></i></div>
+      <div>
+        <h2>Citation</h2>
+        <span>Foodstuff Regulation Bye-Law (No. 8) 2016</span>
+      </div>
+    </div>
+    <p>This Bye-Law shall be cited as the <strong>Foodstuff Regulation Bye-Law (No. 8) 2016</strong>. The Schedule to this Bye-Law may be varied by a resolution of the Area Council.</p>
+    <div class="stamp-block">
+      <p><i class="fas fa-gavel" style="margin-right:8px;"></i>DULY passed by the Bwari Area Council Legislative Arm.</p>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_cutting_road_tar' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-road"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Cutting of Road Tar</strong><span>Part X — Bye-Law No. 9</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_market_regulation' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-store"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Market Regulation</strong><span>Part XIV — Bye-Law No. 13</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_liquor_licensing' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-wine-glass"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Liquor Licensing</strong><span>Part XXIII — Bye-Law No. 22</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_house_numbering' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-house-chimney"></i></div>
+      <div class="bylaw-nav-card-text"><strong>House Numbering</strong><span>Part XII — Bye-Law No. 11</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

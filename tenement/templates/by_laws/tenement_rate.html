@@ -1,0 +1,534 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tenement Rate Collection Bye-Law | Bwari Area Council{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bylaw-hero {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    color: #fff;
+    padding: 72px 24px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .bylaw-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bylaw-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .bylaw-hero h1 {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 12px;
+  }
+  .bylaw-hero p {
+    font-size: 1rem;
+    opacity: 0.85;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .bylaw-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  .bylaw-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .bylaw-breadcrumb a { color: #059669; text-decoration: none; }
+  .bylaw-breadcrumb a:hover { text-decoration: underline; }
+  .bylaw-breadcrumb i { font-size: 0.65rem; color: #d1d5db; }
+  .bylaw-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .bylaw-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0fdf4;
+  }
+  .bylaw-card-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: #065f46;
+    font-size: 1.2rem;
+  }
+  .bylaw-card-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 4px;
+  }
+  .bylaw-card-header span { font-size: 0.8rem; color: #6b7280; }
+  .bylaw-card p {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.75;
+    margin: 0 0 14px;
+  }
+  .bylaw-card p:last-child { margin-bottom: 0; }
+  .bylaw-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #065f46;
+    margin: 24px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bylaw-card h3::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 16px;
+    background: #059669;
+    border-radius: 2px;
+  }
+  .bylaw-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .bylaw-meta-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .bylaw-meta-item label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+    margin-bottom: 6px;
+  }
+  .bylaw-meta-item span { font-size: 0.9rem; font-weight: 600; color: #111827; }
+  .bylaw-func-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    counter-reset: item;
+  }
+  .bylaw-func-list li {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.6;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .bylaw-func-list li:last-child { border-bottom: none; }
+  .bylaw-func-list li::before {
+    content: counter(item);
+    counter-increment: item;
+    min-width: 24px; height: 24px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .bylaw-nested-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 34px;
+  }
+  .bylaw-nested-list li {
+    font-size: 0.88rem;
+    color: #4b5563;
+    padding: 6px 0;
+    line-height: 1.6;
+    border-bottom: 1px solid #f9fafb;
+    display: flex;
+    gap: 8px;
+  }
+  .bylaw-nested-list li:last-child { border-bottom: none; }
+  .bylaw-nested-list li::before {
+    content: '—';
+    color: #6ee7b7;
+    flex-shrink: 0;
+  }
+  .alert-box {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 16px;
+  }
+  .alert-box i { color: #d97706; margin-top: 2px; flex-shrink: 0; }
+  .alert-box p { margin: 0; font-size: 0.88rem; color: #78350f; line-height: 1.6; }
+  .info-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 16px;
+  }
+  .info-box i { color: #3b82f6; margin-top: 2px; flex-shrink: 0; }
+  .info-box p { margin: 0; font-size: 0.88rem; color: #1e40af; line-height: 1.6; }
+  .definition-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .definition-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #059669;
+    border-radius: 8px;
+    padding: 14px 18px;
+  }
+  .definition-term {
+    display: block;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #065f46;
+    margin-bottom: 4px;
+  }
+  .definition-desc {
+    font-size: 0.88rem;
+    color: #374151;
+    line-height: 1.65;
+  }
+  .bylaw-section-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #059669;
+    margin: 40px 0 16px;
+  }
+  .bylaw-nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .bylaw-nav-card {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 18px 20px; text-decoration: none; color: inherit;
+    transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .bylaw-nav-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); transform: translateY(-2px); }
+  .bylaw-nav-card-icon {
+    width: 40px; height: 40px; background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: #065f46; font-size: 1rem;
+  }
+  .bylaw-nav-card-text strong { display: block; font-size: 0.88rem; font-weight: 700; color: #111827; margin-bottom: 2px; }
+  .bylaw-nav-card-text span { font-size: 0.76rem; color: #6b7280; }
+  .bylaw-nav-card i.fa-chevron-right { margin-left: auto; color: #d1d5db; font-size: 0.75rem; }
+  .stamp-block {
+    text-align: center;
+    padding: 28px;
+    background: #f0fdf4;
+    border: 1px dashed #6ee7b7;
+    border-radius: 12px;
+    margin-top: 8px;
+  }
+  .stamp-block p { margin: 0; font-size: 0.9rem; font-weight: 600; color: #065f46; letter-spacing: 0.03em; }
+  @media (max-width: 600px) { .bylaw-card { padding: 24px 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="bylaw-hero">
+  <div class="bylaw-hero-badge">
+    <i class="fas fa-building"></i>
+    Part XXI — Bye-Law No. 20 of 2016
+  </div>
+  <h1>Tenement Rate Collection Bye-Law 2016</h1>
+  <p>Assessment, valuation, and collection of tenement rates within Bwari Area Council jurisdiction</p>
+</section>
+
+<div class="bylaw-body">
+
+  <nav class="bylaw-breadcrumb">
+    <a href="{% url 'home' %}"><i class="fas fa-house"></i> Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{% url 'bylaw_preliminary' %}">Bye-Laws</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Part XXI — Tenement Rate</span>
+  </nav>
+
+  <!-- Overview -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-building"></i></div>
+      <div>
+        <h2>Tenement Rate Collection Bye-Law — No. 20 of 2016</h2>
+        <span>Part XXI — Bwari Area Council FCT Abuja, Nigeria</span>
+      </div>
+    </div>
+    <p>Pursuant to the Bureau of Local Government Act, Laws of the FCT Abuja 2006 and all other laws enabling it in that behalf, the Bwari Area Council hereby makes the following Bye-Law.</p>
+    <p>This Bye-Law governs the assessment, valuation, and collection of tenement rates on all rateable properties within the jurisdiction of the Bwari Area Council.</p>
+    <div class="bylaw-meta-grid">
+      <div class="bylaw-meta-item"><label>Bye-Law No.</label><span>No. 20 of 2016</span></div>
+      <div class="bylaw-meta-item"><label>Part</label><span>Part XXI</span></div>
+      <div class="bylaw-meta-item"><label>Rate Charge</label><span>4k per Naira (4%)</span></div>
+      <div class="bylaw-meta-item"><label>Surcharge</label><span>25% per annum for arrears</span></div>
+    </div>
+  </div>
+
+  <!-- Valuation Office -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-landmark"></i></div>
+      <div>
+        <h2>Establishment of Valuation Office</h2>
+        <span>Sections 1–3 — Structure and Appointment</span>
+      </div>
+    </div>
+    <p>There is hereby established the <strong>Bwari Area Council Valuation Office</strong> which shall carry out assessment of all rateable properties in the Area Council. The Valuation Office shall have zonal offices in each district as may be considered appropriate by the Chairman.</p>
+    <p>The Valuation Office shall be the only body in the council empowered to levy rates under this Bye-Law. It shall consist of the Head of Valuation and such number of staff as required.</p>
+
+    <h3>Appointment of Head of Valuation</h3>
+    <ul class="bylaw-func-list">
+      <li>The Chairman shall appoint the Head of Valuation as both Professional and Administrative Head.</li>
+      <li>Responsibility for identification, survey, and valuation of rateable properties for the compilation of the valuation list.</li>
+      <li>Nomination, appointment, and supervision of professional advisers for property valuation.</li>
+    </ul>
+
+    <h3>Appointment of Appraisers</h3>
+    <p>The Head of Valuation, in consultation with the Chairman, may appoint qualified Estate Surveyors and Valuers registered by the Professional Body. Such persons shall be under the control and supervision of the Head of Valuation.</p>
+  </div>
+
+  <!-- Powers -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div>
+        <h2>Powers of Appraisers &amp; Rating Authority</h2>
+        <span>Sections 4 &amp; 5 — Inspection and Demand</span>
+      </div>
+    </div>
+
+    <h3>Powers of an Appraiser</h3>
+    <ul class="bylaw-func-list">
+      <li>Require any person to give information orally or in writing that may affect the assessed value of a tenement.</li>
+      <li>Call upon any person liable to pay rate to exhibit documents required for valuation of a tenement.</li>
+      <li>Enter any tenement on working days between 8:00 am and 4:00 pm to take measurements and particulars for valuation.</li>
+      <li>Require the occupier to furnish the name and address of the owner where the occupier is not the owner.</li>
+      <li>Require the owner/occupier or agent to indicate the boundaries of the tenement.</li>
+    </ul>
+
+    <h3>Powers of the Rating Authority</h3>
+    <ul class="bylaw-func-list">
+      <li>Demand and collect tenement rates from owners or occupiers after due notice of demand.</li>
+      <li>Call upon any person liable to rate to exhibit accounts and receipts for rents in connection with valuation.</li>
+      <li>Call on the occupier (where not the owner) to furnish the name and address of the owner.</li>
+    </ul>
+  </div>
+
+  <!-- Assessment & Valuation List -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-clipboard-list"></i></div>
+      <div>
+        <h2>Assessment &amp; Valuation List</h2>
+        <span>Sections 6–14 — Preparation, Publication &amp; Methodology</span>
+      </div>
+    </div>
+
+    <h3>General Assessment</h3>
+    <p>As soon as practicable after the appointment of the Head of Valuation, a <strong>First General Assessment</strong> shall be conducted. Not less than once every five years, a new general assessment shall be made of every rateable tenement in the council.</p>
+
+    <h3>Publication &amp; Inspection</h3>
+    <ul class="bylaw-func-list">
+      <li>Notice of the valuation list shall be published in widely-read daily newspapers, with the list available for public inspection for 21 days.</li>
+      <li>A notice showing the assessed value shall be served upon the owner/occupier of each tenement in the list.</li>
+    </ul>
+
+    <h3>Exemptions from Assessment</h3>
+    <div class="definition-grid">
+      <div class="definition-item">
+        <span class="definition-term">Places of Worship</span>
+        <span class="definition-desc">All land and buildings used exclusively for public worship and recognised as such by law.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">Cemeteries &amp; Burial Grounds</span>
+        <span class="definition-desc">All registered cemeteries and burial grounds within the Area Council.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">Non-Profit Public Institutions</span>
+        <span class="definition-desc">Recognised and registered public institutions certified to be non-profit making.</span>
+      </div>
+      <div class="definition-item">
+        <span class="definition-term">Chairman's Exemptions</span>
+        <span class="definition-desc">Any tenement specifically exempted by the Chairman, including palaces of recognised Traditional Rulers.</span>
+      </div>
+    </div>
+
+    <h3>Methods of Valuation</h3>
+    <p>Appraisers shall consider the actual rent passing on the tenement or comparable rent in the vicinity. Where a property cannot be valued by direct rent reference due to its special nature, the <strong>depreciated replacement cost</strong> method or any other profession-recognised method may be used.</p>
+  </div>
+
+  <!-- Rate Charge & Payment -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-receipt"></i></div>
+      <div>
+        <h2>Rate Charge, Payment &amp; Surcharge</h2>
+        <span>Sections 15, 25 &amp; 26 — Rates, Notices &amp; Deadlines</span>
+      </div>
+    </div>
+    <p>A tenement rate shall be charged at a <strong>uniform rate of 4k per Naira</strong> (4%) of rateable value. This rate shall be subject to periodic review by Gazette notice.</p>
+
+    <div class="info-box">
+      <i class="fas fa-circle-info"></i>
+      <p><strong>Payment Period:</strong> Any person liable to pay shall do so within <strong>21 days</strong> from the service of the demand notice, or any other date specified in the notice.</p>
+    </div>
+
+    <div class="alert-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Surcharge for Arrears:</strong> Where a rate remains unpaid from the date it became due, a surcharge of <strong>25% per annum</strong> (per month the rate remains unpaid) shall be charged and recovered by the rating authority.</p>
+    </div>
+  </div>
+
+  <!-- Objections & Appeals -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-gavel"></i></div>
+      <div>
+        <h2>Objections &amp; Appeals</h2>
+        <span>Sections 16–24 — Dispute Resolution Process</span>
+      </div>
+    </div>
+
+    <h3>Lodging an Objection</h3>
+    <ul class="bylaw-func-list">
+      <li>Any owner or occupier dissatisfied with a valuation may lodge a written Notice of Objection with the Head of Valuation while the list is open for public inspection.</li>
+      <li>The Notice of Objection shall fully state the grounds on which the objection is made.</li>
+      <li>A deposit equal to <strong>50% of the rate due</strong> must accompany the objection; this shall be credited to the rate payer's account pending determination.</li>
+    </ul>
+
+    <h3>Appeal to Magistrate Court</h3>
+    <p>An appeal to the Magistrate Court may be made at the instance of an appellant or by the rating authority where the disputed valuation is ₦600 or more. The decision of the Court shall be final. Costs shall be at the discretion of the court.</p>
+
+    <div class="info-box">
+      <i class="fas fa-clock"></i>
+      <p><strong>Time Limits:</strong> Appeals must be lodged within <strong>30 days</strong> after service of notice of assessment. Appeals against a committee decision must be lodged within <strong>30 days</strong> from the date of that decision.</p>
+    </div>
+  </div>
+
+  <!-- Enforcement -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-shield-halved"></i></div>
+      <div>
+        <h2>Enforcement, Recovery &amp; Penalties</h2>
+        <span>Sections 27–33 — Liability, Collectors &amp; Offences</span>
+      </div>
+    </div>
+
+    <h3>Liability for Payment</h3>
+    <p>Occupiers or subsequent purchasers of a tenement are primarily responsible for paying all rates. The owner becomes secondarily liable. The rating authority may make the owner primarily liable where individual billing of tenants is impractical.</p>
+
+    <h3>Recovery of Unpaid Rates</h3>
+    <ul class="bylaw-func-list">
+      <li>The rating authority may obtain a court judgment against a rate defaulter requiring payment within 21 days of judgment.</li>
+      <li>The Area Council is empowered to recover the rate as a civil debt together with any surcharge and costs.</li>
+      <li>The Area Council may <strong>seal up any tenement</strong> until the court delivers judgment on the matter.</li>
+    </ul>
+
+    <div class="alert-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Offences &amp; Penalties:</strong> Any person who fails to comply, makes an incorrect return, refuses to comply with lawful requirements, or obstructs an officer shall be guilty of an offence and liable on summary conviction to a fine of <strong>₦50,000</strong> for an individual, or <strong>imprisonment for 3 months</strong> (individual) or <strong>1 year</strong> (organisation).</p>
+    </div>
+
+    <div class="alert-box" style="margin-top:12px;">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p><strong>Incitement Penalty:</strong> Any person who incites others to refuse payment shall be liable to a fine of <strong>₦100,000</strong> (individual) or <strong>₦1,500,000</strong> (organisation), or imprisonment of 3 months (individual) or 1 year (organisation).</p>
+    </div>
+  </div>
+
+  <!-- Citation -->
+  <div class="bylaw-card">
+    <div class="bylaw-card-header">
+      <div class="bylaw-card-icon"><i class="fas fa-stamp"></i></div>
+      <div>
+        <h2>Citation &amp; Commencement</h2>
+        <span>Operational Date — 5th January, 2016</span>
+      </div>
+    </div>
+    <p>This Bye-Law may be cited as the <strong>Tenement Rate Collection Bye-Law 2016</strong> and shall become operational with effect from the <strong>5th day of January, 2016</strong>.</p>
+    <div class="stamp-block">
+      <p><i class="fas fa-gavel" style="margin-right:8px;"></i>DULY passed by the Bwari Area Council Legislative Arm.</p>
+    </div>
+  </div>
+
+  <!-- Other Bye-Laws -->
+  <p class="bylaw-section-label"><i class="fas fa-books"></i> &nbsp;Other Bye-Laws</p>
+  <div class="bylaw-nav-cards">
+    <a href="{% url 'bylaw_enabling_law' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Enabling Law</strong><span>Part II — Bye-Law No. 1</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_construction_permits' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-helmet-safety"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Construction Permits</strong><span>Part VIII — Bye-Law No. 7</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_liquor_licensing' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-wine-glass"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Liquor Licensing</strong><span>Part XXIII — Bye-Law No. 22</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{% url 'bylaw_wrong_parking' %}" class="bylaw-nav-card">
+      <div class="bylaw-nav-card-icon"><i class="fas fa-car"></i></div>
+      <div class="bylaw-nav-card-text"><strong>Wrong Parking</strong><span>Part XXIV — Bye-Law No. 23</span></div>
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+</div>
+{% endblock %}
