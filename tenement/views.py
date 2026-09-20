@@ -434,6 +434,18 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
     property_batch = []
     user_batch = []
 
+    # Hashing a password (PBKDF2) is deliberately expensive (~hundreds of ms
+    # per call). Every imported row uses the same dummy password, so hash it
+    # once per distinct password instead of once per row — with 100k+ rows,
+    # re-hashing per row can take hours and is what was timing out the
+    # import request in production.
+    password_hash_cache = {}
+
+    def hashed_password_for(raw_password):
+        if raw_password not in password_hash_cache:
+            password_hash_cache[raw_password] = make_password(raw_password)
+        return password_hash_cache[raw_password]
+
     for row in valid_rows:
         raw_name = re.sub(r'[^a-zA-Z0-9 ]+', ' ', str(row['property_name']).strip())
         display_name = raw_name[:30].strip() or 'Property'
@@ -446,7 +458,7 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
             User(
                 username=row['username'],
                 email=row['email'],
-                password=make_password(raw_password),
+                password=hashed_password_for(raw_password),
                 first_name=first_name,
                 last_name=last_name,
             )
