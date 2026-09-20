@@ -8,7 +8,8 @@ import openpyxl
 import json
 import qrcode
 import base64
-from django.db.models import Sum
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from django.db.models import Q
@@ -778,6 +779,28 @@ def resend_otp(request):
 def dashboard(request):
     profile = request.user.userprofile
     context = {'user_type': profile.user_type}
+    now = timezone.now()
+
+    # Shared helper: monthly revenue trend (last 6 months) for a Payment queryset.
+    def _monthly_revenue_trend(payment_qs):
+        since = (now - timedelta(days=180)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        rows = (
+            payment_qs.filter(status='success', paid_at__gte=since)
+            .annotate(month=TruncMonth('paid_at'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+        by_month = {row['month'].strftime('%Y-%m'): float(row['total'] or 0) for row in rows if row['month']}
+        labels, data = [], []
+        cursor = since
+        for _ in range(6):
+            key = cursor.strftime('%Y-%m')
+            labels.append(cursor.strftime('%b'))
+            data.append(by_month.get(key, 0))
+            # advance one calendar month
+            cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
+        return labels, data
 
     if profile.user_type in ['admin', 'staff', 'field_staff']:
         residential_count = Property.objects.filter(property_type='residential').count()
@@ -795,7 +818,6 @@ def dashboard(request):
         # database round trips on every dashboard load — which is what was
         # timing out the whole page. Replaced with a handful of bulk queries
         # that compute the same per-(user, rate) paid/unpaid counts.
-        now = timezone.now()
         sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
         eligible_user_ids = list(User.objects.filter(
             userprofile__user_type='landlord',
@@ -821,6 +843,22 @@ def dashboard(request):
         sanitation_non_payers_count = _san_unpaid
         total_sanitation_eligible = _san_paid + _san_unpaid
 
+        # Revenue trend — successful payments, system-wide, by month (last 6 months)
+        revenue_trend_labels, revenue_trend_data = _monthly_revenue_trend(Payment.objects.all())
+
+        # Complaints by category — labels resolved via the model's own choices
+        # so this stays correct even if the choice list changes later.
+        category_field = Complaint._meta.get_field('category')
+        category_choices = dict(category_field.choices) if category_field.choices else {}
+        complaints_by_category_qs = (
+            Complaint.objects.values('category').annotate(count=Count('id')).order_by('-count')
+        )
+        complaints_by_category_labels = [
+            category_choices.get(row['category'], (row['category'] or 'Uncategorized').replace('_', ' ').title())
+            for row in complaints_by_category_qs
+        ]
+        complaints_by_category_data = [row['count'] for row in complaints_by_category_qs]
+
         context.update({
             'residential_count': residential_count,
             'commercial_count': commercial_count,
@@ -833,6 +871,12 @@ def dashboard(request):
             'sanitation_payers_count':   sanitation_payers_count,
             'sanitation_non_payers_count': sanitation_non_payers_count,
             'total_sanitation_eligible': total_sanitation_eligible,
+            'revenue_trend_labels':      json.dumps(revenue_trend_labels),
+            'revenue_trend_data':        json.dumps(revenue_trend_data),
+            'revenue_trend_total':       sum(revenue_trend_data),
+            'complaints_by_category_labels': json.dumps(complaints_by_category_labels),
+            'complaints_by_category_data':   json.dumps(complaints_by_category_data),
+            'has_complaints_data':       bool(complaints_by_category_data),
         })
     elif profile.user_type == 'landlord':
         properties = Property.objects.filter(owner=request.user).order_by('-created_at')
@@ -885,6 +929,11 @@ def dashboard(request):
                     'computed_amount': rate.amount,
                 })
 
+        # Payment history — this landlord's successful payments by month (last 6 months)
+        landlord_revenue_labels, landlord_revenue_data = _monthly_revenue_trend(
+            Payment.objects.filter(landlord=request.user)
+        )
+
         context.update({
             'properties': properties_with_status,
             'total_properties': len(properties_with_status),
@@ -894,6 +943,11 @@ def dashboard(request):
             'paid_coverage_list': paid_coverage_list,
             'total_complaints': my_complaints.count(),
             'open_complaints': my_complaints.filter(status='open').count(),
+            'paid_obligations_count': len(paid_coverage_list),
+            'outstanding_obligations_count': len(obligations_list),
+            'total_obligations_count': len(paid_coverage_list) + len(obligations_list),
+            'landlord_revenue_labels': json.dumps(landlord_revenue_labels),
+            'landlord_revenue_data': json.dumps(landlord_revenue_data),
         })
 
     return render(request, 'dashboard.html', context)

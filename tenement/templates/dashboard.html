@@ -46,6 +46,30 @@
     margin-top: 4px;
   }
 
+  /* ── Bar / Trend Chart Cards ─────────────────────────────── */
+  .bar-chart-card-body {
+    padding: 20px 22px 8px;
+    height: 230px;
+    position: relative;
+  }
+  .chart-card-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 16px 22px 0;
+  }
+  .chart-card-meta .ccm-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -.3px;
+  }
+  .chart-card-meta .ccm-label {
+    font-size: .74rem;
+    color: var(--ink-4);
+  }
+
   :root {
     --ink: #0b1220;
     --ink-2: #2c374a;
@@ -771,6 +795,47 @@
     </div>
   </div>
 
+  <div class="grid-2 fade fade-2">
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Revenue Trend</div>
+      </div>
+      {% if revenue_trend_total %}
+      <div class="chart-card-meta">
+        <span class="ccm-value">₦{{ revenue_trend_total|floatformat:0 }}</span>
+        <span class="ccm-label">collected · last 6 months</span>
+      </div>
+      <div class="bar-chart-card-body">
+        <canvas id="revenueTrendChart"></canvas>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state">
+          <i class="fas fa-chart-column"></i>
+          <p>No successful payments in the last 6 months.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-flag"></i></span>Complaints by Category</div>
+      </div>
+      {% if has_complaints_data %}
+      <div class="bar-chart-card-body" style="height:210px;padding-top:18px;">
+        <canvas id="complaintsCategoryChart"></canvas>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state">
+          <i class="fas fa-flag"></i>
+          <p>No complaints have been logged yet.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   <div class="section-label fade">Quick Actions</div>
   <div class="grid-3 fade fade-1">
     <div class="adm-card">
@@ -1082,6 +1147,47 @@
     </div>
   </div>
 
+  <div class="grid-2 fade fade-2">
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Revenue Trend</div>
+      </div>
+      {% if revenue_trend_total %}
+      <div class="chart-card-meta">
+        <span class="ccm-value">₦{{ revenue_trend_total|floatformat:0 }}</span>
+        <span class="ccm-label">collected · last 6 months</span>
+      </div>
+      <div class="bar-chart-card-body">
+        <canvas id="revenueTrendChart"></canvas>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state">
+          <i class="fas fa-chart-column"></i>
+          <p>No successful payments in the last 6 months.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-flag"></i></span>Complaints by Category</div>
+      </div>
+      {% if has_complaints_data %}
+      <div class="bar-chart-card-body" style="height:210px;padding-top:18px;">
+        <canvas id="complaintsCategoryChart"></canvas>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state">
+          <i class="fas fa-flag"></i>
+          <p>No complaints have been logged yet.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   <div class="section-label fade">Staff Tools</div>
   <div class="grid-1 fade fade-1">
     <div class="adm-card">
@@ -1263,6 +1369,48 @@
   <div class="notice info fade">
     <i class="fas fa-circle-info"></i>
     <p>Register your properties to start receiving tenement rate bills and manage your payments from this dashboard.</p>
+  </div>
+
+  <div class="section-label fade">Metrics</div>
+  <div class="grid-2 fade fade-1">
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Payment Status</div>
+      </div>
+      <div class="card-body chart-card-body">
+        {% if total_obligations_count %}
+        <div class="chart-wrap">
+          <canvas id="paymentStatusChart"></canvas>
+          <div class="chart-center-label">
+            <div class="cc-value">{% widthratio paid_obligations_count total_obligations_count 100 %}%</div>
+            <div class="cc-caption">Covered</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-chart-pie"></i>
+          <p>No billable obligations yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Payment History</div>
+      </div>
+      {% if total_paid %}
+      <div class="bar-chart-card-body" style="height:210px;padding-top:18px;">
+        <canvas id="landlordRevenueChart"></canvas>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state">
+          <i class="fas fa-chart-column"></i>
+          <p>No successful payments in the last 6 months.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
   </div>
 
   <div class="section-label fade">My Portfolio</div>
@@ -1600,8 +1748,35 @@
   (function () {
     if (typeof Chart === 'undefined') return;
 
+    var FONT = "'Plus Jakarta Sans', sans-serif";
+    var INK_3 = '#5c6b82';
+    var INK_4 = '#98a4b8';
+    var BORDER = 'rgba(15, 23, 42, 0.06)';
+
+    function nairaFormat(value) {
+      var n = Number(value) || 0;
+      return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
+    }
+
+    function nairaCompact(value) {
+      var n = Number(value) || 0;
+      if (n >= 1000000) return '₦' + (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (n >= 1000) return '₦' + (n / 1000).toFixed(0) + 'k';
+      return '₦' + n;
+    }
+
+    var tooltipBase = {
+      backgroundColor: '#0b1220',
+      padding: 10,
+      titleFont: { family: FONT, size: 12, weight: '600' },
+      bodyFont: { family: FONT, size: 12 },
+      cornerRadius: 8,
+      displayColors: true,
+      boxPadding: 4
+    };
+
     // Shared, understated donut style matching the card design language.
-    var baseOptions = {
+    var donutOptions = {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '72%',
@@ -1612,19 +1787,57 @@
             usePointStyle: true,
             pointStyle: 'circle',
             padding: 14,
-            font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '600' },
-            color: '#5c6b82'
+            font: { family: FONT, size: 11, weight: '600' },
+            color: INK_3
           }
         },
-        tooltip: {
-          backgroundColor: '#0b1220',
-          padding: 10,
-          titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
-          bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
-          cornerRadius: 8
-        }
+        tooltip: Object.assign({}, tooltipBase, {
+          callbacks: {
+            label: function (ctx) {
+              var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+              var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+              return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+            }
+          }
+        })
       }
     };
+
+    // Shared, professional bar/line chart style: subtle gridlines, no clutter.
+    function barLineOptions(opts) {
+      opts = opts || {};
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: Object.assign({}, tooltipBase, {
+            callbacks: opts.currency ? {
+              label: function (ctx) { return ' ' + nairaFormat(ctx.parsed.y); }
+            } : undefined
+          })
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { family: FONT, size: 11, weight: '600' }, color: INK_3 }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: BORDER, drawTicks: false },
+            border: { display: false },
+            ticks: {
+              font: { family: FONT, size: 10 },
+              color: INK_4,
+              maxTicksLimit: 5,
+              callback: opts.currency ? function (v) { return nairaCompact(v); } : undefined,
+              precision: opts.currency ? undefined : 0
+            }
+          }
+        }
+      };
+    }
 
     var propertyCanvas = document.getElementById('propertyTypeChart');
     if (propertyCanvas) {
@@ -1645,7 +1858,7 @@
             hoverOffset: 4
           }]
         },
-        options: baseOptions
+        options: donutOptions
       });
     }
 
@@ -1666,7 +1879,85 @@
             hoverOffset: 4
           }]
         },
-        options: baseOptions
+        options: donutOptions
+      });
+    }
+
+    var paymentStatusCanvas = document.getElementById('paymentStatusChart');
+    if (paymentStatusCanvas) {
+      new Chart(paymentStatusCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Covered', 'Outstanding'],
+          datasets: [{
+            data: [
+              {{ paid_obligations_count|default:0 }},
+              {{ outstanding_obligations_count|default:0 }}
+            ],
+            backgroundColor: ['#146c43', '#a15c07'],
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            hoverOffset: 4
+          }]
+        },
+        options: donutOptions
+      });
+    }
+
+    var revenueTrendCanvas = document.getElementById('revenueTrendChart');
+    if (revenueTrendCanvas) {
+      new Chart(revenueTrendCanvas, {
+        type: 'bar',
+        data: {
+          labels: {{ revenue_trend_labels|default:"[]"|safe }},
+          datasets: [{
+            label: 'Revenue',
+            data: {{ revenue_trend_data|default:"[]"|safe }},
+            backgroundColor: '#0d3f73',
+            hoverBackgroundColor: '#082749',
+            borderRadius: 5,
+            maxBarThickness: 34
+          }]
+        },
+        options: barLineOptions({ currency: true })
+      });
+    }
+
+    var landlordRevenueCanvas = document.getElementById('landlordRevenueChart');
+    if (landlordRevenueCanvas) {
+      new Chart(landlordRevenueCanvas, {
+        type: 'bar',
+        data: {
+          labels: {{ landlord_revenue_labels|default:"[]"|safe }},
+          datasets: [{
+            label: 'Payments',
+            data: {{ landlord_revenue_data|default:"[]"|safe }},
+            backgroundColor: '#146c43',
+            hoverBackgroundColor: '#0a4a30',
+            borderRadius: 5,
+            maxBarThickness: 34
+          }]
+        },
+        options: barLineOptions({ currency: true })
+      });
+    }
+
+    var complaintsCategoryCanvas = document.getElementById('complaintsCategoryChart');
+    if (complaintsCategoryCanvas) {
+      new Chart(complaintsCategoryCanvas, {
+        type: 'bar',
+        data: {
+          labels: {{ complaints_by_category_labels|default:"[]"|safe }},
+          datasets: [{
+            label: 'Complaints',
+            data: {{ complaints_by_category_data|default:"[]"|safe }},
+            backgroundColor: '#ad1f2f',
+            hoverBackgroundColor: '#7a1620',
+            borderRadius: 5,
+            maxBarThickness: 34
+          }]
+        },
+        options: barLineOptions({ currency: false })
       });
     }
   })();
