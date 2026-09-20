@@ -3,6 +3,7 @@ import csv
 import re
 import uuid
 import threading
+import logging
 from decimal import Decimal
 import openpyxl
 import json
@@ -55,6 +56,52 @@ from reportlab.platypus import Table, TableStyle
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
+
+logger = logging.getLogger(__name__)
+
+PAYSTACK_TIMEOUT = 15  # seconds — prevents the view from hanging indefinitely
+
+
+def _paystack_request(method, url, **kwargs):
+    """
+    Thin wrapper around requests calls to Paystack.
+
+    Returns (response, error_detail). Exactly one of the two is set:
+    - On success: (Response object, None)
+    - On failure to even reach Paystack (DNS, connection refused, timeout,
+      SSL, etc.): (None, "<human readable reason>")
+
+    A non-2xx response FROM Paystack is not treated as a failure here —
+    that's still a normal (response, None) return, since the caller needs
+    the actual status code / body to know what Paystack said was wrong
+    (bad key, invalid amount, invalid email, etc). Every outcome is logged
+    with enough detail to diagnose it from the server logs, since the
+    user-facing message stays generic on purpose.
+    """
+    kwargs.setdefault('timeout', PAYSTACK_TIMEOUT)
+    try:
+        response = requests.request(method, url, **kwargs)
+    except requests.exceptions.Timeout:
+        logger.error("Paystack request to %s timed out after %ss", url, kwargs['timeout'])
+        return None, "timeout"
+    except requests.exceptions.SSLError as exc:
+        logger.error("Paystack SSL error for %s: %s", url, exc)
+        return None, "ssl_error"
+    except requests.exceptions.ConnectionError as exc:
+        logger.error("Paystack connection error for %s: %s", url, exc)
+        return None, "connection_error"
+    except requests.exceptions.RequestException as exc:
+        logger.error("Paystack request error for %s: %s", url, exc)
+        return None, "request_error"
+
+    if response.status_code != 200:
+        # Log the full body — this is where the *real* reason lives
+        # (invalid/revoked key, invalid email, amount too low, etc).
+        logger.error(
+            "Paystack call to %s returned HTTP %s: %s",
+            url, response.status_code, response.text[:1000]
+        )
+    return response, None
 
 # Helper: email sending
 from django.core.mail import send_mail
@@ -2011,8 +2058,10 @@ def initiate_payment(request, property_id, rate_id):
         }
     }
 
-    response = requests.post(paystack_url, headers=headers, json=data)
-    if response.status_code == 200:
+    response, network_error = _paystack_request('post', paystack_url, headers=headers, json=data)
+    if network_error:
+        messages.error(request, "Could not connect to payment gateway. Please try again later.")
+    elif response.status_code == 200:
         resp_data = response.json()
         if resp_data['status']:
             return redirect(resp_data['data']['authorization_url'])
@@ -2036,9 +2085,11 @@ def verify_payment(request, reference):
 
     url = f"https://api.paystack.co/transaction/verify/{reference}"
     headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
-    response = requests.get(url, headers=headers)
+    response, network_error = _paystack_request('get', url, headers=headers)
 
-    if response.status_code == 200:
+    if network_error:
+        messages.error(request, "Could not verify payment at this time. Please contact support.")
+    elif response.status_code == 200:
         resp_data = response.json()
         if resp_data['status'] and resp_data['data']['status'] == 'success':
             paid_at = timezone.now()
@@ -2246,8 +2297,12 @@ def get_paystack_access_code(request, property_id, rate_id):
         }
     }
 
-    response = requests.post(paystack_url, headers=headers, json=data)
-    if response.status_code == 200:
+    response, network_error = _paystack_request('post', paystack_url, headers=headers, json=data)
+    if network_error:
+        payment.status = 'failed'
+        payment.save()
+        return JsonResponse({'error': 'Could not connect to payment gateway. Please try again later.'}, status=502)
+    elif response.status_code == 200:
         resp_data = response.json()
         if resp_data['status']:
             return JsonResponse({
