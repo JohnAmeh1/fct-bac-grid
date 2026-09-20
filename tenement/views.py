@@ -231,6 +231,42 @@ def generate_dummy_property_credentials(property_ref, password_index=None):
     return username, email, password
 
 
+def get_paginator_page_range(page_obj, siblings=2, boundary=1):
+    """Return a compact but complete page list with ellipses for gaps."""
+    page_number = page_obj.number
+    total_pages = page_obj.paginator.num_pages
+    if total_pages <= (siblings * 2) + boundary * 2 + 3:
+        return list(range(1, total_pages + 1))
+
+    page_range = []
+    left_window = max(1, page_number - siblings)
+    right_window = min(total_pages, page_number + siblings)
+
+    for num in range(1, boundary + 1):
+        page_range.append(num)
+    if left_window > boundary + 1:
+        page_range.append('…')
+    for num in range(left_window, right_window + 1):
+        if num > boundary and num <= total_pages - boundary:
+            page_range.append(num)
+    if right_window < total_pages - boundary:
+        page_range.append('…')
+    for num in range(total_pages - boundary + 1, total_pages + 1):
+        if num > 0:
+            page_range.append(num)
+
+    deduped = []
+    seen = set()
+    for item in page_range:
+        if item == '…':
+            deduped.append(item)
+            continue
+        if item not in seen:
+            deduped.append(item)
+            seen.add(item)
+    return deduped
+
+
 def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, max_preview_rows=25):
     if uploaded_file is None:
         return 0, []
@@ -403,11 +439,14 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
         display_name = raw_name[:30].strip() or 'Property'
         first_name = display_name.split()[0] if display_name else 'Property'
         last_name = ' '.join(display_name.split()[1:])[:25] if len(display_name.split()) > 1 else 'Owner'
+        raw_password = str(row.get('password') or '').strip()
+        if not raw_password:
+            raw_password = '12345678'
         user_batch.append(
             User(
                 username=row['username'],
                 email=row['email'],
-                password=make_password(row['password']),
+                password=make_password(raw_password),
                 first_name=first_name,
                 last_name=last_name,
             )
@@ -1050,9 +1089,11 @@ def admin_manage_users(request):
     paginator = Paginator(users, 20)
     page_number = request.GET.get('page')
     users_page = paginator.get_page(page_number)
+    users_page_range = get_paginator_page_range(users_page)
 
     context = {
         'users':           users_page,
+        'page_range':      users_page_range,
         'total_users':     UserProfile.objects.filter(email_verified=True).count(),
         'total_landlords': UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
         'total_admins':    UserProfile.objects.filter(user_type='admin', email_verified=True).count(),
@@ -1150,6 +1191,7 @@ def admin_manage_properties(request):
     paginator = Paginator(props_list, 12)
     page_number = request.GET.get('page')
     properties_page = paginator.get_page(page_number)
+    properties_page_range = get_paginator_page_range(properties_page)
 
     for prop in properties_page:
         prop.payment_status = get_property_payment_status(prop)
@@ -1159,6 +1201,7 @@ def admin_manage_properties(request):
 
     context = {
         'properties':        properties_page,
+        'page_range':       properties_page_range,
         'total_properties':  total_properties,
         'residential_count': residential_count,
         'commercial_count':  commercial_count,

@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from openpyxl import Workbook
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -8,7 +9,12 @@ from PIL import Image
 from django.contrib.auth.models import User
 
 from tenement.models import Property, USER_TYPE_CHOICES, PaymentRate
-from tenement.views import import_properties_from_uploaded_file, is_property_fully_paid, is_property_sanitation_paid
+from tenement.views import (
+    get_paginator_page_range,
+    import_properties_from_uploaded_file,
+    is_property_fully_paid,
+    is_property_sanitation_paid,
+)
 
 
 class BulkImportAccountTests(TestCase):
@@ -105,6 +111,45 @@ class BulkImportAccountTests(TestCase):
         self.assertEqual(second_count, 0)
         self.assertEqual(Property.objects.count(), 2)
         self.assertEqual(User.objects.filter(userprofile__user_type='landlord').count(), 2)
+
+    def test_xlsx_import_with_blank_password_uses_default_password(self):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.append([
+            'Property Name', 'Address', 'District', 'Property Type',
+            'Latitude', 'Longitude', 'Password'
+        ])
+        worksheet.append([
+            'Bwari Plaza', 'No. 1 Main Road', 'Bwari', 'residential',
+            '9.288472', '7.390101', None,
+        ])
+
+        buffer = BytesIO()
+        workbook.save(buffer)
+        uploaded_file = SimpleUploadedFile(
+            'properties.xlsx',
+            buffer.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+        created_count, account_rows = import_properties_from_uploaded_file(uploaded_file)
+
+        self.assertEqual(created_count, 1)
+        self.assertEqual(len(account_rows), 1)
+        user = User.objects.get(username__startswith='bwari-plaza')
+        self.assertTrue(user.check_password('12345678'))
+        self.assertEqual(user.userprofile.user_type, 'landlord')
+
+    def test_paginator_page_range_is_visible_beyond_three_pages(self):
+        page = type('PageStub', (), {'number': 10, 'paginator': type('PaginatorStub', (), {'num_pages': 25, 'page_range': range(1, 26)})()})()
+
+        page_range = get_paginator_page_range(page, siblings=2, boundary=1)
+
+        self.assertEqual(page_range[0], 1)
+        self.assertIn('…', page_range)
+        self.assertEqual(page_range[-1], 25)
+        self.assertGreater(len(page_range), 7)
+        self.assertIn(10, page_range)
 
     def test_field_staff_can_create_property(self):
         field_staff = User.objects.create_user(

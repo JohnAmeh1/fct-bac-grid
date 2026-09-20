@@ -566,10 +566,12 @@
           {% if users.has_previous %}
             <a href="?page={{ users.previous_page_number }}&{{ request.GET.urlencode }}" class="pg"><i class="fas fa-chevron-left"></i></a>
           {% endif %}
-          {% for num in users.paginator.page_range %}
-            {% if users.number == num %}
+          {% for num in page_range %}
+            {% if num == '…' %}
+              <span class="pg muted">…</span>
+            {% elif users.number == num %}
               <span class="pg active">{{ num }}</span>
-            {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+            {% else %}
               <a href="?page={{ num }}&{{ request.GET.urlencode }}" class="pg">{{ num }}</a>
             {% endif %}
           {% endfor %}
