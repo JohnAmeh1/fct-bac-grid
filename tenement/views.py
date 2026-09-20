@@ -469,8 +469,10 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
         batch = user_batch[index:index + 1000]
         with transaction.atomic():
             User.objects.bulk_create(batch, batch_size=1000)
-        fetched_users = list(User.objects.filter(username__in=[user.username for user in batch]).values_list('id', 'username'))
-        created_users.extend(fetched_users)
+        # PostgreSQL + Django populate `.id` on each object after bulk_create,
+        # so we can read ids straight off `batch` instead of re-querying the
+        # database for them — this halves the round trips to Neon for this step.
+        created_users.extend((user.id, user.username) for user in batch)
         if progress_callback:
             progress(min(index + len(batch), len(valid_rows)), len(valid_rows), len(created_users), 'Creating property accounts...')
 
@@ -2280,6 +2282,145 @@ def staff_register_property(request):
     return render(request, 'staff/register_property.html', {'form': form})
 
 
+class _InMemoryUploadCopy:
+    """
+    A minimal stand-in for Django's UploadedFile that owns its own bytes.
+
+    request.FILES objects (and their underlying temp files) are only
+    guaranteed to be valid for the lifetime of the request. Since the actual
+    import now runs in a background thread that outlives the request/response
+    cycle, we copy the upload into plain bytes up front and hand this wrapper
+    to the background thread instead of the original file object.
+    """
+
+    def __init__(self, name, content_bytes):
+        self.name = name
+        self._buffer = io.BytesIO(content_bytes)
+
+    def seek(self, pos):
+        return self._buffer.seek(pos)
+
+    def read(self, *args, **kwargs):
+        return self._buffer.read(*args, **kwargs)
+
+
+def _run_property_import_in_background(uploaded_file_copy, progress_key):
+    """
+    Runs the (potentially very slow, 100k+ row) import off the request
+    thread. Progress and the final result are written to the cache so the
+    browser can poll `staff_import_properties_progress` for status.
+
+    This is a plain Python thread rather than a real task queue, which is a
+    reasonable stopgap for a single-worker deployment but has real limits:
+    if the gunicorn worker process is restarted/redeployed mid-import, the
+    thread (and the import) dies with it. For very large recurring imports,
+    a proper background worker (Celery/RQ + Redis) is the durable answer.
+    """
+    cache_key = f'property_import_progress:{progress_key}'
+
+    def progress_callback(current, total, created_count, message):
+        percent = int((current / total) * 100) if total else 0
+        cache.set(cache_key, {
+            'status': 'running',
+            'message': message,
+            'percent': percent,
+            'created_count': created_count,
+            'done': False,
+            'error': '',
+            'rows': [],
+        }, timeout=3600)
+
+    try:
+        created_count, account_rows = import_properties_from_uploaded_file(
+            uploaded_file_copy, progress_callback=progress_callback,
+        )
+        cache.set(cache_key, {
+            'status': 'done',
+            'message': 'Import complete.' if created_count else 'No valid property rows were found. Nothing was saved.',
+            'percent': 100,
+            'created_count': created_count,
+            'done': True,
+            'error': '',
+            'rows': account_rows,
+        }, timeout=3600)
+    except Exception as exc:
+        cache.set(cache_key, {
+            'status': 'error',
+            'message': 'Import failed.',
+            'percent': 0,
+            'created_count': 0,
+            'done': True,
+            'error': str(exc),
+            'rows': [],
+        }, timeout=3600)
+    finally:
+        # Each thread gets its own DB connection; close it explicitly so
+        # long-running background threads don't leak idle connections
+        # against the (remote, connection-limited) Neon database.
+        from django.db import connections
+        connections.close_all()
+
+
+_PROGRESS_PAGE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Importing properties…</title>
+  <style>
+    body {{ font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }}
+    .bar-track {{ background: #e5e7eb; border-radius: 8px; height: 20px; overflow: hidden; margin: 16px 0; }}
+    .bar-fill {{ background: #16a34a; height: 100%; width: 0%; transition: width 0.4s ease; }}
+    .status {{ color: #4b5563; }}
+    .error {{ color: #b91c1c; font-weight: 600; }}
+    .success {{ color: #15803d; font-weight: 600; }}
+    a.button {{ display: inline-block; margin-top: 20px; padding: 10px 18px; background: #111827; color: #fff; text-decoration: none; border-radius: 6px; }}
+  </style>
+</head>
+<body>
+  <h2>Importing properties…</h2>
+  <p class="status" id="status-message">Starting import…</p>
+  <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+  <p id="percent-text">0%</p>
+  <div id="result"></div>
+
+  <script>
+    const progressUrl = "{progress_url}";
+    const doneUrl = "{done_url}";
+
+    async function poll() {{
+      try {{
+        const res = await fetch(progressUrl, {{ cache: "no-store" }});
+        const data = await res.json();
+
+        document.getElementById("status-message").textContent = data.message || "Working…";
+        document.getElementById("bar-fill").style.width = (data.percent || 0) + "%";
+        document.getElementById("percent-text").textContent = (data.percent || 0) + "%";
+
+        if (data.done) {{
+          const resultEl = document.getElementById("result");
+          if (data.status === "error") {{
+            resultEl.innerHTML = '<p class="error">Import failed: ' + (data.error || "unknown error") + '</p>' +
+              '<a class="button" href="' + doneUrl + '">Back to import page</a>';
+          }} else {{
+            resultEl.innerHTML = '<p class="success">' + data.created_count + ' property record(s) imported successfully.</p>' +
+              '<a class="button" href="' + doneUrl + '">Back to import page</a>';
+          }}
+          return;
+        }}
+        setTimeout(poll, 1500);
+      }} catch (e) {{
+        document.getElementById("status-message").textContent = "Lost connection to progress updates — the import is still running in the background. Reloading…";
+        setTimeout(() => window.location.reload(), 3000);
+      }}
+    }}
+    poll();
+  </script>
+</body>
+</html>
+"""
+
+
 @staff_or_admin_required
 def staff_import_properties(request):
     profile = getattr(request.user, 'userprofile', None)
@@ -2296,17 +2437,39 @@ def staff_import_properties(request):
         form = PropertyBulkUploadForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = request.FILES.get('file')
-            try:
-                created_count, account_rows = import_properties_from_uploaded_file(uploaded_file)
-            except Exception as exc:
-                messages.error(request, f'Import failed while saving to the database: {exc}')
+            if uploaded_file is None:
+                messages.error(request, 'Please choose a file to upload.')
                 return redirect('staff_import_properties')
 
-            if created_count:
-                messages.success(request, f'{created_count} property records were imported and saved to the database successfully.')
-            else:
-                messages.warning(request, 'No valid property rows were found in the uploaded file. Nothing was saved.')
-            return redirect('staff_import_properties')
+            # Read the whole upload into memory now, while we still have the
+            # real request-bound file object, so the background thread has
+            # its own independent copy to work from.
+            uploaded_file.seek(0)
+            file_bytes = uploaded_file.read()
+            file_copy = _InMemoryUploadCopy(uploaded_file.name, file_bytes)
+
+            new_progress_key = uuid.uuid4().hex
+            cache.set(f'property_import_progress:{new_progress_key}', {
+                'status': 'running',
+                'message': 'Starting import…',
+                'percent': 0,
+                'created_count': 0,
+                'done': False,
+                'error': '',
+                'rows': [],
+            }, timeout=3600)
+
+            thread = threading.Thread(
+                target=_run_property_import_in_background,
+                args=(file_copy, new_progress_key),
+                daemon=True,
+            )
+            thread.start()
+
+            progress_url = reverse('staff_import_properties_progress', args=[new_progress_key])
+            done_url = reverse('staff_import_properties')
+            html = _PROGRESS_PAGE_TEMPLATE.format(progress_url=progress_url, done_url=done_url)
+            return HttpResponse(html)
         else:
             messages.error(request, 'Please upload a valid CSV or Excel file.')
 
