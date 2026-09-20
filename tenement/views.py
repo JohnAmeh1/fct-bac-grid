@@ -788,29 +788,34 @@ def dashboard(request):
         # Sanitation payer counts — mirror the exact logic used in
         # admin_sanitation_defaulters so the dashboard numbers always match
         # the Sanitation Records page (per-user × per-rate records).
+        #
+        # NOTE: this used to issue one .exists() query per (landlord, rate)
+        # pair in a Python loop. That was fine with a handful of landlords,
+        # but with 100k+ imported landlord accounts it meant 100k+ synchronous
+        # database round trips on every dashboard load — which is what was
+        # timing out the whole page. Replaced with a handful of bulk queries
+        # that compute the same per-(user, rate) paid/unpaid counts.
         now = timezone.now()
-        sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
-        eligible_users = User.objects.filter(
+        sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
+        eligible_user_ids = list(User.objects.filter(
             userprofile__user_type='landlord',
             userprofile__email_verified=True,
-        ).select_related('userprofile')
+        ).values_list('id', flat=True))
 
+        total_pairs = len(eligible_user_ids) * len(sanitation_rates)
         _san_paid = 0
-        _san_unpaid = 0
-        for _u in eligible_users:
+        if eligible_user_ids and sanitation_rates:
             for _rate in sanitation_rates:
-                _has_paid = Payment.objects.filter(
-                    landlord=_u,
+                paid_landlord_ids = Payment.objects.filter(
+                    landlord_id__in=eligible_user_ids,
                     payment_rate=_rate,
                     status='success',
                     property=None,
                 ).filter(
                     django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
-                ).exists()
-                if _has_paid:
-                    _san_paid += 1
-                else:
-                    _san_unpaid += 1
+                ).values_list('landlord_id', flat=True).distinct()
+                _san_paid += len(set(paid_landlord_ids))
+        _san_unpaid = total_pairs - _san_paid
 
         sanitation_payers_count   = _san_paid
         sanitation_non_payers_count = _san_unpaid
@@ -1499,25 +1504,43 @@ def admin_sanitation_defaulters(request):
         messages.error(request, "Access denied.")
         return redirect('dashboard')
 
-    sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+    sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
     all_records = []
     now = timezone.now()
 
     # All users (landlords + tenants) are subject to sanitation levy
-    users = User.objects.filter(
+    users = list(User.objects.filter(
         userprofile__user_type__in=['landlord', 'tenant'],
         userprofile__email_verified=True,
-    ).select_related('userprofile')
-    for user in users:
-        for rate in sanitation_rates:
-            valid_payment = Payment.objects.filter(
-                landlord=user,
-                payment_rate=rate,
+    ).select_related('userprofile'))
+
+    # NOTE: this used to run one Payment query per (user, rate) pair — with
+    # 100k+ imported accounts that's 100k+ synchronous DB round trips and
+    # crashes the page. Instead, pull every relevant "latest valid payment"
+    # in a constant number of queries and look them up from memory.
+    user_ids = [u.id for u in users]
+    latest_valid_payment_by_pair = {}
+    if user_ids and sanitation_rates:
+        candidate_payments = (
+            Payment.objects.filter(
+                landlord_id__in=user_ids,
+                payment_rate__in=sanitation_rates,
                 status='success',
                 property=None,
-            ).filter(
-                django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
-            ).order_by('-paid_at').first()
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .order_by('landlord_id', 'payment_rate_id', '-paid_at')
+        )
+        for payment in candidate_payments:
+            key = (payment.landlord_id, payment.payment_rate_id)
+            # order_by above puts each pair's most recent valid payment first;
+            # keep only that first one per pair.
+            if key not in latest_valid_payment_by_pair:
+                latest_valid_payment_by_pair[key] = payment
+
+    for user in users:
+        for rate in sanitation_rates:
+            valid_payment = latest_valid_payment_by_pair.get((user.id, rate.id))
 
             has_paid = valid_payment is not None
             all_records.append({
