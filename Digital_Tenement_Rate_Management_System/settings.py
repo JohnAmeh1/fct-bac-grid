@@ -10,16 +10,16 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECRET_KEY = 'django-insecure-b)09@+xjhvhy#q4o_3a0vvoe(q3nry9xhu!9(qfi-47%-ail01'
-# SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = 'django-insecure-b)09@+xjhvhy#q4o_3a0vvoe(q3nry9xhu!9(qfi-47%-ail01'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 
 
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-b)09@+xjhvhy#q4o_3a0vvoe(q3nry9xhu!9(qfi-47%-ail01'
-)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECRET_KEY = os.environ.get(
+#     'SECRET_KEY',
+#     'django-insecure-b)09@+xjhvhy#q4o_3a0vvoe(q3nry9xhu!9(qfi-47%-ail01'
+# )
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # DEBUG = False
@@ -106,25 +106,16 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'tenement_db',
-#         'USER': 'postgres',
-#         'PASSWORD': '221005',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
 
-# DATABASE_URL = "postgresql://neondb_owner:npg_5NRoX0npJyKs@ep-steep-shape-am1gc0cs-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
-# DATABASES = {
-#     "default": dj_database_url.parse(
-#         DATABASE_URL,
-#         conn_max_age=60,
-#     )
-# }
+DATABASE_URL = "postgresql://neondb_owner:npg_cmUPaXRzB35o@ep-summer-dawn-b4te7s0e-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=60,
+    )
+}
 
 CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
 
