@@ -5,8 +5,46 @@
 
 {% block content %}
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@1,400;1,500&display=swap');
+
+  /* ── Metric Chart Cards ──────────────────────────────────── */
+  .chart-card-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 240px;
+    height: 210px;
+  }
+  .chart-center-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+  .chart-center-label .cc-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .chart-center-label .cc-caption {
+    font-size: .64rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-4);
+    margin-top: 4px;
+  }
 
   :root {
     --ink: #0b1220;
@@ -687,6 +725,52 @@
     </div>
   </div>
 
+  <div class="section-label fade">Metrics</div>
+  <div class="grid-2 fade fade-1">
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Portfolio</div>
+      </div>
+      <div class="card-body chart-card-body">
+        {% if total_properties %}
+        <div class="chart-wrap">
+          <canvas id="propertyTypeChart"></canvas>
+          <div class="chart-center-label">
+            <div class="cc-value">{{ total_properties }}</div>
+            <div class="cc-caption">Total</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-chart-pie"></i>
+          <p>No properties registered yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-leaf"></i></span>Sanitation Compliance</div>
+      </div>
+      <div class="card-body chart-card-body">
+        {% if total_sanitation_eligible %}
+        <div class="chart-wrap">
+          <canvas id="sanitationChart"></canvas>
+          <div class="chart-center-label">
+            <div class="cc-value">{% widthratio sanitation_payers_count total_sanitation_eligible 100 %}%</div>
+            <div class="cc-caption">Compliant</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-leaf"></i>
+          <p>No sanitation-eligible accounts yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
   <div class="section-label fade">Quick Actions</div>
   <div class="grid-3 fade fade-1">
     <div class="adm-card">
@@ -949,6 +1033,52 @@
         <div class="stat-icon"><i class="fas fa-mountain-sun"></i></div>
       </div>
       <div class="stat-foot">Land properties</div>
+    </div>
+  </div>
+
+  <div class="section-label fade">Metrics</div>
+  <div class="grid-2 fade fade-1">
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Portfolio</div>
+      </div>
+      <div class="card-body chart-card-body">
+        {% if total_properties %}
+        <div class="chart-wrap">
+          <canvas id="propertyTypeChart"></canvas>
+          <div class="chart-center-label">
+            <div class="cc-value">{{ total_properties }}</div>
+            <div class="cc-caption">Total</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-chart-pie"></i>
+          <p>No properties registered yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-leaf"></i></span>Sanitation Compliance</div>
+      </div>
+      <div class="card-body chart-card-body">
+        {% if total_sanitation_eligible %}
+        <div class="chart-wrap">
+          <canvas id="sanitationChart"></canvas>
+          <div class="chart-center-label">
+            <div class="cc-value">{% widthratio sanitation_payers_count total_sanitation_eligible 100 %}%</div>
+            <div class="cc-caption">Compliant</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-leaf"></i>
+          <p>No sanitation-eligible accounts yet.</p>
+        </div>
+        {% endif %}
+      </div>
     </div>
   </div>
 
@@ -1465,6 +1595,80 @@
     }
     tick();
     setInterval(tick, 1000);
+  })();
+
+  (function () {
+    if (typeof Chart === 'undefined') return;
+
+    // Shared, understated donut style matching the card design language.
+    var baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 14,
+            font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '600' },
+            color: '#5c6b82'
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0b1220',
+          padding: 10,
+          titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+          bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+          cornerRadius: 8
+        }
+      }
+    };
+
+    var propertyCanvas = document.getElementById('propertyTypeChart');
+    if (propertyCanvas) {
+      new Chart(propertyCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Residential', 'Commercial', 'Industrial', 'Land'],
+          datasets: [{
+            data: [
+              {{ residential_count|default:0 }},
+              {{ commercial_count|default:0 }},
+              {{ industrial_count|default:0 }},
+              {{ land_count|default:0 }}
+            ],
+            backgroundColor: ['#146c43', '#0d3f73', '#a15c07', '#0b6f68'],
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            hoverOffset: 4
+          }]
+        },
+        options: baseOptions
+      });
+    }
+
+    var sanitationCanvas = document.getElementById('sanitationChart');
+    if (sanitationCanvas) {
+      new Chart(sanitationCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Paid', 'Unpaid'],
+          datasets: [{
+            data: [
+              {{ sanitation_payers_count|default:0 }},
+              {{ sanitation_non_payers_count|default:0 }}
+            ],
+            backgroundColor: ['#0b6f68', '#ad1f2f'],
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            hoverOffset: 4
+          }]
+        },
+        options: baseOptions
+      });
+    }
   })();
 </script>
 
