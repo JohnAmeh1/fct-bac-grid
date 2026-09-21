@@ -1030,6 +1030,7 @@
       <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fas fa-house"></i> Dashboard
       </a>
+      {% if user.userprofile.user_type == 'admin' %}
       <a href="{% url 'admin_manage_properties' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_properties' %}active{% endif %}">
         <i class="fas fa-building"></i> Properties
       </a>
@@ -1039,11 +1040,9 @@
       <a href="{% url 'admin_payment_rates' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_rates' or request.resolver_match.url_name == 'admin_create_payment_rate' %}active{% endif %}">
         <i class="fas fa-sack-dollar"></i> Levy Management
       </a>
-      {% if user.userprofile.user_type == 'admin' %}
       <a href="{% url 'admin_manage_users' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_users' %}active{% endif %}">
         <i class="fas fa-users"></i> Users
       </a>
-      {% endif %}
       <a href="{% url 'admin_manage_complaints' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_complaints' %}active{% endif %}">
         <i class="fas fa-chart-column"></i> Reports
       </a>
@@ -1053,6 +1052,35 @@
       {% if user.userprofile.user_type == 'admin' %}
       <a href="{% url 'admin_site_configuration' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_site_configuration' %}active{% endif %}">
         <i class="fas fa-gear"></i> Settings
+      </a>
+      {% elif user.userprofile.user_type == 'staff' %}
+      <a href="{% url 'staff_create_landlord' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_create_landlord' %}active{% endif %}">
+        <i class="fas fa-user-plus"></i> New Landlord
+      </a>
+      <a href="{% url 'staff_register_property' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_register_property' %}active{% endif %}">
+        <i class="fas fa-building-circle-check"></i> Register Record
+      </a>
+      <a href="{% url 'staff_import_properties' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_import_properties' %}active{% endif %}">
+        <i class="fas fa-file-import"></i> Import Records
+      </a>
+      <a href="{% url 'staff_verify_payment' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_verify_payment' %}active{% endif %}">
+        <i class="fas fa-receipt"></i> Verify Receipt
+      </a>
+      <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-gear"></i> My Profile
+      </a>
+      {% elif user.userprofile.user_type == 'field_staff' %}
+      <a href="{% url 'register_property' %}" class="sidebar-link {% if request.resolver_match.url_name == 'register_property' %}active{% endif %}">
+        <i class="fas fa-circle-plus"></i> New Field Record
+      </a>
+      <a href="{% url 'admin_manage_properties' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_properties' %}active{% endif %}">
+        <i class="fas fa-map-location-dot"></i> Field Locations
+      </a>
+      <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-gear"></i> My Profile
+      </a>
+      <a href="{% url 'contact' %}" class="sidebar-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+        <i class="fas fa-headset"></i> Field Support
       </a>
       {% endif %}
     </nav>
@@ -1067,7 +1095,7 @@
     <a href="{% url 'dashboard' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
       <i class="fas fa-house"></i><span>Home</span>
     </a>
-    {% if user.userprofile.user_type == 'admin' or user.userprofile.user_type == 'staff' or user.userprofile.user_type == 'field_staff' %}
+    {% if user.userprofile.user_type == 'admin' %}
     <a href="{% url 'admin_manage_properties' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'admin_manage_properties' %}active{% endif %}">
       <i class="fas fa-building"></i><span>Properties</span>
     </a>
@@ -1076,6 +1104,32 @@
     </a>
     <a href="{% url 'admin_all_payments' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'admin_all_payments' %}active{% endif %}">
       <i class="fas fa-credit-card"></i><span>Payments</span>
+    </a>
+    <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-ellipsis"></i><span>More</span>
+    </a>
+    {% elif user.userprofile.user_type == 'staff' %}
+    <a href="{% url 'staff_create_landlord' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'staff_create_landlord' %}active{% endif %}">
+      <i class="fas fa-user-plus"></i><span>Landlord</span>
+    </a>
+    <a href="{% url 'staff_register_property' %}" class="mobile-bottom-link mobile-bottom-action {% if request.resolver_match.url_name == 'staff_register_property' %}active{% endif %}">
+      <span class="mobile-bottom-action-icon"><i class="fas fa-building-circle-check"></i></span><span>Register</span>
+    </a>
+    <a href="{% url 'staff_verify_payment' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'staff_verify_payment' %}active{% endif %}">
+      <i class="fas fa-receipt"></i><span>Verify</span>
+    </a>
+    <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-ellipsis"></i><span>More</span>
+    </a>
+    {% elif user.userprofile.user_type == 'field_staff' %}
+    <a href="{% url 'register_property' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'register_property' %}active{% endif %}">
+      <i class="fas fa-circle-plus"></i><span>Record</span>
+    </a>
+    <a href="{% url 'admin_manage_properties' %}" class="mobile-bottom-link mobile-bottom-action {% if request.resolver_match.url_name == 'admin_manage_properties' %}active{% endif %}">
+      <span class="mobile-bottom-action-icon"><i class="fas fa-map-location-dot"></i></span><span>Locations</span>
+    </a>
+    <a href="{% url 'contact' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+      <i class="fas fa-headset"></i><span>Support</span>
     </a>
     <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
       <i class="fas fa-ellipsis"></i><span>More</span>
@@ -1101,10 +1155,6 @@
   <main id="main-content">
     {% if user.is_authenticated and user.userprofile.user_type != 'landlord' %}
     <div class="app-topbar">
-      <label class="topbar-search">
-        <i class="fas fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search properties, users, payments&hellip;" aria-label="Search">
-      </label>
       <div class="topbar-right">
         <a href="#" class="topbar-bell js-notif-bell" id="topbarNotificationBell">
           <i class="far fa-bell"></i>
