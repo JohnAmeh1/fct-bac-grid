@@ -90,6 +90,118 @@
 
   .navbar, .nav-container, .nav-links, .notification-bell-wrapper { overflow: visible !important; }
 
+  /* ===== APP SHELL: SIDEBAR + TOPBAR (desktop dashboard layout) ===== */
+  .app-sidebar, .app-topbar { display: none; }
+  @media (min-width: 1025px) {
+    body.has-sidebar-shell .announce-bar,
+    body.has-sidebar-shell > .navbar { display: none; }
+    body.has-sidebar-shell #main-content,
+    body.has-sidebar-shell > .footer { margin-left: 264px; }
+    body.has-sidebar-shell .app-sidebar { display: flex; }
+    body.has-sidebar-shell .app-topbar { display: flex; }
+  }
+
+  .app-sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 264px;
+    z-index: 300;
+    flex-direction: column;
+    padding: 20px 14px 18px;
+    background:
+      radial-gradient(280px 200px at 100% 0%, rgba(255,255,255,0.06), transparent 60%),
+      linear-gradient(180deg, #123d2a 0%, #0a2a1c 100%);
+    color: rgba(255,255,255,.86);
+    overflow-y: auto;
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 6px 10px 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+  }
+  .sidebar-brand-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: rgba(255,255,255,.12);
+    display: grid; place-items: center;
+    color: #fff; font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .sidebar-brand-text strong { display: block; font-size: .95rem; font-weight: 800; color: #fff; letter-spacing: .01em; line-height: 1.2; }
+  .sidebar-brand-text span { display: block; font-size: .66rem; color: rgba(255,255,255,.55); margin-top: 1px; }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .sidebar-section-label {
+    font-size: .64rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: rgba(255,255,255,.38); padding: 16px 14px 6px;
+  }
+  .sidebar-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-radius: 10px;
+    color: rgba(255,255,255,.74);
+    font-size: .85rem; font-weight: 600;
+    transition: background .15s ease, color .15s ease;
+    position: relative;
+  }
+  .sidebar-link i { width: 18px; text-align: center; font-size: .88rem; flex-shrink: 0; }
+  .sidebar-link:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .sidebar-link.active { background: #fff; color: #123d2a; box-shadow: 0 8px 18px rgba(0,0,0,.22); }
+  .sidebar-link .soon-tag {
+    margin-left: auto; font-size: .58rem; font-weight: 700; letter-spacing: .03em;
+    color: rgba(255,255,255,.5); background: rgba(255,255,255,.08);
+    padding: 2px 7px; border-radius: 999px;
+  }
+  .sidebar-link.active .soon-tag { background: rgba(18,61,42,.10); color: rgba(18,61,42,.55); }
+  .sidebar-footer {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,.10);
+  }
+  .sidebar-logout {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-radius: 10px;
+    color: rgba(255,255,255,.7); font-size: .85rem; font-weight: 600;
+  }
+  .sidebar-logout:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .sidebar-logout i { width: 18px; text-align: center; }
+
+  .app-topbar {
+    align-items: center;
+    gap: 18px;
+    padding: 16px 30px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e8edf5;
+    position: sticky;
+    top: 0;
+    z-index: 150;
+  }
+  .topbar-search {
+    flex: 1; max-width: 420px;
+    display: flex; align-items: center; gap: 10px;
+    background: #f3f6f9; border-radius: 12px;
+    padding: 10px 14px; color: #94a3b8;
+    border: 1px solid transparent;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .topbar-search:focus-within { background: #fff; border-color: #d8deea; }
+  .topbar-search input { border: none; background: none; outline: none; font: inherit; font-size: .85rem; flex: 1; color: #1a2333; }
+  .topbar-search input::placeholder { color: #94a3b8; }
+  .topbar-right { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+  .topbar-bell { position: relative; color: #4d5d74; font-size: 1.05rem; }
+  .topbar-bell:hover { color: #123d2a; }
+  .topbar-avatar { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .topbar-avatar-circle {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(145deg, #19653f, #0a2a1c);
+    color: #fff; display: grid; place-items: center;
+    font-weight: 700; font-size: .88rem; font-family: 'Fraunces', 'Plus Jakarta Sans', serif; flex-shrink: 0;
+  }
+  .topbar-name { line-height: 1.25; }
+  .topbar-name strong { display: block; font-size: .82rem; color: #1a2333; }
+  .topbar-name span { display: block; font-size: .68rem; color: #64748b; }
+
   /* ===== MEGA MENU STYLES ===== */
   .bylaw-mega-menu {
     width: min(820px, calc(100vw - 32px));
@@ -558,7 +670,7 @@
       border: 1px solid rgba(15,23,42,.09) !important;
       border-radius: 16px 16px 24px 16px !important;
       box-shadow: 0 10px 28px rgba(11,18,32,.06) !important;
-      background: #ffffff !important;
+      background: rgba(255,255,255,.96) !important;
     }
     .app-shell .form-section-head, .app-shell .search-card-head, .app-shell .detail-card-head,
     .app-shell .receipt-head, .app-shell .user-card-banner {
@@ -582,7 +694,15 @@
         linear-gradient(110deg, rgba(8,39,73,.94), rgba(13,63,115,.76) 54%, rgba(11,111,104,.72)),
         url("{% static 'images/city_gate.jpg' %}") center / cover !important;
     }
-    .app-shell .about-hero::after, .app-shell .c-hero::after, .app-shell .san-hero::after, .app-shell .bylaw-hero::after { display: none; }
+    .app-shell .about-hero::after, .app-shell .c-hero::after, .app-shell .san-hero::after, .app-shell .bylaw-hero::after {
+      content: '';
+      position: absolute;
+      width: 330px; height: 330px;
+      right: -130px; bottom: -230px;
+      border: 30px solid rgba(255,255,255,.10);
+      border-radius: 50%;
+      pointer-events: none;
+    }
     .app-shell .about-card, .app-shell .contact-card, .app-shell .san-overview-card,
     .app-shell .bylaw-card, .app-shell .feature-card, .app-shell .info-card {
       border: 1px solid rgba(15,23,42,.09) !important;
@@ -601,7 +721,7 @@
       border: 1px solid rgba(15,23,42,.09) !important;
       border-radius: 16px 16px 24px 16px !important;
       box-shadow: 0 10px 28px rgba(11,18,32,.06) !important;
-      background: #ffffff !important;
+      background: rgba(255,255,255,.96) !important;
       overflow: hidden;
     }
     .app-shell .table-card > :first-child, .app-shell .results-card > :first-child { border-top: 3px solid #146c43; }
@@ -625,7 +745,7 @@
     }
   </style>
 </head>
-<body class="app-shell page-{{ request.resolver_match.url_name|default:'site' }}{% if user.is_authenticated %} is-authenticated{% endif %}">
+<body class="app-shell page-{{ request.resolver_match.url_name|default:'site' }}{% if user.is_authenticated %} is-authenticated{% endif %} {% block body_class %}{% endblock %}">
 
   <!-- ===== TOP ANNOUNCEMENT BAR ===== -->
   <div class="announce-bar">
@@ -650,8 +770,8 @@
           </div>
         </div>
         <div class="logo-text">
-          <span class="logo-main">Bwari Area Council</span>
-          <span class="logo-sub">Digital Tenement Rate System</span>
+          <span class="logo-main">BAC GRID</span>
+          <span class="logo-sub">Bwari Area Council</span>
         </div>
       </a>
 
@@ -732,9 +852,9 @@
         <li><a href="{% url 'sanitation' %}" class="nav-link {% if request.resolver_match.url_name == 'sanitation' %}active{% endif %}">Sanitation</a></li>
         <li><a href="{% url 'contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
         <li class="notification-bell-wrapper">
-          <a href="#" class="nav-link" id="notificationBell">
+          <a href="#" class="nav-link js-notif-bell" id="notificationBell">
             <i class="far fa-bell"></i>
-            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+            <span id="notificationBadge" class="notification-badge js-notif-badge" style="display: none;">0</span>
           </a>
           <div id="notificationDropdown">
             <div class="notif-dropdown-header">
@@ -869,11 +989,11 @@
 
       <!-- Notifications -->
       <li class="mobile-notification-bell">
-        <a href="#" class="mobile-nav-link" id="mobileNotificationBell">
+        <a href="#" class="mobile-nav-link js-notif-bell" id="mobileNotificationBell">
           <span class="nav-text">Notifications</span>
           <div class="nav-left notification-icon-wrapper">
             <div class="icon-badge">
-              <span id="mobileNotificationBadge" class="notification-badge mobile" style="display: none;">0</span>
+              <span id="mobileNotificationBadge" class="notification-badge mobile js-notif-badge" style="display: none;">0</span>
               <i class="far fa-bell nav-icon"></i>
             </div>
           </div>
@@ -896,6 +1016,51 @@
   </div>
 </div>
   </nav>
+
+  {% if user.is_authenticated and user.userprofile.user_type != 'landlord' %}
+  <aside class="app-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon"><i class="fas fa-location-dot"></i></div>
+      <div class="sidebar-brand-text">
+        <strong>BAC GRID</strong>
+        <span>Bwari Area Council</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-house"></i> Dashboard
+      </a>
+      <a href="{% url 'admin_manage_properties' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_properties' %}active{% endif %}">
+        <i class="fas fa-building"></i> Properties
+      </a>
+      <a href="{% url 'admin_all_payments' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_all_payments' %}active{% endif %}">
+        <i class="fas fa-credit-card"></i> Payments
+      </a>
+      <a href="{% url 'admin_payment_rates' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_rates' or request.resolver_match.url_name == 'admin_create_payment_rate' %}active{% endif %}">
+        <i class="fas fa-sack-dollar"></i> Levy Management
+      </a>
+      {% if user.userprofile.user_type == 'admin' %}
+      <a href="{% url 'admin_manage_users' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_users' %}active{% endif %}">
+        <i class="fas fa-users"></i> Users
+      </a>
+      {% endif %}
+      <a href="{% url 'admin_manage_complaints' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_complaints' %}active{% endif %}">
+        <i class="fas fa-chart-column"></i> Reports
+      </a>
+      <a href="#" class="sidebar-link">
+        <i class="fas fa-map-location-dot"></i> Maps &amp; GIS <span class="soon-tag">Soon</span>
+      </a>
+      {% if user.userprofile.user_type == 'admin' %}
+      <a href="{% url 'admin_site_configuration' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_site_configuration' %}active{% endif %}">
+        <i class="fas fa-gear"></i> Settings
+      </a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+      <a href="{% url 'logout' %}" class="sidebar-logout"><i class="fas fa-arrow-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+  {% endif %}
 
   {% if user.is_authenticated %}
   <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
@@ -934,6 +1099,27 @@
 
   <!-- ===== MAIN CONTENT ===== -->
   <main id="main-content">
+    {% if user.is_authenticated and user.userprofile.user_type != 'landlord' %}
+    <div class="app-topbar">
+      <label class="topbar-search">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search properties, users, payments&hellip;" aria-label="Search">
+      </label>
+      <div class="topbar-right">
+        <a href="#" class="topbar-bell js-notif-bell" id="topbarNotificationBell">
+          <i class="far fa-bell"></i>
+          <span id="topbarNotificationBadge" class="notification-badge js-notif-badge" style="display:none;">0</span>
+        </a>
+        <a href="{% url 'profile' %}" class="topbar-avatar">
+          <div class="topbar-avatar-circle">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</div>
+          <div class="topbar-name">
+            <strong>{{ user.get_full_name|default:user.username }}</strong>
+            <span>{% if user.userprofile.user_type == 'admin' %}System Administrator{% elif user.userprofile.user_type == 'field_staff' %}Field Staff{% else %}Staff{% endif %}</span>
+          </div>
+        </a>
+      </div>
+    </div>
+    {% endif %}
     {% if messages %}
       <div class="messages-container">
         {% for message in messages %}
@@ -961,8 +1147,8 @@
               <div class="logo-fallback small" style="display:none"><span>B</span></div>
             </div>
             <div>
-              <div class="footer-brand-name">Bwari Area Council</div>
-              <div class="footer-brand-sub">Digital Tenement And Business Rate System</div>
+              <div class="footer-brand-name">BAC GRID</div>
+              <div class="footer-brand-sub">Bwari Area Council &middot; Digital Tenement &amp; Business Rate System</div>
             </div>
           </div>
           <p class="footer-desc">A modern, transparent, and automated revenue solution for Bwari Area Council, Abuja. Pay your tenement rates online — fast, secure, and stress-free.</p>
@@ -1056,15 +1242,13 @@ function toggleAccordion(btn) {
     return cookieValue || '';
   }
 
-  const bell       = document.getElementById('notificationBell');
-  const mobileBell = document.getElementById('mobileNotificationBell');
+  const bells      = Array.from(document.querySelectorAll('.js-notif-bell'));
   const dropdown   = document.getElementById('notificationDropdown');
-  const badge      = document.getElementById('notificationBadge');
-  const mobileBadge= document.getElementById('mobileNotificationBadge');
+  const badges     = Array.from(document.querySelectorAll('.js-notif-badge'));
   const listContainer = document.getElementById('notificationList');
   const markAllBtn = document.getElementById('markAllReadBtn');
 
-  if (!bell || !dropdown || !listContainer) return;
+  if (!bells.length || !dropdown || !listContainer) return;
 
   document.body.appendChild(dropdown);
 
@@ -1072,7 +1256,7 @@ function toggleAccordion(btn) {
 
   function updateBadge(count) {
     const displayCount = count > 9 ? '9+' : String(count);
-    [badge, mobileBadge].forEach(b => {
+    badges.forEach(b => {
       if (!b) return;
       b.textContent = displayCount;
       b.style.display = count > 0 ? 'flex' : 'none';
@@ -1178,16 +1362,13 @@ function toggleAccordion(btn) {
     )).then(() => fetchAnnouncements()).catch(console.warn);
   }
 
-  bell.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggleDropdown(bell); });
-
-  if (mobileBell) {
-    mobileBell.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggleDropdown(mobileBell); });
-  }
+  bells.forEach(b => {
+    b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggleDropdown(b); });
+  });
 
   document.addEventListener('click', e => {
     if (
-      !e.target.closest('#notificationBell') &&
-      !e.target.closest('#mobileNotificationBell') &&
+      !e.target.closest('.js-notif-bell') &&
       !e.target.closest('#notificationDropdown')
     ) closeDropdown();
   });

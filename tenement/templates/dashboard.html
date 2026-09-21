@@ -4,6 +4,8 @@
 
 {% block title %}Dashboard | FCT BAC Grid{% endblock %}
 
+{% block body_class %}{% if user_type != 'landlord' %}has-sidebar-shell{% endif %}{% endblock %}
+
 {% block content %}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
@@ -769,18 +771,18 @@
   .hero-banner {
     min-height: 176px;
     background:
-      linear-gradient(90deg, rgba(8,39,73,.96) 0%, rgba(8,39,73,.80) 43%, rgba(8,39,73,.20) 100%),
+      linear-gradient(90deg, rgba(10,42,28,.95) 0%, rgba(10,42,28,.78) 43%, rgba(10,42,28,.18) 100%),
       url("{% static 'images/city_gate2.jpg' %}") center 46% / cover,
-      var(--accent-dk);
+      #0d3524;
   }
-  .hero-banner::after { display: none; }
+  .hero-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(118deg, transparent 45%, rgba(255,255,255,.10) 45.2%, transparent 45.5%);
+    pointer-events: none;
+  }
   .hero-skyline { opacity: .22; }
-  .hero-content {
-    padding: 18px 20px;
-    border-radius: 14px 14px 20px 14px;
-    background: #082749;
-    box-shadow: 0 10px 24px rgba(8,39,73,.22);
-  }
   .hero-right { align-self: flex-start; }
   .stats-grid.cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -984,9 +986,11 @@
     .lm-property-image img { width: 100%; height: 100%; object-fit: cover; }
     .lm-property-copy { min-width: 0; flex: 1; }
     .lm-property-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+    .lm-status-chip { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--green-dim); color: var(--green); font-size: .6rem; font-weight: 700; vertical-align: middle; }
     .lm-property-copy span { display: block; margin-top: 3px; font-size: .67rem; color: var(--ink-3); }
     .lm-property-actions { display: flex; gap: 5px; }
     .lm-property-actions a { padding: 6px 9px; border-radius: 7px; background: var(--accent-dim); color: var(--accent); font-size: .65rem; font-weight: 700; }
+    .lm-property-actions a.danger { background: var(--red-dim); color: var(--red); }
     .lm-activity-list { margin-bottom: 22px; padding: 2px 13px; }
     .lm-activity { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
     .lm-activity:last-child { border-bottom: 0; }
@@ -1159,8 +1163,11 @@
       {% with property=properties.0 %}
       <div class="lm-property-row">
         <div class="lm-property-image">{% if property.main_image %}<img src="{{ property.main_image.url }}" alt="{{ property.name }}">{% else %}<i class="fas fa-house"></i>{% endif %}</div>
-        <div class="lm-property-copy"><strong>{{ property.name }}</strong><span><i class="fas fa-location-dot"></i> {{ property.district|default:"Bwari, FCT" }} · {{ property.get_property_type_display }}</span></div>
-        <div class="lm-property-actions"><a href="{% url 'view_property' property.id %}">View</a></div>
+        <div class="lm-property-copy"><strong>{{ property.name }} <span class="lm-status-chip">Active</span></strong><span><i class="fas fa-location-dot"></i> {{ property.district|default:"Bwari, FCT" }} · {{ property.get_property_type_display }}</span></div>
+        <div class="lm-property-actions">
+          <a href="{% url 'view_property' property.id %}">View</a>
+          <a href="{% url 'delete_property' property.id %}" class="danger" onclick="return confirm('Delete this property? This cannot be undone.');">Delete</a>
+        </div>
       </div>
       {% endwith %}
     {% else %}
