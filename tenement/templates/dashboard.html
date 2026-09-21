@@ -1003,6 +1003,69 @@
     .lm-action.amber { color: var(--amber); background: var(--amber-dim); }
     .lm-action.red { color: var(--red); background: var(--red-dim); }
   }
+
+  /* Operational dashboards use the same lively visual system as the landlord view. */
+  .dashboard-admin .hero-banner { background-position: center 42%; }
+  .dashboard-staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.94), rgba(13,63,115,.68) 48%, rgba(20,108,67,.26)), url("{% static 'images/city_gate.jpg' %}") center / cover, var(--accent-dk); }
+  .dashboard-field_staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.93), rgba(11,111,104,.62) 53%, rgba(20,108,67,.22)), url("{% static 'images/city_gate2.jpg' %}") center / cover, var(--accent-dk); }
+  .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { gap: 18px; }
+  .dashboard-admin .qa-tile, .dashboard-staff .qa-tile, .dashboard-field_staff .qa-tile {
+    min-height: 132px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 20px;
+    text-align: left;
+  }
+  .dashboard-admin .qa-tile .qa-icon, .dashboard-staff .qa-tile .qa-icon, .dashboard-field_staff .qa-tile .qa-icon { width: 42px; height: 42px; }
+  .dashboard-admin .qa-tile::before, .dashboard-staff .qa-tile::before, .dashboard-field_staff .qa-tile::before {
+    content: 'Open workspace';
+    display: block;
+    order: 3;
+    margin-top: auto;
+    color: var(--ink-3);
+    font-size: .67rem;
+    font-weight: 600;
+  }
+  .dashboard-field_staff .qa-tile::before { content: 'Open records'; }
+  .dashboard-admin .adm-card, .dashboard-staff .adm-card, .dashboard-field_staff .adm-card {
+    border-radius: 16px 16px 24px 16px;
+    box-shadow: 0 10px 26px rgba(11,18,32,.06);
+  }
+  .dashboard-admin .grid-3 .adm-card:nth-child(1) .card-head, .dashboard-staff .grid-2 .adm-card:nth-child(1) .card-head, .dashboard-field_staff .grid-2 .adm-card:nth-child(1) .card-head { border-top-color: var(--accent); }
+  .dashboard-admin .grid-3 .adm-card:nth-child(2) .card-head, .dashboard-staff .grid-2 .adm-card:nth-child(2) .card-head, .dashboard-field_staff .grid-2 .adm-card:nth-child(2) .card-head { border-top-color: var(--green); }
+  .dashboard-admin .grid-3 .adm-card:nth-child(3) .card-head { border-top-color: var(--purple); }
+  .dashboard-admin .action-item, .dashboard-staff .action-item, .dashboard-field_staff .action-item { border-radius: 10px; margin-bottom: 4px; }
+  .dashboard-admin .action-item:hover, .dashboard-staff .action-item:hover, .dashboard-field_staff .action-item:hover { box-shadow: inset 3px 0 0 currentColor; }
+  .dashboard-admin .timeline-item, .dashboard-staff .timeline-item, .dashboard-field_staff .timeline-item { position: relative; }
+  .dashboard-admin .timeline-item:not(:last-child)::before, .dashboard-staff .timeline-item:not(:last-child)::before, .dashboard-field_staff .timeline-item:not(:last-child)::before { content: ''; position: absolute; left: 16px; top: 46px; bottom: -14px; width: 1px; background: var(--border-2); }
+  @media (max-width: 640px) {
+    .adm-wrap.dashboard-admin, .adm-wrap.dashboard-staff, .adm-wrap.dashboard-field_staff { padding: 16px 14px 36px; }
+    .dashboard-admin .hero-banner, .dashboard-staff .hero-banner, .dashboard-field_staff .hero-banner { min-height: 174px; padding: 23px 21px; border-radius: 16px; margin-bottom: 18px; }
+    .dashboard-admin .hero-content h1, .dashboard-staff .hero-content h1, .dashboard-field_staff .hero-content h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-style: normal; font-size: 1.34rem; font-weight: 800; }
+    .dashboard-admin .hero-content p, .dashboard-staff .hero-content p, .dashboard-field_staff .hero-content p { max-width: 270px; font-size: .72rem; }
+    .dashboard-admin .hero-right, .dashboard-staff .hero-right, .dashboard-field_staff .hero-right { position: absolute; right: 16px; bottom: 13px; }
+    .dashboard-admin .hero-time, .dashboard-staff .hero-time, .dashboard-field_staff .hero-time { display: none; }
+    .dashboard-admin .hero-status-pill, .dashboard-staff .hero-status-pill, .dashboard-field_staff .hero-status-pill { padding: 5px 8px; font-size: .62rem; }
+    .dashboard-admin .command-strip, .dashboard-staff .command-strip, .dashboard-field_staff .command-strip { display: none; }
+    .dashboard-admin .stats-grid.cols-4, .dashboard-staff .stats-grid.cols-4, .dashboard-field_staff .stats-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .dashboard-admin .stats-grid.cols-4 .stat-card, .dashboard-staff .stats-grid.cols-4 .stat-card, .dashboard-field_staff .stats-grid.cols-4 .stat-card { min-height: 132px; padding: 14px; border-radius: 14px; }
+    .dashboard-admin .stats-grid.cols-4 .stat-card::after, .dashboard-staff .stats-grid.cols-4 .stat-card::after, .dashboard-field_staff .stats-grid.cols-4 .stat-card::after { width: 50px; height: 20px; right: 10px; bottom: 10px; }
+    .dashboard-admin .stats-grid.cols-4 .stat-icon, .dashboard-staff .stats-grid.cols-4 .stat-icon, .dashboard-field_staff .stats-grid.cols-4 .stat-icon { width: 34px; height: 34px; font-size: .78rem; }
+    .dashboard-admin .stats-grid.cols-4 .stat-label, .dashboard-staff .stats-grid.cols-4 .stat-label, .dashboard-field_staff .stats-grid.cols-4 .stat-label { font-size: .6rem; margin-bottom: 7px; }
+    .dashboard-admin .stats-grid.cols-4 .stat-value, .dashboard-staff .stats-grid.cols-4 .stat-value, .dashboard-field_staff .stats-grid.cols-4 .stat-value { font-size: 1.45rem; }
+    .dashboard-admin .stats-grid.cols-4 .stat-value.sm, .dashboard-staff .stats-grid.cols-4 .stat-value.sm, .dashboard-field_staff .stats-grid.cols-4 .stat-value.sm { font-size: 1rem; }
+    .dashboard-admin .stats-grid.cols-4 .stat-foot, .dashboard-staff .stats-grid.cols-4 .stat-foot, .dashboard-field_staff .stats-grid.cols-4 .stat-foot { padding: 8px 43px 0 0; font-size: .61rem; line-height: 1.25; }
+    .dashboard-admin .stats-grid.cols-4 .stat-trend, .dashboard-staff .stats-grid.cols-4 .stat-trend, .dashboard-field_staff .stats-grid.cols-4 .stat-trend { display: none; }
+    .dashboard-admin .section-label, .dashboard-staff .section-label, .dashboard-field_staff .section-label { margin: 23px 0 11px; font-size: .62rem; }
+    .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .dashboard-admin .qa-tile, .dashboard-staff .qa-tile, .dashboard-field_staff .qa-tile { min-height: 108px; padding: 14px; font-size: .74rem; border-radius: 13px; }
+    .dashboard-admin .qa-tile .qa-icon, .dashboard-staff .qa-tile .qa-icon, .dashboard-field_staff .qa-tile .qa-icon { width: 35px; height: 35px; font-size: .78rem; }
+    .dashboard-admin .qa-tile::before, .dashboard-staff .qa-tile::before, .dashboard-field_staff .qa-tile::before { font-size: .58rem; }
+    .dashboard-admin .grid-1-2, .dashboard-staff .grid-1-2, .dashboard-field_staff .grid-1-2, .dashboard-admin .grid-2, .dashboard-staff .grid-2, .dashboard-field_staff .grid-2, .dashboard-admin .grid-3, .dashboard-staff .grid-3, .dashboard-field_staff .grid-3, .dashboard-admin .grid-2-1 { gap: 12px; margin-bottom: 12px; }
+    .dashboard-admin .adm-card, .dashboard-staff .adm-card, .dashboard-field_staff .adm-card { border-radius: 14px; }
+    .dashboard-admin .card-head, .dashboard-staff .card-head, .dashboard-field_staff .card-head { padding: 13px 15px; }
+    .dashboard-admin .card-body, .dashboard-staff .card-body, .dashboard-field_staff .card-body { padding: 15px; }
+  }
 </style>
 
 <div class="adm-wrap dashboard-{{ user_type }}">

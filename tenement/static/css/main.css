@@ -1129,3 +1129,44 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .cta-actions { flex-direction: column; }
   .footer-bottom-inner { flex-direction: column; text-align: center; }
 }
+
+/* ---- SHARED POLISH LAYER ---- */
+main { position: relative; }
+main::before {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  width: 420px; height: 420px;
+  top: 18%; left: -260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(77,187,132,.10), transparent 68%);
+  pointer-events: none;
+}
+.navbar { border-bottom-color: rgba(13,63,115,.09); }
+.nav-link { border-radius: 999px; }
+.nav-link:hover, .nav-link.active { box-shadow: inset 0 0 0 1px rgba(13,63,115,.08); }
+.btn { border-radius: 10px; }
+.btn-primary { box-shadow: 0 8px 18px rgba(13,63,115,.17); }
+.footer { position: relative; overflow: hidden; }
+.footer::before { content: ''; position: absolute; width: 340px; height: 340px; border: 1px solid rgba(122,212,167,.12); border-radius: 50%; right: -130px; top: -180px; }
+.page-shell, .form-card, .card {
+  border-radius: 16px;
+  border-color: rgba(15,23,42,.08);
+  box-shadow: 0 12px 28px rgba(11,18,32,.06);
+}
+.form-section, .form-card { overflow: hidden; }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+  border-radius: 9px;
+  border-color: var(--gray-300);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus {
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px rgba(77,187,132,.16);
+  outline: none;
+}
+table { border-radius: 12px; overflow: hidden; }
+@media (max-width: 768px) {
+  .page-shell, .form-card, .card { border-radius: 14px; }
+  main::before { width: 260px; height: 260px; left: -180px; }
+}
