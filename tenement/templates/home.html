@@ -128,28 +128,16 @@
     background-attachment: scroll;
   }
 
-  /*
-   * Two-layer overlay:
-   * Layer 1 (::before) — directional dark tint:
-   *   left side slightly lighter so green text pops,
-   *   right side darker so the city image/card contrasts nicely.
-   * Layer 2 (::after) — soft green glow bottom-left for warmth.
-   background: linear-gradient(
-      110deg,
-      rgba(5, 20, 10, 0.72) 0%,
-      rgba(5, 20, 10, 0.65) 45%,
-      rgba(5, 20, 10, 0.58) 100%
-    );
-   */
+  /* Keep the Bwari image visible; tint only the text side for contrast. */
   .hero::before {
     content: '';
     position: absolute;
     inset: 0;
     background: linear-gradient(
-      110deg,
-      rgba(62, 82, 69, 0.72) 0%,
-      rgba(75, 85, 79, 0.65) 45%,
-      rgba(171, 187, 176, 0.58) 100%
+      90deg,
+      rgba(8, 39, 73, 0.56) 0%,
+      rgba(8, 39, 73, 0.24) 45%,
+      rgba(8, 39, 73, 0.04) 100%
     );
     pointer-events: none;
     z-index: 1;
@@ -161,7 +149,7 @@
     inset: 0;
     background: radial-gradient(
       ellipse at 8% 75%,
-      rgba(22, 163, 74, 0.20),
+      rgba(22, 163, 74, 0.10),
       transparent 55%
     );
     pointer-events: none;
@@ -1355,7 +1343,6 @@
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.55);
-  backdrop-filter: blur(4px);
   z-index: 9000;
   display: flex;
   align-items: center;
@@ -1368,6 +1355,7 @@
 .rl-modal-overlay.open {
   opacity: 1;
   pointer-events: all;
+  backdrop-filter: blur(4px);
 }
 .rl-modal {
   background: var(--surface);
