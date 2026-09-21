@@ -1103,8 +1103,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     border-top: 1px solid var(--gray-200);
     box-shadow: 0 -8px 26px rgba(11,18,32,.08);
     backdrop-filter: blur(14px);
+    isolation: isolate;
   }
   .mobile-bottom-link {
+    min-height: 52px;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -1115,10 +1117,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     font-size: 10px;
     font-weight: 700;
     line-height: 1.1;
+    text-align: center;
+  }
+  .mobile-bottom-link > span:last-child {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .mobile-bottom-link > i { font-size: 18px; height: 20px; }
   .mobile-bottom-link.active { color: var(--green-700); }
-  .mobile-bottom-action { position: relative; padding-top: 20px; }
+  .mobile-bottom-action { position: relative; z-index: 1; padding-top: 20px; }
   .mobile-bottom-action-icon {
     position: absolute;
     top: -24px;

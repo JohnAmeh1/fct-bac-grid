@@ -1351,6 +1351,8 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity .2s ease;
+  /* This full-screen dialog must stay hidden until its open class is set. */
+  animation: none !important;
 }
 .rl-modal-overlay.open {
   opacity: 1;

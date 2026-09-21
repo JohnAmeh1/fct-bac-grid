@@ -499,8 +499,12 @@ Tenement System{% endblock %} {% block content %}
                 <i class="fas fa-shield-halved"></i> Administrator
             {% elif user_type == 'landlord' %}
                 <i class="fas fa-house-user"></i> Landlord
+            {% elif user_type == 'staff' %}
+              <i class="fas fa-user-tie"></i> Staff
+            {% elif user_type == 'field_staff' %}
+              <i class="fas fa-map-location-dot"></i> Field Staff
             {% else %}
-
+              <i class="fas fa-user"></i> User
             {% endif %}
           </div>
           <div class="user-meta">
@@ -628,9 +632,11 @@ Tenement System{% endblock %} {% block content %}
                   {% comment %} {% if user_type == 'admin' %}Administrator{% elif user_type ==
                   'landlord' %}Landlord{% else %}Shop Owner{% endif %} {% endcomment %}
 
-                  {% if user_type == 'admin' %} Administrator
-                  {% elif user_type == 'landlord' %} Landlord
-
+                  {% if user_type == 'admin' %}Administrator
+                  {% elif user_type == 'landlord' %}Landlord
+                  {% elif user_type == 'staff' %}Staff
+                  {% elif user_type == 'field_staff' %}Field Staff
+                  {% else %}User
                   {% endif %}
                 </div>
                 <i class="fas fa-id-card fld-ico"></i>
