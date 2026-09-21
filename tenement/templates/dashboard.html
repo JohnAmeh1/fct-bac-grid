@@ -1059,6 +1059,12 @@
     .dashboard-admin .stats-grid.cols-4 .stat-value, .dashboard-staff .stats-grid.cols-4 .stat-value, .dashboard-field_staff .stats-grid.cols-4 .stat-value { font-size: 1.45rem; }
     .dashboard-admin .stats-grid.cols-4 .stat-value.sm, .dashboard-staff .stats-grid.cols-4 .stat-value.sm, .dashboard-field_staff .stats-grid.cols-4 .stat-value.sm { font-size: 1rem; }
     .dashboard-admin .stats-grid.cols-4 .stat-foot, .dashboard-staff .stats-grid.cols-4 .stat-foot, .dashboard-field_staff .stats-grid.cols-4 .stat-foot { padding: 8px 43px 0 0; font-size: .61rem; line-height: 1.25; }
+    .dashboard-admin .sanitation-summary-card, .dashboard-staff .sanitation-summary-card { min-height: 132px !important; }
+    .dashboard-admin .sanitation-summary-card > div:nth-child(2), .dashboard-staff .sanitation-summary-card > div:nth-child(2) { min-height: 72px; }
+    .dashboard-admin .sanitation-summary-card > div:nth-child(2) > div, .dashboard-staff .sanitation-summary-card > div:nth-child(2) > div { padding: 10px 11px 8px !important; }
+    .dashboard-admin .sanitation-summary-card > div:nth-child(2) > div > div:nth-child(3), .dashboard-staff .sanitation-summary-card > div:nth-child(2) > div > div:nth-child(3) { font-size: 1.35rem !important; white-space: nowrap; }
+    .dashboard-admin .sanitation-summary-card > div:nth-child(2) > div > div:last-child, .dashboard-staff .sanitation-summary-card > div:nth-child(2) > div > div:last-child { font-size: .58rem !important; white-space: nowrap; }
+    .dashboard-admin .sanitation-summary-card > div:last-child, .dashboard-staff .sanitation-summary-card > div:last-child { padding: 7px 11px 8px !important; }
     .dashboard-admin .stats-grid.cols-4 .stat-trend, .dashboard-staff .stats-grid.cols-4 .stat-trend, .dashboard-field_staff .stats-grid.cols-4 .stat-trend { display: none; }
     .dashboard-admin .section-label, .dashboard-staff .section-label, .dashboard-field_staff .section-label { margin: 23px 0 11px; font-size: .62rem; }
     .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -1094,7 +1100,7 @@
       {% endif %}
       <h1>Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
       {% if user_type == 'admin' or user_type == 'staff' or user_type == 'field_staff' %}
-        <p>Here's how the Bwari Area Council tenement rate system is performing today — properties, payments, and compliance, all in one place.</p>
+        <p>{{ site_config.welcome_message|default:"Here's how the Bwari Area Council tenement rate system is performing today — properties, payments, and compliance, all in one place." }}</p>
       {% else %}
         <p>Manage your registered properties, keep your tenement rates and sanitation levy up to date, and track your reports here.</p>
       {% endif %}
@@ -1214,7 +1220,7 @@
       </div>
     </div>
     <!-- ── Sanitation Payers Split Card ─────────────────────── -->
-    <div class="stat-card fade fade-2" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--red)) 1;padding:0;overflow:hidden;position:relative;">
+    <div class="stat-card sanitation-summary-card fade fade-2" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--red)) 1;padding:0;overflow:hidden;position:relative;">
       <!-- Card Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:1px solid var(--border);">
         <div>
@@ -1384,7 +1390,7 @@
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Payment Overview</div>
       </div>
-      {% if revenue_trend_total %}
+      {% if revenue_trend_labels %}
       <div class="chart-card-meta">
         <span class="ccm-value">₦{{ revenue_trend_total|money:0 }}</span>
         <span class="ccm-label">collected · last 6 months</span>
@@ -1618,7 +1624,7 @@
       </div>
     </div>
     <!-- ── Sanitation Payers Split Card ─────────────────────── -->
-    <div class="stat-card fade fade-2" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--red)) 1;padding:0;overflow:hidden;position:relative;">
+    <div class="stat-card sanitation-summary-card fade fade-2" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--red)) 1;padding:0;overflow:hidden;position:relative;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:1px solid var(--border);">
         <div>
           <div class="stat-label" style="margin-bottom:2px;">Sanitation Levy</div>
@@ -1765,7 +1771,7 @@
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Payment Overview</div>
       </div>
-      {% if revenue_trend_total %}
+      {% if revenue_trend_labels %}
       <div class="chart-card-meta">
         <span class="ccm-value">₦{{ revenue_trend_total|money:0 }}</span>
         <span class="ccm-label">collected · last 6 months</span>
@@ -2113,7 +2119,7 @@
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Payment History</div>
       </div>
-      {% if total_paid %}
+      {% if landlord_revenue_labels %}
       <div class="bar-chart-card-body" style="height:210px;padding-top:18px;">
         <canvas id="landlordRevenueChart"></canvas>
       </div>

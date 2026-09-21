@@ -34,7 +34,7 @@ from django.utils.text import slugify
 from .forms import (
     SignupForm, LoginForm, ProfileUpdateForm, PropertyRegistrationForm,
     PropertyEditForm, PropertyBulkUploadForm, ComplaintForm,
-    AdminComplaintUpdateForm, SiteConfigurationForm, PaymentRateForm,
+    AdminComplaintUpdateForm, SiteConfigurationForm, BulkPropertyTypeChangeForm, PaymentRateForm,
     FixedResidentialRateForm, AnnouncementForm, StaffLandlordCreationForm,
     StaffPropertyRegistrationForm, OTPVerificationForm,
     ForgotPasswordForm, ForgotPasswordOTPForm, ResetPasswordForm,
@@ -149,6 +149,10 @@ def _paystack_error_mentions_email(response):
 # Helper: email sending
 from django.core.mail import send_mail
 
+def _configured_sender_email():
+    return SiteConfiguration.get_config().system_email or settings.DEFAULT_FROM_EMAIL
+
+
 def send_otp_email(user, otp_code):
     subject = 'Email Verification – FCT BAC Grid'
     message = (
@@ -161,7 +165,7 @@ def send_otp_email(user, otp_code):
         send_mail(
             subject,
             message,
-            settings.DEFAULT_FROM_EMAIL,
+            _configured_sender_email(),
             [user.email],
             fail_silently=False,
         )
@@ -751,7 +755,7 @@ def send_forgot_password_email(user, otp_code):
         send_mail(
             subject,
             message,
-            settings.DEFAULT_FROM_EMAIL,
+            _configured_sender_email(),
             [user.email],
             fail_silently=False,
         )
@@ -826,6 +830,10 @@ def contact(request):
 def signup_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
+
+    if not SiteConfiguration.get_config().allow_registration:
+        messages.warning(request, 'New account registration is temporarily unavailable.')
+        return redirect('home')
 
     ip = _get_client_ip(request)
 
@@ -1277,6 +1285,15 @@ def register_property(request):
         messages.error(request, "Only landlords, staff, and field staff can register properties.")
         return redirect('dashboard')
 
+    config = SiteConfiguration.get_config()
+    if (
+        profile.user_type == 'landlord'
+        and config.max_properties_per_landlord
+        and Property.objects.filter(owner=request.user).count() >= config.max_properties_per_landlord
+    ):
+        messages.error(request, f'You have reached the limit of {config.max_properties_per_landlord} properties.')
+        return redirect('landlord_properties')
+
     if request.method == 'POST':
         form = PropertyRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -1380,7 +1397,7 @@ def landlord_properties(request):
     if district:
         properties = properties.filter(district=district)
 
-    paginator = Paginator(properties, 9)
+    paginator = Paginator(properties, SiteConfiguration.get_config().default_pagination_size)
     page_number = request.GET.get('page')
     properties_page = paginator.get_page(page_number)
 
@@ -1860,24 +1877,42 @@ def admin_view_complaint(request, complaint_id):
 # ── Admin: Site Configuration ─────────────────────────────────────────────────
 @staff_member_required
 def admin_site_configuration(request):
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'admin':
+        messages.error(request, 'Only administrators can change site configuration.')
+        return redirect('dashboard')
+
     config = SiteConfiguration.get_config()
 
     if request.method == 'POST':
-        form = SiteConfigurationForm(request.POST, instance=config)
-        if form.is_valid():
-            cfg = form.save(commit=False)
-            cfg.updated_by = request.user
-            cfg.save()
-            messages.success(request, "Site configuration saved successfully.")
-            return redirect('admin_site_configuration')
+        if request.POST.get('action') == 'bulk_property_type_change':
+            property_type_form = BulkPropertyTypeChangeForm(request.POST)
+            form = SiteConfigurationForm(instance=config)
+            if property_type_form.is_valid():
+                source_type = property_type_form.cleaned_data['source_property_type']
+                target_type = property_type_form.cleaned_data['target_property_type']
+                with transaction.atomic():
+                    updated_count = Property.objects.filter(property_type=source_type).update(property_type=target_type)
+                messages.success(request, f'Updated {updated_count} properties from {source_type.title()} to {target_type.title()}.')
+                return redirect('admin_site_configuration')
+            messages.error(request, 'Property type update was not applied. Please correct the form below.')
         else:
+            property_type_form = BulkPropertyTypeChangeForm()
+            form = SiteConfigurationForm(request.POST, instance=config)
+            if form.is_valid():
+                cfg = form.save(commit=False)
+                cfg.updated_by = request.user
+                cfg.save()
+                messages.success(request, "Site configuration saved successfully.")
+                return redirect('admin_site_configuration')
             messages.error(request, "Please correct the errors below.")
     else:
         form = SiteConfigurationForm(instance=config)
+        property_type_form = BulkPropertyTypeChangeForm()
 
     return render(request, 'admin/site_configuration.html', {
-        'form':   form,
-        'config': config,
+        'form':               form,
+        'config':             config,
+        'property_type_form': property_type_form,
     })
 
 

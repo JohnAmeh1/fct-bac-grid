@@ -353,6 +353,30 @@ class SiteConfigurationForm(forms.ModelForm):
         }
 
 
+class BulkPropertyTypeChangeForm(forms.Form):
+    source_property_type = forms.ChoiceField(
+        choices=PROPERTY_TYPE_CHOICES,
+        label='Change properties currently marked as',
+    )
+    target_property_type = forms.ChoiceField(
+        choices=PROPERTY_TYPE_CHOICES,
+        label='To property type',
+    )
+    confirm_change = forms.BooleanField(
+        required=True,
+        label='I understand this changes every matching property record.',
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            cleaned_data.get('source_property_type')
+            and cleaned_data.get('source_property_type') == cleaned_data.get('target_property_type')
+        ):
+            self.add_error('target_property_type', 'Choose a different target property type.')
+        return cleaned_data
+
+
 class PaymentRateForm(forms.ModelForm):
     property_type = forms.ChoiceField(
         choices=PaymentRate._meta.get_field('property_type').choices,

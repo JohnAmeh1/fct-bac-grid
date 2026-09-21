@@ -756,6 +756,14 @@
       <a href="{% url 'signup' %}" class="announce-link">Register Now &rarr;</a>
     </div>
   </div>
+  {% if site_config.maintenance_mode %}
+  <div class="announce-bar" style="position:relative;background:#a15c07;">
+    <div class="announce-inner">
+      <i class="fas fa-screwdriver-wrench"></i>
+      <span>Maintenance mode is active. Some services may be temporarily unavailable.</span>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- ===== NAVBAR ===== -->
   <nav class="navbar" id="navbar">
@@ -770,8 +778,8 @@
           </div>
         </div>
         <div class="logo-text">
-          <span class="logo-main">BAC GRID</span>
-          <span class="logo-sub">Bwari Area Council</span>
+          <span class="logo-main">{{ site_config.site_name|default:'BAC GRID' }}</span>
+          <span class="logo-sub">{{ site_config.site_tagline|default:'Bwari Area Council' }}</span>
         </div>
       </a>
 
@@ -1082,6 +1090,19 @@
         <i class="fas fa-headset"></i> Field Support
       </a>
       {% endif %}
+      <span class="sidebar-section-label">Council Portal</span>
+      <a href="{% url 'home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <i class="fas fa-house"></i> Home
+      </a>
+      <a href="{% url 'about' %}" class="sidebar-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+        <i class="fas fa-circle-info"></i> About BAC Grid
+      </a>
+      <a href="{% url 'sanitation' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sanitation' %}active{% endif %}">
+        <i class="fas fa-leaf"></i> Sanitation
+      </a>
+      <a href="{% url 'contact' %}" class="sidebar-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+        <i class="fas fa-headset"></i> Contact
+      </a>
     </nav>
     <div class="sidebar-footer">
       <a href="{% url 'logout' %}" class="sidebar-logout"><i class="fas fa-arrow-right-from-bracket"></i> Logout</a>
@@ -1105,7 +1126,7 @@
       <i class="fas fa-credit-card"></i><span>Payments</span>
     </a>
     <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-      <i class="fas fa-ellipsis"></i><span>More</span>
+      <i class="fas fa-user-circle"></i><span>Profile</span>
     </a>
     {% elif user.userprofile.user_type == 'staff' %}
     <a href="{% url 'staff_create_landlord' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'staff_create_landlord' %}active{% endif %}">
@@ -1118,7 +1139,7 @@
       <i class="fas fa-receipt"></i><span>Verify</span>
     </a>
     <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-      <i class="fas fa-ellipsis"></i><span>More</span>
+      <i class="fas fa-user-circle"></i><span>Profile</span>
     </a>
     {% elif user.userprofile.user_type == 'field_staff' %}
     <a href="{% url 'register_property' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'register_property' %}active{% endif %}">
@@ -1131,7 +1152,7 @@
       <i class="fas fa-headset"></i><span>Support</span>
     </a>
     <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-      <i class="fas fa-ellipsis"></i><span>More</span>
+      <i class="fas fa-user-circle"></i><span>Profile</span>
     </a>
     {% else %}
     <a href="{% url 'landlord_properties' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'landlord_properties' %}active{% endif %}">
@@ -1144,7 +1165,7 @@
       <i class="fas fa-credit-card"></i><span>Payments</span>
     </a>
     <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-      <i class="fas fa-ellipsis"></i><span>More</span>
+      <i class="fas fa-user-circle"></i><span>Profile</span>
     </a>
     {% endif %}
   </nav>
@@ -1196,8 +1217,8 @@
               <div class="logo-fallback small" style="display:none"><span>B</span></div>
             </div>
             <div>
-              <div class="footer-brand-name">BAC GRID</div>
-              <div class="footer-brand-sub">Bwari Area Council &middot; Digital Tenement &amp; Business Rate System</div>
+              <div class="footer-brand-name">{{ site_config.site_name|default:'BAC GRID' }}</div>
+              <div class="footer-brand-sub">{{ site_config.site_tagline|default:'Bwari Area Council Digital Tenement Rate System' }}</div>
             </div>
           </div>
           <p class="footer-desc">A modern, transparent, and automated revenue solution for Bwari Area Council, Abuja. Pay your tenement rates online — fast, secure, and stress-free.</p>
@@ -1234,9 +1255,9 @@
         <div class="footer-col">
           <h4 class="footer-heading">Contact</h4>
           <ul class="footer-contact-list">
-            <li><i class="fas fa-location-dot"></i> Bwari Area Council Secretariat, Abuja</li>
-            <li><i class="fas fa-phone"></i> +234 800 000 0000</li>
-            <li><i class="fas fa-envelope"></i> info@bwaricouncil.gov.ng</li>
+            <li><i class="fas fa-location-dot"></i> {{ site_config.contact_address|default:'Bwari Area Council Secretariat, Abuja' }}</li>
+            <li><i class="fas fa-phone"></i> {{ site_config.contact_phone|default:'+234 800 000 0000' }}</li>
+            <li><i class="fas fa-envelope"></i> {{ site_config.contact_email|default:'info@bwaricouncil.gov.ng' }}</li>
             <li><i class="fas fa-clock"></i> Mon – Fri: 8am – 5pm</li>
           </ul>
         </div>
