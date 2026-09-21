@@ -1,7 +1,9 @@
 import io
+import os
 import csv
 import re
 import uuid
+import tempfile
 import threading
 import logging
 from decimal import Decimal
@@ -54,7 +56,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.validators import validate_email
@@ -1678,14 +1680,181 @@ def admin_site_configuration(request):
 
 
 # ── Admin: Export Data ────────────────────────────────────────────────────────
+# The DB side of these exports is now bulk/constant-time (see the fixes on
+# each build function below), but building and styling a 100k+ row Excel
+# workbook with openpyxl is itself CPU-bound work that can run well past a
+# gunicorn worker's timeout regardless of how fast the queries are. So,
+# same as the bulk property import and the demo-data reset, the actual
+# workbook is built on a background thread; the request just kicks it off
+# and returns a progress page immediately. Once done, the page shows a
+# Download link instead of a "reset complete" message.
+
+EXPORT_TMP_DIR = os.path.join(tempfile.gettempdir(), 'bac_grid_exports')
+
+_EXPORT_PROGRESS_PAGE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Preparing export…</title>
+  <style>
+    body {{ font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }}
+    .bar-track {{ background: #e5e7eb; border-radius: 8px; height: 20px; overflow: hidden; margin: 16px 0; }}
+    .bar-fill {{ background: #1e6cf0; height: 100%; width: 0%; transition: width 0.4s ease; }}
+    .status {{ color: #4b5563; }}
+    .error {{ color: #b91c1c; font-weight: 600; }}
+    .success {{ color: #15803d; font-weight: 600; }}
+    a.button {{ display: inline-block; margin-top: 20px; padding: 10px 18px; background: #111827; color: #fff; text-decoration: none; border-radius: 6px; }}
+    a.button.primary {{ background: #16a34a; }}
+  </style>
+</head>
+<body>
+  <h2>Preparing your export…</h2>
+  <p class="status" id="status-message">Starting…</p>
+  <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+  <p id="percent-text">0%</p>
+  <div id="result"></div>
+
+  <script>
+    const progressUrl = "{progress_url}";
+    const backUrl = "{back_url}";
+
+    async function poll() {{
+      try {{
+        const res = await fetch(progressUrl, {{ cache: "no-store" }});
+        const data = await res.json();
+
+        document.getElementById("status-message").textContent = data.message || "Working…";
+        document.getElementById("bar-fill").style.width = (data.percent || 0) + "%";
+        document.getElementById("percent-text").textContent = (data.percent || 0) + "%";
+
+        if (data.done) {{
+          const resultEl = document.getElementById("result");
+          if (data.status === "error") {{
+            resultEl.innerHTML = '<p class="error">Export failed: ' + (data.error || "unknown error") + '</p>' +
+              '<a class="button" href="' + backUrl + '">Back</a>';
+          }} else {{
+            resultEl.innerHTML = '<p class="success">Export ready.</p>' +
+              '<a class="button primary" href="' + data.download_url + '">Download file</a> ' +
+              '<a class="button" href="' + backUrl + '">Back</a>';
+          }}
+          return;
+        }}
+        setTimeout(poll, 1500);
+      }} catch (e) {{
+        document.getElementById("status-message").textContent = "Lost connection to progress updates. Reloading…";
+        setTimeout(() => window.location.reload(), 3000);
+      }}
+    }}
+    poll();
+  </script>
+</body>
+</html>
+"""
+
+
+def _run_export_in_background(build_workbook_fn, filename, progress_key):
+    """
+    Runs `build_workbook_fn()` (a zero-arg callable returning an openpyxl
+    Workbook) off the request thread, saves the result to a temp file, and
+    writes progress/result to the cache under `progress_key` so the browser
+    can poll it and then download the finished file.
+    """
+    cache_key = f'export_progress:{progress_key}'
+    cache.set(cache_key, {
+        'status': 'running', 'message': 'Building workbook…', 'percent': 40,
+        'done': False, 'error': '', 'download_url': '',
+    }, timeout=3600)
+
+    try:
+        wb = build_workbook_fn()
+        os.makedirs(EXPORT_TMP_DIR, exist_ok=True)
+        file_path = os.path.join(EXPORT_TMP_DIR, f'{progress_key}.xlsx')
+        wb.save(file_path)
+
+        cache.set(cache_key, {
+            'status': 'done',
+            'message': 'Export ready.',
+            'percent': 100,
+            'done': True,
+            'error': '',
+            'download_url': reverse('download_export', args=[progress_key]),
+            'filename': filename,
+        }, timeout=3600)
+    except Exception as exc:
+        logger.error("Export %s failed: %s", progress_key, exc)
+        cache.set(cache_key, {
+            'status': 'error', 'message': 'Export failed.', 'percent': 0,
+            'done': True, 'error': str(exc), 'download_url': '',
+        }, timeout=3600)
+    finally:
+        from django.db import connections
+        connections.close_all()
+
+
+def _start_background_export(request, build_workbook_fn, filename, back_url_name):
+    """Kicks off a background export and returns the progress-page response."""
+    progress_key = uuid.uuid4().hex
+    thread = threading.Thread(
+        target=_run_export_in_background,
+        args=(build_workbook_fn, filename, progress_key),
+        daemon=True,
+    )
+    thread.start()
+
+    progress_url = reverse('export_progress', args=[progress_key])
+    back_url = reverse(back_url_name)
+    html = _EXPORT_PROGRESS_PAGE_TEMPLATE.format(progress_url=progress_url, back_url=back_url)
+    return HttpResponse(html)
+
+
+@staff_member_required
+@require_GET
+def export_progress(request, progress_key):
+    progress_data = cache.get(f'export_progress:{progress_key}', {})
+    return JsonResponse({
+        'status': progress_data.get('status', 'idle'),
+        'message': progress_data.get('message', 'Awaiting export...'),
+        'percent': progress_data.get('percent', 0),
+        'done': progress_data.get('done', False),
+        'error': progress_data.get('error', ''),
+        'download_url': progress_data.get('download_url', ''),
+    })
+
+
+@staff_member_required
+def download_export(request, progress_key):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff', 'field_staff']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    progress_data = cache.get(f'export_progress:{progress_key}')
+    if not progress_data or progress_data.get('status') != 'done':
+        messages.error(request, 'This export is not ready yet or has expired. Please generate it again.')
+        return redirect('dashboard')
+
+    file_path = os.path.join(EXPORT_TMP_DIR, f'{progress_key}.xlsx')
+    if not os.path.exists(file_path):
+        messages.error(request, 'This export file has expired. Please generate it again.')
+        return redirect('dashboard')
+
+    filename = progress_data.get('filename', 'export.xlsx')
+    return FileResponse(
+        open(file_path, 'rb'),
+        as_attachment=True,
+        filename=filename,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+
+
 @staff_member_required
 def admin_export_landlords(request):
     """Kept for backward-compat — redirects to the unified user export."""
     return admin_export_users(request)
 
 
-@staff_member_required
-def admin_export_users(request):
+def _build_users_workbook():
     """Export all non-admin, non-staff user accounts (landlords, tenants, etc.)."""
     # Property counts are annotated in a single JOIN + GROUP BY here instead
     # of one `.count()` query per user in the row loop below — with 100k+
@@ -1815,18 +1984,13 @@ def admin_export_users(request):
     summary_cell.alignment = Alignment(horizontal="right", vertical="center")
 
     ws.freeze_panes = 'A5'
+    return wb
 
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
 
+@staff_member_required
+def admin_export_users(request):
     filename = f"users_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-    response = HttpResponse(
-        buffer.getvalue(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
+    return _start_background_export(request, _build_users_workbook, filename, 'admin_manage_users')
 
 
 def page_not_found(request, exception=None):
@@ -1887,27 +2051,61 @@ def admin_sanitation_defaulters(request):
                 'payment': valid_payment,
             })
 
+    # These three totals are computed from the FULL dataset, before any
+    # filtering/pagination below, so the stat cards and tab badges always
+    # show true totals regardless of which page or filter is showing.
     defaulters_count = sum(1 for r in all_records if not r['has_paid'])
     paid_count = sum(1 for r in all_records if r['has_paid'])
+    total_records_count = len(all_records)
+    total_amount_due = sum(r['amount'] for r in all_records if not r['has_paid'])
+
+    # Status filter (all/defaulters/paid) and search now happen server-side,
+    # before pagination — with pagination in place, the old client-side-only
+    # JS filter/search would have silently only searched whatever 50 rows
+    # happened to be on the current page instead of the whole dataset.
+    status_filter = request.GET.get('status', 'all')
+    if status_filter == 'defaulters':
+        filtered_records = [r for r in all_records if not r['has_paid']]
+    elif status_filter == 'paid':
+        filtered_records = [r for r in all_records if r['has_paid']]
+    else:
+        status_filter = 'all'
+        filtered_records = all_records
+
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        q_lower = search_query.lower()
+        filtered_records = [
+            r for r in filtered_records
+            if q_lower in r['user'].username.lower()
+            or q_lower in (r['user'].email or '').lower()
+            or q_lower in (r['user'].get_full_name() or '').lower()
+        ]
+
+    # The DB queries above are already bulk/constant-time, but rendering
+    # every (user × rate) row into one HTML page is not — with 100k+
+    # accounts that's hundreds of thousands of table rows in a single
+    # response, which is what was making this page hang ("just keeps
+    # rolling"): the template engine and then the browser both choke on
+    # a response that size. Paginate it exactly like every other admin
+    # list view in this app (see admin_manage_users, admin_manage_properties).
+    paginator = Paginator(filtered_records, 50)
+    page_number = request.GET.get('page')
+    records_page = paginator.get_page(page_number)
+    records_page_range = get_paginator_page_range(records_page)
 
     return render(request, 'admin/sanitation_defaulters.html', {
-        'all_records': all_records,
+        'all_records': records_page,
+        'page_range': records_page_range,
+        'status_filter': status_filter,
+        'search_query': search_query,
         'defaulters_count': defaulters_count,
         'paid_count': paid_count,
-        # keep legacy 'defaulters' context for the export URL in template
-        'defaulters': [r for r in all_records if not r['has_paid']],
+        'total_records_count': total_records_count,
+        'total_amount_due': total_amount_due,
     })
 
-@staff_member_required
-def admin_export_sanitation_defaulters(request):
-    profile = request.user.userprofile
-    if profile.user_type not in ['admin', 'staff', 'field_staff']:
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
-
-    export_mode = request.GET.get('mode', 'defaulters')  # 'all' or 'defaulters'
-    export_all = export_mode == 'all'
-
+def _build_sanitation_workbook(export_all):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'All Sanitation Records' if export_all else 'Sanitation Defaulters'
@@ -2004,17 +2202,27 @@ def admin_export_sanitation_defaulters(request):
     if row_num == 2:
         ws.cell(row=2, column=1, value='No records found.')
 
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
+    return wb
 
+
+@staff_member_required
+def admin_export_sanitation_defaulters(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff', 'field_staff']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    export_mode = request.GET.get('mode', 'defaulters')  # 'all' or 'defaulters'
+    export_all = export_mode == 'all'
     filename_prefix = 'sanitation_all_users' if export_all else 'sanitation_defaulters'
-    response = HttpResponse(
-        output.read(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    filename = f'{filename_prefix}_{timezone.now().strftime("%Y%m%d")}.xlsx'
+
+    return _start_background_export(
+        request,
+        lambda: _build_sanitation_workbook(export_all),
+        filename,
+        'admin_sanitation_defaulters',
     )
-    response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{timezone.now().strftime("%Y%m%d")}.xlsx"'
-    return response
 
 # ── Admin: Payment Rates ─────────────────────────────────────────────────────
 @staff_member_required
@@ -3136,13 +3344,7 @@ def admin_defaulters_list(request):
     return render(request, 'admin/defaulters_list.html', {'defaulters': defaulters})
 
 
-@staff_member_required
-def admin_export_defaulters(request):
-    profile = request.user.userprofile
-    if profile.user_type not in ['admin', 'staff', 'field_staff']:
-        messages.error(request, "Access denied.")
-        return redirect('dashboard')
-
+def _build_defaulters_workbook():
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Defaulters"
@@ -3235,16 +3437,18 @@ def admin_export_defaulters(request):
     if row_num == 2:
         ws.cell(row=2, column=1, value="No defaulters found.")
 
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
+    return wb
 
-    response = HttpResponse(
-        output.read(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = f'attachment; filename="defaulters_enforcement_{timezone.now().strftime("%Y%m%d")}.xlsx"'
-    return response
+
+@staff_member_required
+def admin_export_defaulters(request):
+    profile = request.user.userprofile
+    if profile.user_type not in ['admin', 'staff', 'field_staff']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    filename = f'defaulters_enforcement_{timezone.now().strftime("%Y%m%d")}.xlsx'
+    return _start_background_export(request, _build_defaulters_workbook, filename, 'admin_defaulters_list')
 
 
 # ── Forgot Password views ────────────────────────────────────────────────────
