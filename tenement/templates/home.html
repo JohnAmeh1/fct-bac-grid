@@ -128,32 +128,13 @@
     background-attachment: scroll;
   }
 
-  /* Keep the Bwari image visible; tint only the text side for contrast. */
+  /* The hero photograph stays clear; text sits directly over the image. */
   .hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      rgba(8, 39, 73, 0.56) 0%,
-      rgba(8, 39, 73, 0.24) 45%,
-      rgba(8, 39, 73, 0.04) 100%
-    );
-    pointer-events: none;
-    z-index: 1;
+    display: none;
   }
 
   .hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      ellipse at 8% 75%,
-      rgba(22, 163, 74, 0.10),
-      transparent 55%
-    );
-    pointer-events: none;
-    z-index: 1;
+    display: none;
   }
 
   .hero-inner {
@@ -203,6 +184,7 @@
     line-height: 1.12;
     letter-spacing: -.03em;
     margin-bottom: 12px;
+    text-shadow: 0 2px 10px rgba(8,39,73,.75);
   }
 
   .hero-title-accent { color: #4ade80; }
@@ -224,6 +206,7 @@
     line-height: 1.75;
     margin-bottom: 28px;
     max-width: 480px;
+    text-shadow: 0 1px 7px rgba(8,39,73,.80);
   }
 
   /* Search bar — white background stays clean */
@@ -307,8 +290,8 @@
     font-size: .75rem;
     font-weight: 500;
     color: rgba(255,255,255,0.80);
-    background: rgba(255,255,255,0.10);
-    border: 1px solid rgba(255,255,255,0.18);
+    background: #082749;
+    border: 1px solid #315a80;
     padding: 5px 10px;
     border-radius: 99px;
   }
@@ -321,7 +304,7 @@
     background: rgba(255,255,255,.05);
     border: 1px solid rgba(255,255,255,.1);
     border-radius: var(--radius-xl);
-    backdrop-filter: blur(12px);
+    backdrop-filter: none;
     overflow: hidden;
   }
   .primary-card { animation: float 6s ease-in-out infinite; }
@@ -1236,7 +1219,7 @@
   background: rgba(20, 184, 166, 0.10);
   border-color: rgba(20, 184, 166, 0.22);
   color: #5eead4;
-  backdrop-filter: blur(8px);
+  backdrop-filter: none;
 }
 .action-item.teal:hover {
   background: rgba(20, 184, 166, 0.18);
@@ -1281,7 +1264,7 @@
   background: rgba(255,255,255,.07);
   border: 1px solid rgba(20,184,166,.3);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   overflow: hidden;
   transition: border-color var(--transition), box-shadow var(--transition);
   width: 100%;

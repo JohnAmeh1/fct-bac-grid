@@ -768,19 +768,18 @@
   /* Dashboard visual direction: warm, data-rich panels rather than uniform cards. */
   .hero-banner {
     min-height: 176px;
-    background:
-      linear-gradient(90deg, rgba(8,39,73,.96) 0%, rgba(8,39,73,.80) 43%, rgba(8,39,73,.20) 100%),
-      url("{% static 'images/city_gate2.jpg' %}") center 46% / cover,
-      var(--accent-dk);
+    background: url("{% static 'images/city_gate2.jpg' %}") center 46% / cover, var(--accent-dk);
   }
   .hero-banner::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(118deg, transparent 45%, rgba(255,255,255,.10) 45.2%, transparent 45.5%);
-    pointer-events: none;
+    display: none;
   }
   .hero-skyline { opacity: .22; }
+  .hero-content {
+    padding: 18px 20px;
+    border-radius: 14px 14px 20px 14px;
+    background: #082749;
+    box-shadow: 0 10px 24px rgba(8,39,73,.22);
+  }
   .hero-right { align-self: flex-start; }
   .stats-grid.cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1006,8 +1005,8 @@
 
   /* Operational dashboards use the same lively visual system as the landlord view. */
   .dashboard-admin .hero-banner { background-position: center 42%; }
-  .dashboard-staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.94), rgba(13,63,115,.68) 48%, rgba(20,108,67,.26)), url("{% static 'images/city_gate.jpg' %}") center / cover, var(--accent-dk); }
-  .dashboard-field_staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.93), rgba(11,111,104,.62) 53%, rgba(20,108,67,.22)), url("{% static 'images/city_gate2.jpg' %}") center / cover, var(--accent-dk); }
+  .dashboard-staff .hero-banner { background: url("{% static 'images/city_gate.jpg' %}") center / cover, var(--accent-dk); }
+  .dashboard-field_staff .hero-banner { background: url("{% static 'images/city_gate2.jpg' %}") center / cover, var(--accent-dk); }
   .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { gap: 18px; }
   .dashboard-admin .qa-tile, .dashboard-staff .qa-tile, .dashboard-field_staff .qa-tile {
     min-height: 132px;
