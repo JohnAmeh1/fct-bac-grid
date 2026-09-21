@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tenement_extras %}
 
 {% block title %}Sanitation Records | FCT BAC Grid{% endblock %}
 
@@ -142,28 +143,28 @@
     <div class="stat-pill sp-blue">
       <div class="stat-ico"><i class="fas fa-users"></i></div>
       <div>
-        <div class="stat-num">{{ total_records_count }}</div>
+        <div class="stat-num">{{ total_records_count|money:0 }}</div>
         <div class="stat-lbl">Total Records</div>
       </div>
     </div>
     <div class="stat-pill sp-red">
       <div class="stat-ico"><i class="fas fa-exclamation-circle"></i></div>
       <div>
-        <div class="stat-num">{{ defaulters_count }}</div>
+        <div class="stat-num">{{ defaulters_count|money:0 }}</div>
         <div class="stat-lbl">Outstanding</div>
       </div>
     </div>
     <div class="stat-pill sp-green">
       <div class="stat-ico"><i class="fas fa-check-circle"></i></div>
       <div>
-        <div class="stat-num">{{ paid_count }}</div>
+        <div class="stat-num">{{ paid_count|money:0 }}</div>
         <div class="stat-lbl">Paid &amp; Current</div>
       </div>
     </div>
     <div class="stat-pill sp-purple">
       <div class="stat-ico"><i class="fas fa-naira-sign"></i></div>
       <div>
-        <div class="stat-num">{{ total_amount_due|floatformat:2 }}</div>
+        <div class="stat-num">{{ total_amount_due|money:2 }}</div>
         <div class="stat-lbl">Total Outstanding (&#8358;)</div>
       </div>
     </div>
@@ -173,13 +174,13 @@
        not just whatever page happens to be loaded -->
   <div class="filter-bar fade fade-2">
     <a href="?status=all{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="filter-tab{% if status_filter == 'all' %} active-all{% endif %}">
-      <i class="fas fa-list"></i> All Records <span class="tab-count">{{ total_records_count }}</span>
+      <i class="fas fa-list"></i> All Records <span class="tab-count">{{ total_records_count|money:0 }}</span>
     </a>
     <a href="?status=defaulters{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="filter-tab{% if status_filter == 'defaulters' %} active-defaulters{% endif %}">
-      <i class="fas fa-exclamation-circle"></i> Defaulters <span class="tab-count">{{ defaulters_count }}</span>
+      <i class="fas fa-exclamation-circle"></i> Defaulters <span class="tab-count">{{ defaulters_count|money:0 }}</span>
     </a>
     <a href="?status=paid{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="filter-tab{% if status_filter == 'paid' %} active-paid{% endif %}">
-      <i class="fas fa-check-circle"></i> Paid <span class="tab-count">{{ paid_count }}</span>
+      <i class="fas fa-check-circle"></i> Paid <span class="tab-count">{{ paid_count|money:0 }}</span>
     </a>
   </div>
 
@@ -189,7 +190,7 @@
       <div class="tch-title">
         <i class="fas fa-list-check" style="color:var(--purple);"></i>
         Sanitation Records
-        {% if all_records %}<span class="tch-count">{{ all_records.paginator.count }}</span>{% endif %}
+        {% if all_records %}<span class="tch-count">{{ all_records.paginator.count|money:0 }}</span>{% endif %}
       </div>
       <form method="get" class="tbl-search-wrap">
         <input type="hidden" name="status" value="{{ status_filter }}">
@@ -257,7 +258,7 @@
             <!-- Amount -->
             <td>
               <span class="amount {% if item.has_paid %}amount-paid{% else %}amount-due{% endif %}">
-                &#8358;{{ item.amount|floatformat:2 }}
+                &#8358;{{ item.amount|money:2 }}
               </span>
             </td>
 
