@@ -52,6 +52,8 @@ urlpatterns = [
     path('management/configuration/', views.admin_site_configuration, name='admin_site_configuration'),
     path('management/export/landlords/', views.admin_export_landlords, name='admin_export_landlords'),
     path('management/export/users/', views.admin_export_users, name='admin_export_users'),
+    path('management/export/progress/<str:progress_key>/', views.export_progress, name='export_progress'),
+    path('management/export/download/<str:progress_key>/', views.download_export, name='download_export'),
 
     # ── Admin: Payment Rates ──────────────────────────────────
     path('management/payments/rates/', views.admin_payment_rates, name='admin_payment_rates'),
