@@ -454,8 +454,186 @@
   </style>
 
   {% block extra_css %}{% endblock %}
+  <style>
+    /* Shared civic visual system: placed after page-specific styles so every route feels related. */
+    body.app-shell {
+      background:
+        radial-gradient(900px 460px at -10% 12%, rgba(20,108,67,.08), transparent 62%),
+        radial-gradient(760px 360px at 108% 2%, rgba(13,63,115,.09), transparent 60%),
+        #f4f7fa;
+      color: #102033;
+    }
+    .app-shell .navbar {
+      background: rgba(255,255,255,.92);
+      border-bottom: 1px solid rgba(13,63,115,.10);
+      box-shadow: 0 8px 26px rgba(11,18,32,.055);
+    }
+    .app-shell .nav-container { max-width: 1360px; }
+    .app-shell .nav-logo .logo-emblem { border-color: #d9f0e3; box-shadow: 0 3px 10px rgba(20,108,67,.10); }
+    .app-shell .nav-link { border-radius: 999px; }
+    .app-shell .nav-link:hover, .app-shell .nav-link.active {
+      color: #146c43;
+      background: #eaf7ef;
+      box-shadow: inset 0 0 0 1px rgba(20,108,67,.10);
+    }
+    .app-shell .btn-primary, .app-shell .btn-auth, .app-shell .btn-filter, .app-shell .btn-apply {
+      background: linear-gradient(135deg, #146c43, #0b6f68) !important;
+      border-color: transparent !important;
+      box-shadow: 0 8px 20px rgba(20,108,67,.19);
+    }
+    .app-shell .btn-primary:hover, .app-shell .btn-auth:hover, .app-shell .btn-filter:hover, .app-shell .btn-apply:hover { background: #0a4a30 !important; }
+    .app-shell .btn, .app-shell button, .app-shell input, .app-shell select, .app-shell textarea { font-family: 'Plus Jakarta Sans', 'DM Sans', sans-serif; }
+    .app-shell .pg-wrap, .app-shell .mp-wrap, .app-shell .page-shell,
+    .app-shell .form-wrap, .app-shell .content-wrap, .app-shell .content-container {
+      background: transparent !important;
+      max-width: 1360px;
+    }
+    .app-shell .pg-header, .app-shell .mp-header, .app-shell .page-header {
+      position: relative;
+      padding: 22px 24px;
+      border-radius: 18px 18px 28px 18px;
+      background: linear-gradient(110deg, #ffffff, #eff8f3);
+      border: 1px solid rgba(20,108,67,.11);
+      box-shadow: 0 12px 30px rgba(11,18,32,.055);
+    }
+    .app-shell .pg-title, .app-shell .mp-header h1, .app-shell .page-header h1 { color: #0b1220; letter-spacing: 0; }
+    .app-shell .pg-sub, .app-shell .mp-header p, .app-shell .page-header p { color: #5c6b82; }
+    .app-shell .form-card, .app-shell .card, .app-shell .filter-bar, .app-shell .filter-sidebar,
+    .app-shell .prop-card, .app-shell .stat-pill, .app-shell .table-card {
+      border-color: rgba(15,23,42,.09) !important;
+      border-radius: 16px 16px 24px 16px !important;
+      box-shadow: 0 10px 28px rgba(11,18,32,.06) !important;
+    }
+    .app-shell .prop-card, .app-shell .form-card, .app-shell .card { overflow: hidden; }
+    .app-shell .prop-card:hover, .app-shell .card:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(11,18,32,.10) !important; }
+    .app-shell .filter-bar, .app-shell .filter-sidebar { background: rgba(255,255,255,.92) !important; }
+    .app-shell .stat-pill { background: linear-gradient(145deg, #fff, #f1f8f4) !important; }
+    .app-shell .prop-footer, .app-shell .card-footer { background: #f8fbf9 !important; }
+    .app-shell input:not([type="checkbox"]):not([type="radio"]), .app-shell select, .app-shell textarea {
+      background: #fbfcfd !important;
+      border: 1px solid #d8e1eb !important;
+      border-radius: 10px !important;
+    }
+    .app-shell input:not([type="checkbox"]):not([type="radio"]):focus, .app-shell select:focus, .app-shell textarea:focus {
+      border-color: #168652 !important;
+      box-shadow: 0 0 0 3px rgba(20,108,67,.14) !important;
+    }
+    .app-shell table { border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 14px; background: #fff; }
+    .app-shell table thead th { background: #edf7f1 !important; color: #35536a !important; }
+    .app-shell table tbody tr { transition: background .18s ease; }
+    .app-shell table tbody tr:hover { background: #f4fbf7 !important; }
+    .app-shell .chip, .app-shell .badge, .app-shell .status-badge { border-radius: 999px !important; }
+    .app-shell .footer { background: linear-gradient(135deg, #082749, #0d3f73 58%, #0b6f68) !important; }
+    .app-shell .footer::after { content: ''; position: absolute; width: 290px; height: 290px; right: 8%; bottom: -190px; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; pointer-events: none; }
+    .app-shell #main-content > :not(style) { animation: app-enter .42s ease both; }
+    @keyframes app-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Auth, forms, profile, receipts, listings, and management screens. */
+    .app-shell .auth-page { background: transparent !important; }
+    .app-shell .auth-left {
+      background:
+        linear-gradient(145deg, rgba(8,39,73,.96), rgba(11,111,104,.84)),
+        url("{% static 'images/city_gate2.jpg' %}") center / cover !important;
+    }
+    .app-shell .auth-left::before { background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px) !important; }
+    .app-shell .auth-right { background: transparent !important; }
+    .app-shell .auth-form-wrap, .app-shell .auth-form-card {
+      padding: 30px;
+      border-radius: 18px 18px 28px 18px;
+      background: rgba(255,255,255,.80);
+      border: 1px solid rgba(15,23,42,.08);
+      box-shadow: 0 18px 40px rgba(11,18,32,.08);
+    }
+    .app-shell .reg-page, .app-shell .profile-page, .app-shell .edit-property-wrap,
+    .app-shell .wrap, .app-shell .bw-announce-wrap, .app-shell .bw-form-wrapper,
+    .app-shell .cu-wrap, .app-shell .dl-wrap, .app-shell .mu-wrap, .app-shell .pb-wrap,
+    .app-shell .vp-wrap, .app-shell .receipt-wrap, .app-shell .property-view-wrapper,
+    .app-shell .user-view-wrapper, .app-shell .bw-staff-form-wrap {
+      background: transparent !important;
+      max-width: 1360px;
+    }
+    .app-shell .bw-form-card, .app-shell .cu-card, .app-shell .search-card, .app-shell .detail-card,
+    .app-shell .property-details-card, .app-shell .user-view-card, .app-shell .receipt-card,
+    .app-shell .user-card, .app-shell .form-section, .app-shell .detail-section {
+      border: 1px solid rgba(15,23,42,.09) !important;
+      border-radius: 16px 16px 24px 16px !important;
+      box-shadow: 0 10px 28px rgba(11,18,32,.06) !important;
+      background: rgba(255,255,255,.96) !important;
+    }
+    .app-shell .form-section-head, .app-shell .search-card-head, .app-shell .detail-card-head,
+    .app-shell .receipt-head, .app-shell .user-card-banner {
+      background: linear-gradient(105deg, #edf7f1, #eef4fb) !important;
+      border-color: rgba(15,23,42,.08) !important;
+    }
+    .app-shell .form-section-head i, .app-shell .detail-label i { color: #146c43; }
+    .app-shell .property-view-wrapper .property-hero, .app-shell .user-card-banner {
+      background: linear-gradient(110deg, #082749, #0d3f73 56%, #0b6f68) !important;
+    }
+    .app-shell .pagination a, .app-shell .pagination span, .app-shell .back-btn, .app-shell .back-link {
+      border-radius: 9px !important;
+    }
+    .app-shell .pagination .current { background: #146c43 !important; border-color: #146c43 !important; }
+
+    /* Public information and the entire by-law library. */
+    .app-shell .about-hero, .app-shell .c-hero, .app-shell .san-hero, .app-shell .bylaw-hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(110deg, rgba(8,39,73,.94), rgba(13,63,115,.76) 54%, rgba(11,111,104,.72)),
+        url("{% static 'images/city_gate.jpg' %}") center / cover !important;
+    }
+    .app-shell .about-hero::after, .app-shell .c-hero::after, .app-shell .san-hero::after, .app-shell .bylaw-hero::after {
+      content: '';
+      position: absolute;
+      width: 330px; height: 330px;
+      right: -130px; bottom: -230px;
+      border: 30px solid rgba(255,255,255,.10);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .app-shell .about-card, .app-shell .contact-card, .app-shell .san-overview-card,
+    .app-shell .bylaw-card, .app-shell .feature-card, .app-shell .info-card {
+      border: 1px solid rgba(15,23,42,.09) !important;
+      border-radius: 16px 16px 24px 16px !important;
+      box-shadow: 0 10px 28px rgba(11,18,32,.06) !important;
+      overflow: hidden;
+    }
+    .app-shell .bylaw-card:hover, .app-shell .san-overview-card:hover, .app-shell .feature-card:hover { transform: translateY(-4px); }
+    .app-shell .bylaw-card-header, .app-shell .san-card-head { background: linear-gradient(105deg, #f0f8f3, #f4f8fd) !important; }
+    .app-shell .bylaw-sidebar-card { border-radius: 14px !important; box-shadow: 0 10px 24px rgba(11,18,32,.06); }
+    .app-shell .bylaw-sidebar-link.active { background: #eaf7ef !important; color: #146c43 !important; }
+
+    /* Data-heavy admin, staff, landlord, and tenant views. */
+    .app-shell .table-card, .app-shell .results-card, .app-shell .list-card, .app-shell .complaint-card,
+    .app-shell .payment-card, .app-shell .announcement-card {
+      border: 1px solid rgba(15,23,42,.09) !important;
+      border-radius: 16px 16px 24px 16px !important;
+      box-shadow: 0 10px 28px rgba(11,18,32,.06) !important;
+      background: rgba(255,255,255,.96) !important;
+      overflow: hidden;
+    }
+    .app-shell .table-card > :first-child, .app-shell .results-card > :first-child { border-top: 3px solid #146c43; }
+    .app-shell .filters, .app-shell .filter-bar, .app-shell .search-bar, .app-shell .toolbar {
+      border-color: rgba(15,23,42,.09) !important;
+      background: rgba(255,255,255,.92) !important;
+      box-shadow: 0 8px 22px rgba(11,18,32,.045);
+    }
+    .app-shell .status-open, .app-shell .status-pending { background: #fff3df !important; color: #a15c07 !important; }
+    .app-shell .status-resolved, .app-shell .status-success, .app-shell .status-paid { background: #e3f5ea !important; color: #146c43 !important; }
+    .app-shell .status-failed, .app-shell .status-overdue { background: #fbe7e8 !important; color: #ad1f2f !important; }
+    @media (max-width: 768px) {
+      .app-shell .pg-header, .app-shell .mp-header, .app-shell .page-header { padding: 17px; border-radius: 15px; margin-bottom: 18px; }
+      .app-shell .pg-wrap, .app-shell .mp-wrap { padding-left: 14px !important; padding-right: 14px !important; }
+      .app-shell .filter-bar { gap: 8px; padding: 12px !important; }
+      .app-shell .filter-bar input, .app-shell .filter-bar select { min-height: 42px; flex: 1 1 100%; }
+      .app-shell .auth-form-wrap, .app-shell .auth-form-card { padding: 22px; box-shadow: none; border: 0; background: transparent; }
+      .app-shell .bw-form-card, .app-shell .cu-card, .app-shell .search-card, .app-shell .detail-card,
+      .app-shell .property-details-card, .app-shell .user-view-card, .app-shell .receipt-card, .app-shell .user-card { border-radius: 14px !important; }
+      .app-shell .bylaw-hero, .app-shell .about-hero, .app-shell .c-hero, .app-shell .san-hero { padding-left: 16px !important; padding-right: 16px !important; }
+    }
+  </style>
 </head>
-<body>
+<body class="app-shell page-{{ request.resolver_match.url_name|default:'site' }}{% if user.is_authenticated %} is-authenticated{% endif %}">
 
   <!-- ===== TOP ANNOUNCEMENT BAR ===== -->
   <div class="announce-bar">
