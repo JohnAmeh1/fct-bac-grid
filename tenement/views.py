@@ -10,6 +10,7 @@ import json
 import qrcode
 import base64
 from django.db.models import Sum, Count
+from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -1686,10 +1687,14 @@ def admin_export_landlords(request):
 @staff_member_required
 def admin_export_users(request):
     """Export all non-admin, non-staff user accounts (landlords, tenants, etc.)."""
+    # Property counts are annotated in a single JOIN + GROUP BY here instead
+    # of one `.count()` query per user in the row loop below — with 100k+
+    # accounts, one query per row is what was timing out this export.
     user_profiles = (
         UserProfile.objects
         .exclude(user_type__in=['admin', 'staff', 'field_staff'])
         .select_related('user')
+        .annotate(property_count=Count('user__properties', distinct=True))
         .order_by('user__date_joined')
     )
 
@@ -1762,7 +1767,7 @@ def admin_export_users(request):
         u         = profile.user
         excel_row = row_num + 4
         row_fill  = alt_fill if row_num % 2 == 0 else None
-        prop_count = u.properties.count() if hasattr(u, 'properties') else 0
+        prop_count = profile.property_count
 
         row_data = [
             row_num,
@@ -1929,24 +1934,40 @@ def admin_export_sanitation_defaulters(request):
         ws.column_dimensions[get_column_letter(i)].width = width
     ws.row_dimensions[1].height = 24
 
-    sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+    sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
     users = User.objects.filter(userprofile__user_type__in=['landlord', 'tenant']).select_related('userprofile')
     row_num = 2
     alt_fill = PatternFill('solid', fgColor='F7F8FA')
     paid_fill = PatternFill('solid', fgColor='DCFCE7')
     now = timezone.now()
 
+    # Bulk-fetch every currently-valid sanitation payment ONCE instead of
+    # running a Payment query per (user, rate) pair below — with 100k+
+    # users that per-pair query was the export's actual bottleneck (the
+    # same class of bug already fixed on the dashboard's sanitation
+    # widget). Ordering newest-first means the first hit we keep per
+    # (landlord, rate) key is the most recent valid payment.
+    sanitation_rate_ids = [r.id for r in sanitation_rates]
+    valid_payment_lookup = {}
+    valid_payments_qs = (
+        Payment.objects
+        .filter(
+            payment_rate_id__in=sanitation_rate_ids,
+            status='success',
+            property__isnull=True,
+        )
+        .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+        .order_by('-paid_at')
+        .only('landlord_id', 'payment_rate_id', 'paid_at', 'expires_at')
+    )
+    for p in valid_payments_qs:
+        key = (p.landlord_id, p.payment_rate_id)
+        if key not in valid_payment_lookup:
+            valid_payment_lookup[key] = p
+
     for user in users:
         for rate in sanitation_rates:
-            valid_payment = Payment.objects.filter(
-                landlord=user,
-                payment_rate=rate,
-                status='success',
-                property=None,
-            ).filter(
-                django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
-            ).order_by('-paid_at').first()
-
+            valid_payment = valid_payment_lookup.get((user.id, rate.id))
             has_paid = valid_payment is not None
 
             if not export_all and has_paid:
@@ -3149,19 +3170,43 @@ def admin_export_defaulters(request):
 
     ws.row_dimensions[1].height = 22
 
-    landlords = User.objects.filter(userprofile__user_type='landlord').select_related('userprofile')
+    landlords = list(User.objects.filter(userprofile__user_type='landlord').select_related('userprofile'))
     row_num = 2
     alt_fill = PatternFill("solid", fgColor="F7F8FA")
     now = timezone.now()
 
+    # Bulk-fetch properties, rates, and valid payments up front instead of
+    # running a Property query per landlord, a PaymentRate query per
+    # property, AND a Payment query per (property, rate) pair below — that
+    # triple-nested per-row querying is what was timing this export out
+    # once there were 100k+ landlords to walk.
+    landlord_ids = [l.id for l in landlords]
+    properties_by_owner = defaultdict(list)
+    for prop in Property.objects.filter(owner_id__in=landlord_ids):
+        properties_by_owner[prop.owner_id].append(prop)
+
+    active_rates = list(PaymentRate.objects.filter(is_active=True))
+    rates_by_property_type = defaultdict(list)
+    for rate in active_rates:
+        if rate.property_type:
+            rates_by_property_type[rate.property_type].append(rate)
+
+    active_rate_ids = [r.id for r in active_rates]
+    valid_pairs = set(
+        Payment.objects
+        .filter(
+            payment_rate_id__in=active_rate_ids,
+            status='success',
+            property_id__isnull=False,
+        )
+        .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+        .values_list('property_id', 'payment_rate_id')
+    )
+
     for landlord in landlords:
-        for prop in Property.objects.filter(owner=landlord):
-            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True):
-                valid = Payment.objects.filter(
-                    landlord=landlord, property=prop, payment_rate=rate, status='success',
-                ).filter(
-                    django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
-                ).exists()
+        for prop in properties_by_owner.get(landlord.id, []):
+            for rate in rates_by_property_type.get(prop.property_type, []):
+                valid = (prop.id, rate.id) in valid_pairs
                 if not valid:
                     row_fill = alt_fill if row_num % 2 == 0 else PatternFill("solid", fgColor="FFFFFF")
                     row_data = [
