@@ -764,6 +764,72 @@
     transition: background var(--transition), border-color var(--transition), color var(--transition);
   }
   .btn-ghost:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
+
+  /* A denser operational layer shared by every dashboard role. */
+  .command-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(110px, 1fr));
+    gap: 1px;
+    margin: -8px 18px 26px;
+    position: relative;
+    z-index: 3;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .command-intro, .command-stat {
+    min-height: 72px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+  }
+  .command-intro { background: linear-gradient(110deg, #f1f6fb, #fff); }
+  .command-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
+    display: grid; place-items: center;
+    background: var(--accent); color: #fff;
+    flex: 0 0 auto;
+  }
+  .command-copy strong, .command-stat strong { display: block; color: var(--ink); font-size: .8rem; }
+  .command-copy span, .command-stat span { display: block; margin-top: 3px; color: var(--ink-3); font-size: .7rem; line-height: 1.35; }
+  .command-stat { justify-content: space-between; }
+  .command-stat > i { color: var(--gold); font-size: 1rem; }
+  .stat-card { min-height: 158px; }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    right: 14px; bottom: 14px;
+    width: 70px; height: 26px;
+    opacity: .6;
+    background: currentColor;
+    clip-path: polygon(0 78%, 12% 56%, 25% 68%, 39% 28%, 52% 49%, 68% 16%, 81% 38%, 100% 4%, 100% 12%, 81% 46%, 68% 24%, 52% 57%, 39% 36%, 25% 76%, 12% 64%, 0 86%);
+    pointer-events: none;
+  }
+  .stat-card.c-blue { color: var(--accent); }
+  .stat-card.c-green { color: var(--green); }
+  .stat-card.c-amber { color: var(--amber); }
+  .stat-card.c-purple { color: var(--purple); }
+  .stat-card.c-teal { color: var(--teal); }
+  .stat-card.c-red { color: var(--red); }
+  .stat-foot { padding-right: 58px; }
+  .qa-tile:nth-child(1) { background: linear-gradient(135deg, #fff, var(--green-dim)); }
+  .qa-tile:nth-child(2) { background: linear-gradient(135deg, #fff, var(--accent-dim)); }
+  .qa-tile:nth-child(3) { background: linear-gradient(135deg, #fff, var(--purple-dim)); }
+  .qa-tile:nth-child(4) { background: linear-gradient(135deg, #fff, var(--amber-dim)); }
+  .grid-1-2 > .adm-card:first-child .card-head,
+  .grid-2 > .adm-card .card-head { border-top: 3px solid transparent; }
+  .grid-1-2 > .adm-card:first-child .card-head { border-top-color: var(--accent); }
+  .grid-2 > .adm-card:nth-child(1) .card-head { border-top-color: var(--green); }
+  .grid-2 > .adm-card:nth-child(2) .card-head { border-top-color: var(--gold); }
+  @media (max-width: 760px) {
+    .command-strip { grid-template-columns: 1fr 1fr; margin: -8px 8px 22px; }
+    .command-intro { grid-column: 1 / -1; }
+  }
 </style>
 
 <div class="adm-wrap">
@@ -796,6 +862,34 @@
     <div class="hero-right">
       <span class="hero-time" id="adm-clock">--:-- --</span>
       <span class="hero-status-pill"><span class="dot"></span>Systems Online</span>
+    </div>
+  </div>
+
+  <div class="command-strip fade fade-1">
+    <div class="command-intro">
+      <span class="command-icon"><i class="fas fa-chart-line"></i></span>
+      <div class="command-copy">
+        <strong>Today at a glance</strong>
+        {% if user_type == 'landlord' %}
+        <span>Your properties, bills, payments, and support requests in one view.</span>
+        {% elif user_type == 'field_staff' %}
+        <span>Use this workspace to review records and keep field enumeration moving.</span>
+        {% else %}
+        <span>Live operational picture across registration, payments, compliance, and reports.</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="command-stat">
+      <div><strong>{{ total_properties|default:0|money:0 }}</strong><span>{% if user_type == 'landlord' %}My properties{% else %}Properties tracked{% endif %}</span></div>
+      <i class="fas fa-building"></i>
+    </div>
+    <div class="command-stat">
+      <div><strong>{{ open_complaints|default:0|money:0 }}</strong><span>Open reports</span></div>
+      <i class="fas fa-flag"></i>
+    </div>
+    <div class="command-stat">
+      <div><strong><i class="fas fa-circle" style="font-size:.5rem;color:var(--green);vertical-align:middle;"></i> Live</strong><span>System status</span></div>
+      <i class="fas fa-signal"></i>
     </div>
   </div>
 
