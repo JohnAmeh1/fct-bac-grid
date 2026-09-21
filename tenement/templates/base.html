@@ -464,7 +464,7 @@
       color: #102033;
     }
     .app-shell .navbar {
-      background: #ffffff;
+      background: rgba(255,255,255,.92);
       border-bottom: 1px solid rgba(13,63,115,.10);
       box-shadow: 0 8px 26px rgba(11,18,32,.055);
     }
@@ -540,7 +540,7 @@
     .app-shell .auth-form-wrap, .app-shell .auth-form-card {
       padding: 30px;
       border-radius: 18px 18px 28px 18px;
-      background: #ffffff;
+      background: rgba(255,255,255,.80);
       border: 1px solid rgba(15,23,42,.08);
       box-shadow: 0 18px 40px rgba(11,18,32,.08);
     }
@@ -578,10 +578,11 @@
     .app-shell .about-hero, .app-shell .c-hero, .app-shell .san-hero, .app-shell .bylaw-hero {
       position: relative;
       overflow: hidden;
-      background: url("{% static 'images/city_gate.jpg' %}") center / cover !important;
+      background:
+        linear-gradient(110deg, rgba(8,39,73,.94), rgba(13,63,115,.76) 54%, rgba(11,111,104,.72)),
+        url("{% static 'images/city_gate.jpg' %}") center / cover !important;
     }
     .app-shell .about-hero::after, .app-shell .c-hero::after, .app-shell .san-hero::after, .app-shell .bylaw-hero::after { display: none; }
-    .app-shell .about-hero::before, .app-shell .c-hero::before, .app-shell .san-hero::before, .app-shell .bylaw-hero::before { display: none !important; }
     .app-shell .about-card, .app-shell .contact-card, .app-shell .san-overview-card,
     .app-shell .bylaw-card, .app-shell .feature-card, .app-shell .info-card {
       border: 1px solid rgba(15,23,42,.09) !important;
@@ -622,7 +623,6 @@
       .app-shell .property-details-card, .app-shell .user-view-card, .app-shell .receipt-card, .app-shell .user-card { border-radius: 14px !important; }
       .app-shell .bylaw-hero, .app-shell .about-hero, .app-shell .c-hero, .app-shell .san-hero { padding-left: 16px !important; padding-right: 16px !important; }
     }
-    .app-shell *, .app-shell *::before, .app-shell *::after { backdrop-filter: none !important; }
   </style>
 </head>
 <body class="app-shell page-{{ request.resolver_match.url_name|default:'site' }}{% if user.is_authenticated %} is-authenticated{% endif %}">
