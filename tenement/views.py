@@ -306,14 +306,20 @@ def is_property_sanitation_paid(property_obj):
 
 
 def generate_dummy_property_credentials(property_ref, password_index=None):
-    base = slugify(str(property_ref or 'property')) or 'property'
-    suffix = uuid.uuid4().hex[:8]
-    username = f"{base[:20]}-{suffix}" if base else f"property-{suffix}"
-    username = username.lower()
-    username = re.sub(r'[^a-z0-9\-_]+', '-', username)
-    username = username.strip('-_')[:30]
-    if not username:
-        username = f"property-{suffix}"
+    """
+    Username is just "bac-<bulk property id>" — nothing else appended.
+    `property_ref` is the bulk property id pulled straight from the
+    spreadsheet (see the 'bulkpropertyid' / 'bacgridid' column mapping in
+    the import loop). We only lowercase it and swap anything that isn't
+    a-z/0-9/-/_ for a hyphen, so the id survives intact in the username.
+
+    If a row has no id at all (property_ref falsy), we fall back to a
+    random suffix purely so the account can still be created — this
+    should not happen for a well-formed bulk-property sheet.
+    """
+    ref = re.sub(r'[^a-z0-9\-_]+', '-', str(property_ref or '').strip().lower()).strip('-_')
+    username = f"bac-{ref}" if ref else f"bac-{uuid.uuid4().hex[:8]}"
+    username = username[:150]  # Django's User.username max_length
     email = f"{username}@bwariproperty.local"
     password = DUMMY_PROPERTY_PASSWORDS[0]
     return username, email, password
