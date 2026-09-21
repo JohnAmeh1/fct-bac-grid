@@ -765,6 +765,81 @@
   }
   .btn-ghost:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
 
+  /* Dashboard visual direction: warm, data-rich panels rather than uniform cards. */
+  .hero-banner {
+    min-height: 176px;
+    background:
+      linear-gradient(90deg, rgba(8,39,73,.96) 0%, rgba(8,39,73,.80) 43%, rgba(8,39,73,.20) 100%),
+      url("{% static 'images/city_gate2.jpg' %}") center 46% / cover,
+      var(--accent-dk);
+  }
+  .hero-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(118deg, transparent 45%, rgba(255,255,255,.10) 45.2%, transparent 45.5%);
+    pointer-events: none;
+  }
+  .hero-skyline { opacity: .22; }
+  .hero-right { align-self: flex-start; }
+  .stats-grid.cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .stats-grid.cols-4 .stat-card {
+    min-height: 176px;
+    border-left-width: 0;
+    border-radius: 13px 13px 22px 13px;
+    box-shadow: 0 9px 22px rgba(11, 18, 32, .055);
+  }
+  .stats-grid.cols-4 .stat-card::before {
+    content: '';
+    position: absolute;
+    width: 118px; height: 118px;
+    right: -52px; top: -66px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .07;
+    pointer-events: none;
+  }
+  .stats-grid.cols-4 .stat-card:nth-child(1) { background: #eef6ff; color: #0d6cae; border-top: 3px solid #1788ca; }
+  .stats-grid.cols-4 .stat-card:nth-child(2) { background: #ecfbf4; color: #138a55; border-top: 3px solid #19a863; }
+  .stats-grid.cols-4 .stat-card:nth-child(3) { background: #fff7e9; color: #b97008; border-top: 3px solid #e39417; }
+  .stats-grid.cols-4 .stat-card:nth-child(4) { background: #fff0f1; color: #cf3150; border-top: 3px solid #e04b66; }
+  .stats-grid.cols-4 + .stats-grid.cols-4 .stat-card:nth-child(1) { background: #effaf4; color: #168652; border-top-color: #1aa866; }
+  .stats-grid.cols-4 + .stats-grid.cols-4 .stat-card:nth-child(2) { background: #f0edff; color: #6844b8; border-top-color: #8761d9; }
+  .stats-grid.cols-4 + .stats-grid.cols-4 .stat-card:nth-child(3) { background: #fff6e8; color: #ae6b06; border-top-color: #df941c; }
+  .stats-grid.cols-4 + .stats-grid.cols-4 .stat-card:nth-child(4) { background: #eaf7f7; color: #087a75; border-top-color: #13a29b; }
+  .stats-grid.cols-4 .stat-icon {
+    background: rgba(255,255,255,.66) !important;
+    color: currentColor !important;
+    box-shadow: 0 3px 10px rgba(11, 18, 32, .05);
+  }
+  .stats-grid.cols-4 .stat-label { color: var(--ink-2); }
+  .stats-grid.cols-4 .stat-value { color: var(--ink); }
+  .stats-grid.cols-4 .stat-foot { border-top-color: rgba(15,23,42,.08); color: var(--ink-3); }
+  .stats-grid.cols-4 .stat-card::after { width: 78px; height: 30px; opacity: .62; }
+  .qa-tile { position: relative; overflow: hidden; border-width: 0; min-height: 124px; }
+  .qa-tile::after {
+    content: '';
+    position: absolute;
+    right: -20px; bottom: -34px;
+    width: 94px; height: 94px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .055;
+  }
+  .adm-card { border-radius: 13px; }
+  .card-head { background: linear-gradient(90deg, var(--surface-2), #fff); }
+  @media (max-width: 1100px) {
+    .stats-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 540px) {
+    .stats-grid.cols-4 { grid-template-columns: 1fr; }
+    .hero-banner { min-height: 230px; padding: 28px 24px; background-position: 62% center; }
+    .hero-right { flex-direction: row; align-items: center; }
+  }
+
   /* A denser operational layer shared by every dashboard role. */
   .command-strip {
     display: grid;
