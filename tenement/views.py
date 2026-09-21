@@ -3587,13 +3587,32 @@ def _build_rate_defaulters_workbook(export_all):
     alt_fill = PatternFill('solid', fgColor='F7F8FA')
     paid_fill = PatternFill('solid', fgColor='DCFCE7')
 
-    property_ids = list(Property.objects.filter(owner_id__in=[l.id for l in landlords]).values_list('id', flat=True))
-    rate_ids = list(PaymentRate.objects.filter(is_active=True, is_sanitation=False).values_list('id', flat=True))
+    landlord_ids = [l.id for l in landlords]
+
+    # Bulk-fetch every property for every landlord in ONE query, and group
+    # the active rates by property_type in memory, instead of issuing one
+    # Property query and one PaymentRate query per landlord/property below.
+    # That per-row querying is what was making this export "just keep
+    # rolling" for real account volumes — see the identical fix already
+    # applied to admin_rate_defaulters (the list view) for the same reason.
+    properties_by_owner = defaultdict(list)
+    property_ids = []
+    if landlord_ids:
+        for prop in Property.objects.filter(owner_id__in=landlord_ids):
+            properties_by_owner[prop.owner_id].append(prop)
+            property_ids.append(prop.id)
+
+    active_rates = list(PaymentRate.objects.filter(is_active=True, is_sanitation=False))
+    rates_by_property_type = defaultdict(list)
+    for rate in active_rates:
+        rates_by_property_type[rate.property_type].append(rate)
+
+    rate_ids = [rate.id for rate in active_rates]
     valid_payment_lookup = {}
-    if property_ids and rate_ids:
+    if property_ids and rate_ids and landlord_ids:
         valid_payments = (
             Payment.objects.filter(
-                landlord_id__in=[l.id for l in landlords],
+                landlord_id__in=landlord_ids,
                 property_id__in=property_ids,
                 payment_rate_id__in=rate_ids,
                 status='success',
@@ -3608,8 +3627,8 @@ def _build_rate_defaulters_workbook(export_all):
                 valid_payment_lookup[key] = payment
 
     for landlord in landlords:
-        for prop in Property.objects.filter(owner=landlord):
-            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True, is_sanitation=False):
+        for prop in properties_by_owner.get(landlord.id, []):
+            for rate in rates_by_property_type.get(prop.property_type, []):
                 valid_payment = valid_payment_lookup.get((landlord.id, prop.id, rate.id))
                 has_paid = valid_payment is not None
                 if not export_all and has_paid:
