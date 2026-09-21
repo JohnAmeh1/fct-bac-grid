@@ -1066,7 +1066,56 @@ def dashboard(request):
         # sanitation levy), shown on the "Total Outstanding Payments" card.
         outstanding_totals = compute_total_outstanding_payments()
 
+        # Recent activity feed — pulled from real records (no synthetic data),
+        # merged across a few sources and sorted by recency.
+        recent_activity = []
+        for prop in Property.objects.select_related('owner').order_by('-created_at')[:4]:
+            recent_activity.append({
+                'when': prop.created_at,
+                'icon': 'fa-building',
+                'color': 'blue',
+                'title': 'New property registered',
+                'subtitle': f"{prop.name} — {prop.owner.get_full_name() or prop.owner.username}",
+            })
+        for pay in Payment.objects.select_related('landlord').filter(status='success').order_by('-paid_at')[:4]:
+            recent_activity.append({
+                'when': pay.paid_at,
+                'icon': 'fa-money-bill-wave',
+                'color': 'green',
+                'title': 'Payment received',
+                'subtitle': f"₦{pay.amount:,.0f} — {pay.landlord.get_full_name() or pay.landlord.username}",
+            })
+        for comp in Complaint.objects.select_related('submitted_by').order_by('-created_at')[:4]:
+            recent_activity.append({
+                'when': comp.created_at,
+                'icon': 'fa-flag',
+                'color': 'red',
+                'title': 'New complaint logged',
+                'subtitle': f"{comp.subject} — {comp.get_category_display()}",
+            })
+        for usr in User.objects.order_by('-date_joined')[:3]:
+            recent_activity.append({
+                'when': usr.date_joined,
+                'icon': 'fa-user-plus',
+                'color': 'purple',
+                'title': 'New account created',
+                'subtitle': usr.get_full_name() or usr.username,
+            })
+        recent_activity = [a for a in recent_activity if a['when']]
+        recent_activity.sort(key=lambda a: a['when'], reverse=True)
+        recent_activity = recent_activity[:6]
+
+        # Simple, real "this month" counters used as footnotes on the top stat cards.
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        new_users_this_month = UserProfile.objects.filter(
+            email_verified=True, created_at__gte=month_start
+        ).count()
+        new_properties_this_month = Property.objects.filter(created_at__gte=month_start).count()
+
         context.update({
+            'recent_activity': recent_activity,
+            'new_users_this_month': new_users_this_month,
+            'new_properties_this_month': new_properties_this_month,
             'residential_count': residential_count,
             'commercial_count': commercial_count,
             'industrial_count': industrial_count,
@@ -1144,7 +1193,46 @@ def dashboard(request):
             Payment.objects.filter(landlord=request.user)
         )
 
+        # Recent activity feed for this landlord — real records only.
+        landlord_recent_activity = []
+        for prop in properties[:4]:
+            landlord_recent_activity.append({
+                'when': prop.created_at,
+                'icon': 'fa-building',
+                'color': 'blue',
+                'title': 'Property registered',
+                'subtitle': prop.name,
+            })
+        for pay in Payment.objects.filter(landlord=request.user).order_by('-created_at')[:4]:
+            landlord_recent_activity.append({
+                'when': pay.created_at,
+                'icon': 'fa-money-bill-wave' if pay.status == 'success' else 'fa-hourglass-half',
+                'color': 'green' if pay.status == 'success' else 'amber',
+                'title': 'Payment successful' if pay.status == 'success' else f"Payment {pay.get_status_display().lower()}",
+                'subtitle': f"₦{pay.amount:,.0f} — {pay.reference}",
+            })
+        for comp in my_complaints.order_by('-created_at')[:3]:
+            landlord_recent_activity.append({
+                'when': comp.created_at,
+                'icon': 'fa-flag',
+                'color': 'red',
+                'title': 'Complaint submitted',
+                'subtitle': comp.subject,
+            })
+        landlord_recent_activity = [a for a in landlord_recent_activity if a['when']]
+        landlord_recent_activity.sort(key=lambda a: a['when'], reverse=True)
+        landlord_recent_activity = landlord_recent_activity[:6]
+
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        new_properties_this_month = properties.filter(created_at__gte=month_start).count()
+        paid_this_month = Payment.objects.filter(
+            landlord=request.user, status='success', paid_at__gte=month_start
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
         context.update({
+            'recent_activity': landlord_recent_activity,
+            'new_properties_this_month': new_properties_this_month,
+            'paid_this_month': paid_this_month,
             'properties': properties_with_status,
             'total_properties': len(properties_with_status),
             'total_paid': total_paid,

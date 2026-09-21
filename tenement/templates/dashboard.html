@@ -21,8 +21,9 @@
   .chart-wrap {
     position: relative;
     width: 100%;
-    max-width: 240px;
-    height: 210px;
+    max-width: 200px;
+    height: 190px;
+    flex-shrink: 0;
   }
   .chart-center-label {
     position: absolute;
@@ -46,6 +47,26 @@
     color: var(--ink-4);
     margin-top: 4px;
   }
+
+  /* ── Donut + Legend split layout ─────────────────────────── */
+  .donut-split {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 22px;
+  }
+  @media (max-width: 480px) { .donut-split { flex-direction: column; } }
+  .legend-list { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: .8rem;
+    color: var(--ink-2);
+  }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { flex: 1; min-width: 0; }
+  .legend-value { font-weight: 700; color: var(--ink); font-family: 'DM Mono', monospace; font-size: .78rem; white-space: nowrap; }
 
   /* ── Bar / Trend Chart Cards ─────────────────────────────── */
   .bar-chart-card-body {
@@ -134,30 +155,37 @@
   .fade-4     { animation-delay: .16s; }
   .fade-5     { animation-delay: .20s; }
 
-  .adm-header {
+  /* ── Hero Banner ──────────────────────────────────────────
+     Replaces the old plain header — a richer, image-like
+     welcome banner in the site's existing navy/gold palette. */
+  .hero-banner {
     position: relative;
     z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
+    gap: 24px;
     flex-wrap: wrap;
-    margin-bottom: 32px;
-    padding: 28px 32px;
-    border: 1px solid var(--border);
+    margin-bottom: 28px;
+    padding: 34px 38px;
     border-radius: var(--radius-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
     overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(520px 260px at 88% 15%, rgba(199,161,90,0.30), transparent 60%),
+      radial-gradient(700px 340px at 10% 120%, rgba(255,255,255,0.08), transparent 60%),
+      linear-gradient(120deg, var(--accent-dk) 0%, var(--accent) 58%, #155489 100%);
+    box-shadow: var(--shadow-md);
   }
-  .adm-header::before {
-    content: '';
+  .hero-skyline {
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent) 0%, var(--gold) 100%);
+    right: -20px; bottom: -10px;
+    width: 340px; height: 130px;
+    opacity: .5;
+    pointer-events: none;
   }
-  .adm-badge {
+  .hero-content { position: relative; z-index: 2; max-width: 640px; }
+  .hero-badge {
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -167,52 +195,61 @@
     text-transform: uppercase;
     padding: 6px 13px;
     border-radius: 999px;
-    margin-bottom: 12px;
-    border: 1px solid transparent;
+    margin-bottom: 14px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.22);
+    color: #fff;
   }
-  .adm-badge.admin    { background: var(--accent-dim); color: var(--accent); border-color: rgba(13,63,115,0.14); }
-  .adm-badge.landlord { background: var(--green-dim);  color: var(--green);  border-color: rgba(20,108,67,0.14); }
-
-  .adm-header-left h1 {
+  .hero-content h1 {
     font-family: 'Fraunces', serif;
     font-style: italic;
-    font-size: clamp(1.6rem, 2.1vw, 2.15rem);
+    font-size: clamp(1.6rem, 2.3vw, 2.25rem);
     font-weight: 500;
-    color: var(--ink);
-    margin: 0 0 4px;
+    color: #fff;
+    margin: 0 0 8px;
     letter-spacing: -.01em;
     line-height: 1.15;
   }
-  .adm-header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+  .hero-content p {
+    margin: 0;
+    font-size: .87rem;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.55;
   }
-  .adm-time {
+  .hero-right {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .hero-time {
     font-family: 'DM Mono', monospace;
     font-size: .78rem;
-    color: var(--ink-3);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
     padding: 7px 14px;
     border-radius: var(--radius-sm);
+    white-space: nowrap;
   }
-  .adm-status-pill {
+  .hero-status-pill {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    background: var(--surface-2);
-    color: var(--green);
+    background: rgba(255,255,255,0.12);
+    color: #d4f5e2;
     font-size: .76rem;
     font-weight: 600;
     padding: 7px 14px;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.2);
+    white-space: nowrap;
   }
-  .adm-status-pill .dot {
+  .hero-status-pill .dot {
     width: 6px; height: 6px;
-    background: var(--green);
+    background: #4ade80;
     border-radius: 50%;
     animation: pulse-dot 2s ease-in-out infinite;
   }
@@ -268,12 +305,13 @@
     border-radius: var(--radius);
     padding: 20px 20px 16px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow var(--transition), border-color var(--transition);
+    transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
     overflow: hidden;
   }
   .stat-card:hover {
     box-shadow: var(--shadow);
     border-color: var(--border-2);
+    transform: translateY(-2px);
   }
   .stat-card.c-blue   { border-left-color: var(--accent); }
   .stat-card.c-green  { border-left-color: var(--green); }
@@ -301,10 +339,10 @@
   }
   .stat-value.sm { font-size: 1.5rem; letter-spacing: -.3px; }
   .stat-icon {
-    width: 36px; height: 36px;
-    border-radius: var(--radius-sm);
+    width: 40px; height: 40px;
+    border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: .85rem;
+    font-size: .9rem;
     flex-shrink: 0;
   }
   .stat-card.c-blue   .stat-icon { background: var(--accent-dim); color: var(--accent); }
@@ -314,19 +352,37 @@
   .stat-card.c-teal   .stat-icon { background: var(--teal-dim);   color: var(--teal); }
   .stat-card.c-red    .stat-icon { background: var(--red-dim);    color: var(--red); }
   .stat-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     font-size: .74rem;
     color: var(--ink-4);
     border-top: 1px solid var(--border);
     padding-top: 12px;
     margin-top: 4px;
   }
+  .stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .stat-trend.up   { background: var(--green-dim); color: var(--green); }
+  .stat-trend.flat { background: var(--surface-3); color: var(--ink-3); }
 
   /* ── Grid Layouts ─────────────────────────────────────── */
   .grid-3   { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 16px; }
   .grid-2   { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 16px; }
   .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr;       gap: 16px; margin-bottom: 16px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 1.4fr;     gap: 16px; margin-bottom: 16px; }
   @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr; } }
-  @media (max-width: 820px) { .grid-2-1, .grid-2 { grid-template-columns: 1fr; } }
+  @media (max-width: 820px) { .grid-2-1, .grid-2, .grid-1-2 { grid-template-columns: 1fr; } }
 
   /* ── Card Base ────────────────────────────────────────── */
   .adm-card {
@@ -380,7 +436,50 @@
   .card-body { padding: 20px 22px; }
   .card-body.no-top { padding-top: 0; }
 
-  /* ── Action Links ─────────────────────────────────────── */
+  /* ── Quick Action Tiles ───────────────────────────────────
+     Colourful icon tiles like a mobile-app dashboard, used
+     for the handful of most-used actions per user type. */
+  .qa-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 820px) { .qa-tiles { grid-template-columns: repeat(2, 1fr); } }
+  .qa-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 22px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: .82rem;
+    text-align: center;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  }
+  .qa-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--border-2); }
+  .qa-tile .qa-icon {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem;
+    color: #fff;
+  }
+  .qa-tile.green  { color: var(--green);  } .qa-tile.green  .qa-icon { background: linear-gradient(135deg, var(--green), #0a4a30); }
+  .qa-tile.blue   { color: var(--accent); } .qa-tile.blue   .qa-icon { background: linear-gradient(135deg, var(--accent), var(--accent-dk)); }
+  .qa-tile.purple { color: var(--purple); } .qa-tile.purple .qa-icon { background: linear-gradient(135deg, var(--purple), #3d2678); }
+  .qa-tile.amber  { color: var(--amber);  } .qa-tile.amber  .qa-icon { background: linear-gradient(135deg, var(--amber), #6e4004); }
+  .qa-tile.teal   { color: var(--teal);   } .qa-tile.teal   .qa-icon { background: linear-gradient(135deg, var(--teal), #063f3b); }
+  .qa-tile.red    { color: var(--red);    } .qa-tile.red    .qa-icon { background: linear-gradient(135deg, var(--red), #7a1620); }
+  .qa-tile.tile-btn { border: none; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; width: 100%; }
+
+  /* ── Action Links (secondary / detailed tool lists) ──────── */
   .action-list { display: flex; flex-direction: column; gap: 2px; }
   .action-item {
     display: flex;
@@ -520,6 +619,37 @@
   .info-key { color: var(--ink-3); font-weight: 500; }
   .info-val { color: var(--ink); font-weight: 600; font-family: 'DM Mono', monospace; font-size: .8rem; }
 
+  /* ── Recent Activity Timeline ─────────────────────────── */
+  .timeline { display: flex; flex-direction: column; }
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .timeline-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .timeline-item:first-child { padding-top: 0; }
+  .timeline-dot {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .76rem;
+    flex-shrink: 0;
+  }
+  .timeline-dot.blue   { background: var(--accent-dim); color: var(--accent); }
+  .timeline-dot.green  { background: var(--green-dim);  color: var(--green); }
+  .timeline-dot.red    { background: var(--red-dim);    color: var(--red); }
+  .timeline-dot.purple { background: var(--purple-dim); color: var(--purple); }
+  .timeline-dot.amber  { background: var(--amber-dim);  color: var(--amber); }
+  .timeline-body { flex: 1; min-width: 0; }
+  .timeline-title { font-weight: 700; font-size: .83rem; color: var(--ink); }
+  .timeline-sub {
+    font-size: .77rem; color: var(--ink-3); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .timeline-time { font-size: .7rem; color: var(--ink-4); white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+
   /* ── Chips ────────────────────────────────────────────── */
   .chip {
     display: inline-flex;
@@ -544,6 +674,50 @@
     border-radius: 50%;
     display: inline-block;
   }
+
+  /* ── Bottom CTA Banner ────────────────────────────────── */
+  .cta-banner {
+    margin-top: 32px;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    padding: 28px 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    color: #fff;
+    background:
+      radial-gradient(420px 220px at 92% 0%, rgba(255,255,255,0.10), transparent 60%),
+      linear-gradient(120deg, var(--green) 0%, #0a4a30 100%);
+    box-shadow: var(--shadow-md);
+  }
+  .cta-banner .cta-text { position: relative; z-index: 1; max-width: 560px; }
+  .cta-banner h3 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    margin: 0 0 6px;
+    font-weight: 500;
+  }
+  .cta-banner p { margin: 0; font-size: .84rem; opacity: .88; line-height: 1.55; }
+  .cta-btn {
+    position: relative; z-index: 1;
+    background: #fff;
+    color: var(--green);
+    font-weight: 700;
+    padding: 11px 22px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: .84rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: transform var(--transition);
+  }
+  .cta-btn:hover { transform: translateY(-2px); }
 
   /* ── Profile Footer ───────────────────────────────────── */
   .profile-card {
@@ -592,33 +766,41 @@
   .btn-ghost:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
 </style>
 
-
 <div class="adm-wrap">
 
   <!-- ══════════════════════════════════════════════════════
-       SHARED HEADER
+       SHARED HERO BANNER
   ══════════════════════════════════════════════════════ -->
-  <div class="adm-header fade">
-    <div class="adm-header-left">
+  <div class="hero-banner fade">
+    <svg class="hero-skyline" viewBox="0 0 340 130" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <path d="M0 130 L20 90 L40 110 L60 70 L80 100 L100 60 L125 100 L150 80 L175 105 L200 65 L225 95 L250 75 L270 100 L295 85 L320 105 L340 95 L340 130 Z" fill="rgba(255,255,255,0.10)"/>
+      <path d="M0 130 L15 105 L35 118 L55 95 L75 115 L95 85 L115 112 L140 100 L160 118 L185 90 L210 110 L235 100 L260 118 L285 105 L310 120 L340 112 L340 130 Z" fill="rgba(255,255,255,0.16)"/>
+    </svg>
+    <div class="hero-content">
       {% if user_type == 'admin' %}
-        <div class="adm-badge admin"><i class="fas fa-shield-halved"></i> Administrator</div>
+        <div class="hero-badge"><i class="fas fa-shield-halved"></i> Administrator</div>
       {% elif user_type == 'landlord' %}
-        <div class="adm-badge landlord"><i class="fas fa-house-user"></i> Landlord</div>
+        <div class="hero-badge"><i class="fas fa-house-user"></i> Landlord</div>
       {% elif user_type == 'field_staff' %}
-        <div class="adm-badge" style="background:#e0f2fe;color:#075985;"><i class="fas fa-map-location-dot"></i> Field Staff</div>
+        <div class="hero-badge"><i class="fas fa-map-location-dot"></i> Field Staff</div>
       {% else %}
-        <div class="adm-badge" style="background:#f3f4f6;color:#374151;"><i class="fas fa-user"></i> Staff</div>
+        <div class="hero-badge"><i class="fas fa-user"></i> Staff</div>
       {% endif %}
       <h1>Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+      {% if user_type == 'admin' or user_type == 'staff' or user_type == 'field_staff' %}
+        <p>Here's how the Bwari Area Council tenement rate system is performing today — properties, payments, and compliance, all in one place.</p>
+      {% else %}
+        <p>Manage your registered properties, keep your tenement rates and sanitation levy up to date, and track your reports here.</p>
+      {% endif %}
     </div>
-    <div class="adm-header-right">
-      <span class="adm-time" id="adm-clock">--:-- --</span>
-      <span class="adm-status-pill"><span class="dot"></span>Systems Online</span>
+    <div class="hero-right">
+      <span class="hero-time" id="adm-clock">--:-- --</span>
+      <span class="hero-status-pill"><span class="dot"></span>Systems Online</span>
     </div>
   </div>
 
   {% if user_type == 'admin' %}
-  
+
   <!-- ══════════════════════════════════════════════════════
        ADMIN DASHBOARD
   ══════════════════════════════════════════════════════ -->
@@ -632,7 +814,10 @@
         </div>
         <div class="stat-icon"><i class="fas fa-users"></i></div>
       </div>
-      <div class="stat-foot">Active accounts in system</div>
+      <div class="stat-foot">
+        <span>Active accounts in system</span>
+        {% if new_users_this_month %}<span class="stat-trend up"><i class="fas fa-arrow-up"></i> +{{ new_users_this_month }} this month</span>{% endif %}
+      </div>
     </div>
     <!-- ── Sanitation Payers Split Card ─────────────────────── -->
     <div class="stat-card fade fade-2" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--red)) 1;padding:0;overflow:hidden;position:relative;">
@@ -692,13 +877,16 @@
         </div>
         <div class="stat-icon"><i class="fas fa-building"></i></div>
       </div>
-      <div class="stat-foot">Registered properties system-wide</div>
+      <div class="stat-foot">
+        <span>Registered system-wide</span>
+        {% if new_properties_this_month %}<span class="stat-trend up"><i class="fas fa-arrow-up"></i> +{{ new_properties_this_month }} this month</span>{% endif %}
+      </div>
     </div>
     <div class="stat-card c-red fade fade-4" title="Unpaid tenement rates (₦{{ outstanding_tenement_total|default:0|money:0 }}) + unpaid sanitation levy (₦{{ outstanding_sanitation_total|default:0|money:0 }})">
       <div class="stat-top">
         <div>
           <div class="stat-label">Total Outstanding Payments</div>
-          <div class="stat-value">₦{{ total_outstanding_payments|default:0|money:0 }}</div>
+          <div class="stat-value sm">₦{{ total_outstanding_payments|default:0|money:0 }}</div>
         </div>
         <div class="stat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
       </div>
@@ -706,7 +894,6 @@
     </div>
   </div>
 
-  <!-- Add after the existing stats-grid cols-4 -->
   <div class="stats-grid cols-4 fade fade-5">
     <div class="stat-card c-green">
       <div class="stat-top">
@@ -750,14 +937,31 @@
     </div>
   </div>
 
-  <div class="section-label fade">Metrics</div>
-  <div class="grid-2 fade fade-1">
+  <div class="section-label fade">Quick Actions</div>
+  <div class="qa-tiles fade fade-1">
+    <a href="{% url 'admin_manage_properties' %}" class="qa-tile blue">
+      <span class="qa-icon"><i class="fas fa-house-user"></i></span>Properties
+    </a>
+    <a href="{% url 'admin_manage_users' %}" class="qa-tile purple">
+      <span class="qa-icon"><i class="fas fa-users-cog"></i></span>Users
+    </a>
+    <a href="{% url 'admin_create_payment_rate' %}" class="qa-tile green">
+      <span class="qa-icon"><i class="fas fa-plus-circle"></i></span>New Rate
+    </a>
+    <a href="{% url 'admin_manage_complaints' %}" class="qa-tile amber">
+      <span class="qa-icon"><i class="fas fa-flag"></i></span>Reports
+      {% if open_complaints %}<span class="chip red" style="position:absolute;margin-top:-44px;margin-left:44px;">{{ open_complaints }}</span>{% endif %}
+    </a>
+  </div>
+
+  <div class="section-label fade">Overview</div>
+  <div class="grid-1-2 fade fade-1">
     <div class="adm-card">
       <div class="card-head">
-        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Portfolio</div>
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Distribution</div>
       </div>
-      <div class="card-body chart-card-body">
-        {% if total_properties %}
+      {% if total_properties %}
+      <div class="donut-split">
         <div class="chart-wrap">
           <canvas id="propertyTypeChart"></canvas>
           <div class="chart-center-label">
@@ -765,14 +969,47 @@
             <div class="cc-caption">Total</div>
           </div>
         </div>
-        {% else %}
+        <div class="legend-list">
+          <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Residential</span><span class="legend-value">{{ residential_count|default:0 }} ({% if total_properties > 0 %}{% widthratio residential_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#0d3f73;"></span><span class="legend-label">Commercial</span><span class="legend-value">{{ commercial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio commercial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Industrial</span><span class="legend-value">{{ industrial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio industrial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#0b6f68;"></span><span class="legend-label">Land</span><span class="legend-value">{{ land_count|default:0 }} ({% if total_properties > 0 %}{% widthratio land_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
         <div class="empty-state">
           <i class="fas fa-chart-pie"></i>
           <p>No properties registered yet.</p>
         </div>
-        {% endif %}
       </div>
+      {% endif %}
     </div>
+
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Payment Overview</div>
+      </div>
+      {% if revenue_trend_total %}
+      <div class="chart-card-meta">
+        <span class="ccm-value">₦{{ revenue_trend_total|money:0 }}</span>
+        <span class="ccm-label">collected · last 6 months</span>
+      </div>
+      <div class="bar-chart-card-body">
+        <canvas id="revenueTrendChart"></canvas>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state">
+          <i class="fas fa-chart-column"></i>
+          <p>No successful payments in the last 6 months.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid-2 fade fade-2">
     <div class="adm-card">
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-leaf"></i></span>Sanitation Compliance</div>
@@ -794,30 +1031,6 @@
         {% endif %}
       </div>
     </div>
-  </div>
-
-  <div class="grid-2 fade fade-2">
-    <div class="adm-card">
-      <div class="card-head">
-        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Revenue Trend</div>
-      </div>
-      {% if revenue_trend_total %}
-      <div class="chart-card-meta">
-        <span class="ccm-value">₦{{ revenue_trend_total|money:0 }}</span>
-        <span class="ccm-label">collected · last 6 months</span>
-      </div>
-      <div class="bar-chart-card-body">
-        <canvas id="revenueTrendChart"></canvas>
-      </div>
-      {% else %}
-      <div class="card-body chart-card-body">
-        <div class="empty-state">
-          <i class="fas fa-chart-column"></i>
-          <p>No successful payments in the last 6 months.</p>
-        </div>
-      </div>
-      {% endif %}
-    </div>
     <div class="adm-card">
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-flag"></i></span>Complaints by Category</div>
@@ -837,7 +1050,7 @@
     </div>
   </div>
 
-  <div class="section-label fade">Quick Actions</div>
+  <div class="section-label fade">Management Tools</div>
   <div class="grid-3 fade fade-1">
     <div class="adm-card">
       <div class="card-head">
@@ -920,7 +1133,7 @@
           <a href="{% url 'staff_verify_payment' %}" class="action-item teal">
             <span class="ai-icon"><i class="fas fa-receipt"></i></span>Verify Payment Receipt
             <i class="ai-arrow fas fa-chevron-right"></i>
-          </a>            
+          </a>
           <a href="{% url 'admin_all_payments' %}" class="action-item teal">
             <span class="ai-icon"><i class="fas fa-money-bill-trend-up"></i></span>View All Payments
             <i class="ai-arrow fas fa-chevron-right"></i>
@@ -934,18 +1147,32 @@
     </div>
   </div>
 
-  <div class="section-label fade">Overview</div>
+  <div class="section-label fade">Activity &amp; System</div>
   <div class="grid-2-1 fade fade-2">
     <div class="adm-card">
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-history"></i></span>Recent Activity</div>
-        <a href="#" class="card-link">View all <i class="fas fa-arrow-right" style="font-size:.65rem;"></i></a>
       </div>
       <div class="card-body no-top">
+        {% if recent_activity %}
+        <div class="timeline">
+          {% for item in recent_activity %}
+          <div class="timeline-item">
+            <span class="timeline-dot {{ item.color }}"><i class="fas {{ item.icon }}"></i></span>
+            <div class="timeline-body">
+              <div class="timeline-title">{{ item.title }}</div>
+              <div class="timeline-sub">{{ item.subtitle }}</div>
+            </div>
+            <span class="timeline-time">{{ item.when|timesince }} ago</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
         <div class="empty-state">
           <i class="fas fa-inbox"></i>
           <p>No recent activity to display.<br>System actions will appear here.</p>
         </div>
+        {% endif %}
       </div>
     </div>
 
@@ -958,14 +1185,6 @@
           <span class="info-key">Status</span>
           <span class="chip green dot">Online</span>
         </div>
-        {% comment %} <div class="info-row">
-          <span class="info-key">Environment</span>
-          <span class="chip blue">Production</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Platform</span>
-          <span class="info-val">Django</span>
-        </div> {% endcomment %}
         <div class="info-row">
           <span class="info-key">Version</span>
           <span class="info-val">1.0.0</span>
@@ -978,8 +1197,18 @@
     </div>
   </div>
 
+  <div class="cta-banner fade">
+    <div class="cta-text">
+      <h3>Clean Bwari. Smart Revenue. Greater Future.</h3>
+      <p>Keep pushing digital adoption across the council — every verified payment and resolved report brings Bwari closer to full compliance.</p>
+    </div>
+    <a href="{% url 'admin_manage_properties' %}" class="cta-btn">Manage Properties <i class="fas fa-arrow-right"></i></a>
+  </div>
+
 {% elif user_type == 'staff' %}
-  <!-- STAFF DASHBOARD QUICK ACTIONS -->
+  <!-- ══════════════════════════════════════════════════════
+       STAFF DASHBOARD
+  ══════════════════════════════════════════════════════ -->
   <div class="stats-grid cols-4">
     <div class="stat-card c-blue fade fade-1">
       <div class="stat-top">
@@ -989,11 +1218,13 @@
         </div>
         <div class="stat-icon"><i class="fas fa-users"></i></div>
       </div>
-      <div class="stat-foot">Active accounts in system</div>
+      <div class="stat-foot">
+        <span>Active accounts in system</span>
+        {% if new_users_this_month %}<span class="stat-trend up"><i class="fas fa-arrow-up"></i> +{{ new_users_this_month }} this month</span>{% endif %}
+      </div>
     </div>
     <!-- ── Sanitation Payers Split Card ─────────────────────── -->
     <div class="stat-card fade fade-2" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--red)) 1;padding:0;overflow:hidden;position:relative;">
-      <!-- Card Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:1px solid var(--border);">
         <div>
           <div class="stat-label" style="margin-bottom:2px;">Sanitation Levy</div>
@@ -1003,9 +1234,7 @@
           <i class="fas fa-leaf"></i>
         </div>
       </div>
-      <!-- Split counters -->
       <div style="display:grid;grid-template-columns:1fr 1fr;">
-        <!-- Paid -->
         <div style="padding:14px 16px 12px;border-right:1px solid var(--border);position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(204,251,241,.45),transparent);pointer-events:none;"></div>
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
@@ -1015,7 +1244,6 @@
           <div style="font-size:2rem;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-1px;">{{ sanitation_payers_count|default:0|money:0 }}</div>
           <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Active payments</div>
         </div>
-        <!-- Unpaid -->
         <div style="padding:14px 16px 12px;position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(254,226,226,.45),transparent);pointer-events:none;"></div>
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
@@ -1026,7 +1254,6 @@
           <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">No active payment</div>
         </div>
       </div>
-      <!-- Progress bar -->
       <div style="padding:10px 16px 12px;border-top:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="flex:1;height:5px;border-radius:99px;background:var(--red-dim);overflow:hidden;">
@@ -1040,7 +1267,6 @@
         <div style="font-size:.66rem;color:var(--ink-4);margin-top:4px;">compliance rate</div>
       </div>
     </div>
-    <!-- ──────────────────────────────────────────────────────── -->
     <div class="stat-card c-amber fade fade-3">
       <div class="stat-top">
         <div>
@@ -1049,7 +1275,10 @@
         </div>
         <div class="stat-icon"><i class="fas fa-building"></i></div>
       </div>
-      <div class="stat-foot">Registered properties system-wide</div>
+      <div class="stat-foot">
+        <span>Registered system-wide</span>
+        {% if new_properties_this_month %}<span class="stat-trend up"><i class="fas fa-arrow-up"></i> +{{ new_properties_this_month }} this month</span>{% endif %}
+      </div>
     </div>
     <div class="stat-card c-red fade fade-4">
       <div class="stat-top">
@@ -1066,54 +1295,58 @@
   <div class="stats-grid cols-4 fade fade-5">
     <div class="stat-card c-green">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Residential</div>
-          <div class="stat-value">{{ residential_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Residential</div><div class="stat-value">{{ residential_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-house"></i></div>
       </div>
       <div class="stat-foot">Residential properties</div>
     </div>
     <div class="stat-card c-blue">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Commercial</div>
-          <div class="stat-value">{{ commercial_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Commercial</div><div class="stat-value">{{ commercial_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-store"></i></div>
       </div>
       <div class="stat-foot">Commercial properties</div>
     </div>
     <div class="stat-card c-amber">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Industrial</div>
-          <div class="stat-value">{{ industrial_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Industrial</div><div class="stat-value">{{ industrial_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-industry"></i></div>
       </div>
       <div class="stat-foot">Industrial properties</div>
     </div>
     <div class="stat-card c-teal">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Land</div>
-          <div class="stat-value">{{ land_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Land</div><div class="stat-value">{{ land_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-mountain-sun"></i></div>
       </div>
       <div class="stat-foot">Land properties</div>
     </div>
   </div>
 
-  <div class="section-label fade">Metrics</div>
-  <div class="grid-2 fade fade-1">
+  <div class="section-label fade">Quick Actions</div>
+  <div class="qa-tiles fade fade-1">
+    <a href="{% url 'staff_create_landlord' %}" class="qa-tile green">
+      <span class="qa-icon"><i class="fas fa-user-plus"></i></span>New Landlord
+    </a>
+    <a href="{% url 'staff_register_property' %}" class="qa-tile blue">
+      <span class="qa-icon"><i class="fas fa-building"></i></span>Register Property
+    </a>
+    <a href="{% url 'staff_import_properties' %}" class="qa-tile purple">
+      <span class="qa-icon"><i class="fas fa-file-csv"></i></span>Import CSV
+    </a>
+    <a href="{% url 'staff_verify_payment' %}" class="qa-tile teal">
+      <span class="qa-icon"><i class="fas fa-receipt"></i></span>Verify Payment
+    </a>
+  </div>
+
+  <div class="section-label fade">Overview</div>
+  <div class="grid-1-2 fade fade-1">
     <div class="adm-card">
       <div class="card-head">
-        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Portfolio</div>
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Distribution</div>
       </div>
-      <div class="card-body chart-card-body">
-        {% if total_properties %}
+      {% if total_properties %}
+      <div class="donut-split">
         <div class="chart-wrap">
           <canvas id="propertyTypeChart"></canvas>
           <div class="chart-center-label">
@@ -1121,41 +1354,22 @@
             <div class="cc-caption">Total</div>
           </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-          <i class="fas fa-chart-pie"></i>
-          <p>No properties registered yet.</p>
+        <div class="legend-list">
+          <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Residential</span><span class="legend-value">{{ residential_count|default:0 }} ({% if total_properties > 0 %}{% widthratio residential_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#0d3f73;"></span><span class="legend-label">Commercial</span><span class="legend-value">{{ commercial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio commercial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Industrial</span><span class="legend-value">{{ industrial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio industrial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#0b6f68;"></span><span class="legend-label">Land</span><span class="legend-value">{{ land_count|default:0 }} ({% if total_properties > 0 %}{% widthratio land_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
         </div>
-        {% endif %}
       </div>
-    </div>
-    <div class="adm-card">
-      <div class="card-head">
-        <div class="card-title"><span class="ct-icon"><i class="fas fa-leaf"></i></span>Sanitation Compliance</div>
-      </div>
+      {% else %}
       <div class="card-body chart-card-body">
-        {% if total_sanitation_eligible %}
-        <div class="chart-wrap">
-          <canvas id="sanitationChart"></canvas>
-          <div class="chart-center-label">
-            <div class="cc-value">{% widthratio sanitation_payers_count total_sanitation_eligible 100 %}%</div>
-            <div class="cc-caption">Compliant</div>
-          </div>
-        </div>
-        {% else %}
-        <div class="empty-state">
-          <i class="fas fa-leaf"></i>
-          <p>No sanitation-eligible accounts yet.</p>
-        </div>
-        {% endif %}
+        <div class="empty-state"><i class="fas fa-chart-pie"></i><p>No properties registered yet.</p></div>
       </div>
+      {% endif %}
     </div>
-  </div>
-
-  <div class="grid-2 fade fade-2">
     <div class="adm-card">
       <div class="card-head">
-        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Revenue Trend</div>
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-column"></i></span>Payment Overview</div>
       </div>
       {% if revenue_trend_total %}
       <div class="chart-card-meta">
@@ -1167,13 +1381,13 @@
       </div>
       {% else %}
       <div class="card-body chart-card-body">
-        <div class="empty-state">
-          <i class="fas fa-chart-column"></i>
-          <p>No successful payments in the last 6 months.</p>
-        </div>
+        <div class="empty-state"><i class="fas fa-chart-column"></i><p>No successful payments in the last 6 months.</p></div>
       </div>
       {% endif %}
     </div>
+  </div>
+
+  <div class="grid-2 fade fade-2">
     <div class="adm-card">
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-flag"></i></span>Complaints by Category</div>
@@ -1184,17 +1398,37 @@
       </div>
       {% else %}
       <div class="card-body chart-card-body">
-        <div class="empty-state">
-          <i class="fas fa-flag"></i>
-          <p>No complaints have been logged yet.</p>
-        </div>
+        <div class="empty-state"><i class="fas fa-flag"></i><p>No complaints have been logged yet.</p></div>
       </div>
       {% endif %}
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-history"></i></span>Recent Activity</div>
+      </div>
+      <div class="card-body no-top">
+        {% if recent_activity %}
+        <div class="timeline">
+          {% for item in recent_activity|slice:":5" %}
+          <div class="timeline-item">
+            <span class="timeline-dot {{ item.color }}"><i class="fas {{ item.icon }}"></i></span>
+            <div class="timeline-body">
+              <div class="timeline-title">{{ item.title }}</div>
+              <div class="timeline-sub">{{ item.subtitle }}</div>
+            </div>
+            <span class="timeline-time">{{ item.when|timesince }} ago</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-inbox"></i><p>No recent activity to display.</p></div>
+        {% endif %}
+      </div>
     </div>
   </div>
 
   <div class="section-label fade">Staff Tools</div>
-  <div class="grid-1 fade fade-1">
+  <div class="grid-2 fade fade-1">
     <div class="adm-card">
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-users"></i></span>Landlord Management</div>
@@ -1214,7 +1448,6 @@
             <i class="ai-arrow fas fa-chevron-right"></i>
           </a>
         </div>
-        
       </div>
     </div>
 
@@ -1235,52 +1468,109 @@
         </p>
       </div>
     </div>
-    
   </div>
 
-
-
 {% elif user_type == 'field_staff' %}
+  <!-- ══════════════════════════════════════════════════════
+       FIELD STAFF DASHBOARD
+  ══════════════════════════════════════════════════════ -->
   <div class="stats-grid cols-4">
     <div class="stat-card c-blue fade fade-1">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">All Properties</div>
-          <div class="stat-value">{{ total_properties|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">All Properties</div><div class="stat-value">{{ total_properties|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-building"></i></div>
       </div>
       <div class="stat-foot">Visible property records across the system</div>
     </div>
     <div class="stat-card c-green fade fade-2">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Residential</div>
-          <div class="stat-value">{{ residential_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Residential</div><div class="stat-value">{{ residential_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-house"></i></div>
       </div>
       <div class="stat-foot">Homes and residential units</div>
     </div>
     <div class="stat-card c-amber fade fade-3">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Commercial</div>
-          <div class="stat-value">{{ commercial_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Commercial</div><div class="stat-value">{{ commercial_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-store"></i></div>
       </div>
       <div class="stat-foot">Business and retail spaces</div>
     </div>
     <div class="stat-card c-teal fade fade-4">
       <div class="stat-top">
-        <div>
-          <div class="stat-label">Land</div>
-          <div class="stat-value">{{ land_count|default:0|money:0 }}</div>
-        </div>
+        <div><div class="stat-label">Land</div><div class="stat-value">{{ land_count|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-map-location-dot"></i></div>
       </div>
       <div class="stat-foot">Plots and undeveloped land</div>
+    </div>
+  </div>
+
+  <div class="section-label fade">Quick Actions</div>
+  <div class="qa-tiles fade fade-1">
+    <a href="{% url 'admin_manage_properties' %}" class="qa-tile blue">
+      <span class="qa-icon"><i class="fas fa-location-dot"></i></span>All Locations
+    </a>
+    <a href="{% url 'register_property' %}" class="qa-tile green">
+      <span class="qa-icon"><i class="fas fa-plus-circle"></i></span>New Property
+    </a>
+    <a href="{% url 'admin_manage_properties' %}" class="qa-tile teal">
+      <span class="qa-icon"><i class="fas fa-pen-ruler"></i></span>Edit Records
+    </a>
+    <a href="{% url 'profile' %}" class="qa-tile purple">
+      <span class="qa-icon"><i class="fas fa-user-gear"></i></span>My Profile
+    </a>
+  </div>
+
+  <div class="section-label fade">Overview</div>
+  <div class="grid-1-2 fade fade-1">
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Property Distribution</div>
+      </div>
+      {% if total_properties %}
+      <div class="donut-split">
+        <div class="chart-wrap">
+          <canvas id="propertyTypeChart"></canvas>
+          <div class="chart-center-label">
+            <div class="cc-value">{{ total_properties|money:0 }}</div>
+            <div class="cc-caption">Total</div>
+          </div>
+        </div>
+        <div class="legend-list">
+          <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Residential</span><span class="legend-value">{{ residential_count|default:0 }} ({% if total_properties > 0 %}{% widthratio residential_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#0d3f73;"></span><span class="legend-label">Commercial</span><span class="legend-value">{{ commercial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio commercial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Industrial</span><span class="legend-value">{{ industrial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio industrial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#0b6f68;"></span><span class="legend-label">Land</span><span class="legend-value">{{ land_count|default:0 }} ({% if total_properties > 0 %}{% widthratio land_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state"><i class="fas fa-chart-pie"></i><p>No properties registered yet.</p></div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="adm-card">
+      <div class="card-head">
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-history"></i></span>Recent Activity</div>
+      </div>
+      <div class="card-body no-top">
+        {% if recent_activity %}
+        <div class="timeline">
+          {% for item in recent_activity|slice:":5" %}
+          <div class="timeline-item">
+            <span class="timeline-dot {{ item.color }}"><i class="fas {{ item.icon }}"></i></span>
+            <div class="timeline-body">
+              <div class="timeline-title">{{ item.title }}</div>
+              <div class="timeline-sub">{{ item.subtitle }}</div>
+            </div>
+            <span class="timeline-time">{{ item.when|timesince }} ago</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-inbox"></i><p>No recent activity to display.</p></div>
+        {% endif %}
+      </div>
     </div>
   </div>
 
@@ -1323,7 +1613,7 @@
     </div>
   </div>
 
-  {% elif user_type == 'landlord' %}
+{% elif user_type == 'landlord' %}
   <!-- ══════════════════════════════════════════════════════
        LANDLORD DASHBOARD
   ══════════════════════════════════════════════════════ -->
@@ -1337,23 +1627,29 @@
         </div>
         <div class="stat-icon"><i class="fas fa-building"></i></div>
       </div>
-      <div class="stat-foot">Registered properties</div>
+      <div class="stat-foot">
+        <span>Registered properties</span>
+        {% if new_properties_this_month %}<span class="stat-trend up"><i class="fas fa-arrow-up"></i> +{{ new_properties_this_month }} this month</span>{% endif %}
+      </div>
     </div>
     <div class="stat-card c-blue fade fade-2">
       <div class="stat-top">
         <div>
           <div class="stat-label">Payments Made</div>
-          <div class="stat-value">₦{{ total_paid|money:0 }}</div>
+          <div class="stat-value sm">₦{{ total_paid|money:0 }}</div>
         </div>
         <div class="stat-icon"><i class="fas fa-receipt"></i></div>
       </div>
-      <div class="stat-foot">Total successful payments</div>
+      <div class="stat-foot">
+        <span>Total successful payments</span>
+        {% if paid_this_month %}<span class="stat-trend up"><i class="fas fa-arrow-up"></i> ₦{{ paid_this_month|money:0 }} this month</span>{% endif %}
+      </div>
     </div>
     <div class="stat-card c-amber fade fade-3">
       <div class="stat-top">
         <div>
           <div class="stat-label">Outstanding Bills</div>
-          <div class="stat-value">₦{{ outstanding_bills|money:0 }}</div>
+          <div class="stat-value sm">₦{{ outstanding_bills|money:0 }}</div>
         </div>
         <div class="stat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
       </div>
@@ -1376,14 +1672,30 @@
     <p>Register your properties to start receiving tenement rate bills and manage your payments from this dashboard.</p>
   </div>
 
-  <div class="section-label fade">Metrics</div>
-  <div class="grid-2 fade fade-1">
+  <div class="section-label fade">Quick Actions</div>
+  <div class="qa-tiles fade fade-1">
+    <a href="{% url 'register_property' %}" class="qa-tile green">
+      <span class="qa-icon"><i class="fas fa-plus"></i></span>Add Property
+    </a>
+    <a href="{% url 'landlord_payments' %}" class="qa-tile blue">
+      <span class="qa-icon"><i class="fas fa-credit-card"></i></span>Record Payment
+    </a>
+    <a href="{% url 'submit_complaint' %}" class="qa-tile red">
+      <span class="qa-icon"><i class="fas fa-file-circle-exclamation"></i></span>Submit Report
+    </a>
+    <a href="{% url 'landlord_properties' %}" class="qa-tile purple">
+      <span class="qa-icon"><i class="fas fa-building-columns"></i></span>All Properties
+    </a>
+  </div>
+
+  <div class="section-label fade">Overview</div>
+  <div class="grid-1-2 fade fade-1">
     <div class="adm-card">
       <div class="card-head">
         <div class="card-title"><span class="ct-icon"><i class="fas fa-chart-pie"></i></span>Payment Status</div>
       </div>
-      <div class="card-body chart-card-body">
-        {% if total_obligations_count %}
+      {% if total_obligations_count %}
+      <div class="donut-split">
         <div class="chart-wrap">
           <canvas id="paymentStatusChart"></canvas>
           <div class="chart-center-label">
@@ -1391,13 +1703,16 @@
             <div class="cc-caption">Covered</div>
           </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-          <i class="fas fa-chart-pie"></i>
-          <p>No billable obligations yet.</p>
+        <div class="legend-list">
+          <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Covered</span><span class="legend-value">{{ paid_obligations_count|default:0 }} ({% widthratio paid_obligations_count total_obligations_count 100 %}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Outstanding</span><span class="legend-value">{{ outstanding_obligations_count|default:0 }} ({% widthratio outstanding_obligations_count total_obligations_count 100 %}%)</span></div>
         </div>
-        {% endif %}
       </div>
+      {% else %}
+      <div class="card-body chart-card-body">
+        <div class="empty-state"><i class="fas fa-chart-pie"></i><p>No billable obligations yet.</p></div>
+      </div>
+      {% endif %}
     </div>
     <div class="adm-card">
       <div class="card-head">
@@ -1409,10 +1724,7 @@
       </div>
       {% else %}
       <div class="card-body chart-card-body">
-        <div class="empty-state">
-          <i class="fas fa-chart-column"></i>
-          <p>No successful payments in the last 6 months.</p>
-        </div>
+        <div class="empty-state"><i class="fas fa-chart-column"></i><p>No successful payments in the last 6 months.</p></div>
       </div>
       {% endif %}
     </div>
@@ -1480,7 +1792,6 @@
       <div class="card-body no-top" style="max-height: 300px; overflow-y: auto;">
         {% if obligations_list %}
           {% for item in obligations_list|slice:":5" %}
-          
           <div class="list-row">
             <div class="list-row-left">
               <div class="list-row-icon" style="background:var(--amber-dim);color:var(--amber);"><i class="fas fa-clock"></i></div>
@@ -1600,28 +1911,29 @@
   </div>
   {% endif %}
 
-  <div class="section-label fade">Quick Actions</div>
+  <div class="section-label fade">Recent Activity &amp; Support</div>
   <div class="grid-2 fade fade-2">
     <div class="adm-card">
       <div class="card-head">
-        <div class="card-title"><span class="ct-icon"><i class="fas fa-bolt"></i></span>Property Actions</div>
+        <div class="card-title"><span class="ct-icon"><i class="fas fa-history"></i></span>Recent Activity</div>
       </div>
-      <div class="card-body">
-        <div class="action-list">
-          <a href="{% url 'register_property' %}" class="action-item green">
-            <span class="ai-icon"><i class="fas fa-plus"></i></span>Register New Property
-            <i class="ai-arrow fas fa-chevron-right"></i>
-          </a>
-         
-          <a href="{% url 'landlord_properties' %}" class="action-item green">
-            <span class="ai-icon"><i class="fas fa-building-columns"></i></span>View All Properties
-            <i class="ai-arrow fas fa-chevron-right"></i>
-          </a>
-          <a href="{% url 'contact' %}" class="action-item blue">
-            <span class="ai-icon"><i class="fas fa-headset"></i></span>Contact Support
-            <i class="ai-arrow fas fa-chevron-right"></i>
-          </a>
+      <div class="card-body no-top">
+        {% if recent_activity %}
+        <div class="timeline">
+          {% for item in recent_activity %}
+          <div class="timeline-item">
+            <span class="timeline-dot {{ item.color }}"><i class="fas {{ item.icon }}"></i></span>
+            <div class="timeline-body">
+              <div class="timeline-title">{{ item.title }}</div>
+              <div class="timeline-sub">{{ item.subtitle }}</div>
+            </div>
+            <span class="timeline-time">{{ item.when|timesince }} ago</span>
+          </div>
+          {% endfor %}
         </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-inbox"></i><p>No recent activity yet.</p></div>
+        {% endif %}
       </div>
     </div>
 
@@ -1639,78 +1951,28 @@
             <span class="ai-icon"><i class="fas fa-list-check"></i></span>My Report History
             {% if open_complaints %}<span class="chip red" style="margin-left:auto;margin-right:4px;">{{ open_complaints }} open</span>{% endif %}
             <i class="ai-arrow fas fa-chevron-right"></i>
-          </a> 
+          </a>
           <a href="{% url 'landlord_payments' %}" class="action-item green">
-            <span class="ai-icon"><i class="fas fa-receipt"></i></span>View Receipts & Payments
+            <span class="ai-icon"><i class="fas fa-receipt"></i></span>View Receipts &amp; Payments
             <i class="ai-arrow fas fa-chevron-right"></i>
           </a>
-          
+          <a href="{% url 'contact' %}" class="action-item blue">
+            <span class="ai-icon"><i class="fas fa-headset"></i></span>Contact Support
+            <i class="ai-arrow fas fa-chevron-right"></i>
+          </a>
         </div>
       </div>
     </div>
   </div>
 
-  {% endif %}
-
-  {% if paid_coverage_list %}
-  <div class="section-label fade">Payment Coverage</div>
-  <div class="adm-card fade fade-2">
-    <div class="card-head">
-      <div class="card-title"><span class="ct-icon" style="background:var(--green-dim);color:var(--green);"><i class="fas fa-shield-halved"></i></span>Active Coverage</div>
-      <a href="{% url 'landlord_payments' %}" class="card-link">Full history <i class="fas fa-arrow-right" style="font-size:.65rem;"></i></a>
+  <div class="cta-banner fade">
+    <div class="cta-text">
+      <h3>Stay ahead of your tenement rates.</h3>
+      <p>Keep your properties compliant and avoid late penalties — pay outstanding bills early and track every receipt in one place.</p>
     </div>
-    <div class="card-body no-top" style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:.845rem;">
-        <thead>
-          <tr>
-            <th style="background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Service</th>
-            <th style="background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Rate</th>
-            <th style="background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Paid On</th>
-            <th style="background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Expires</th>
-            <th style="background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Remaining</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in paid_coverage_list %}
-          <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 16px;vertical-align:middle;">
-              <div style="font-weight:600;color:var(--ink);">
-                {% if item.rate.is_sanitation %}
-                  Environmental Sanitation Levy
-                {% else %}
-                  {{ item.property.name }}
-                {% endif %}
-              </div>
-              <div style="font-size:.75rem;color:var(--ink-3);">
-                {% if item.rate.is_sanitation %}
-                  Monthly Sanitation Payment
-                {% else %}
-                  {{ item.property.get_property_type_display }}
-                {% endif %}
-              </div>
-            </td>
-            <td style="padding:12px 16px;vertical-align:middle;color:var(--ink-2);">{{ item.rate.name }}</td>
-            <td style="padding:12px 16px;vertical-align:middle;color:var(--ink-2);">{{ item.payment.paid_at|date:"M d, Y" }}</td>
-            <td style="padding:12px 16px;vertical-align:middle;">
-              {% if item.payment.expires_at %}
-                <strong>{{ item.payment.expires_at|date:"M d, Y" }}</strong>
-              {% else %}
-                <span style="color:var(--ink-3);">1 yr from payment</span>
-              {% endif %}
-            </td>
-            <td style="padding:12px 16px;vertical-align:middle;">
-              {% if item.payment.days_remaining %}
-                <span class="chip green">{{ item.payment.days_remaining }} days</span>
-              {% else %}
-                <span style="color:var(--ink-3);font-size:.75rem;">N/A</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <a href="{% url 'landlord_payments' %}" class="cta-btn">View My Payments <i class="fas fa-arrow-right"></i></a>
   </div>
+
   {% endif %}
 
   <div class="section-label fade">Account</div>
@@ -1724,6 +1986,7 @@
         <div class="profile-role">
           {% if user_type == 'admin' %}System Administrator
           {% elif user_type == 'field_staff' %}Field Staff
+          {% elif user_type == 'staff' %}Staff
           {% else %}Landlord
           {% endif %}
           &nbsp;·&nbsp; FCT BAC Grid
@@ -1780,7 +2043,7 @@
       boxPadding: 4
     };
 
-    // Shared, understated donut style matching the card design language.
+    // Donut style WITH Chart.js legend (used where no custom HTML legend is drawn).
     var donutOptions = {
       responsive: true,
       maintainAspectRatio: false,
@@ -1807,6 +2070,13 @@
         })
       }
     };
+
+    // Donut style with NO Chart.js legend — used alongside our own HTML legend-list.
+    var donutOptionsNoLegend = Object.assign({}, donutOptions, {
+      plugins: Object.assign({}, donutOptions.plugins, {
+        legend: { display: false }
+      })
+    });
 
     // Shared, professional bar/line chart style: subtle gridlines, no clutter.
     function barLineOptions(opts) {
@@ -1863,7 +2133,7 @@
             hoverOffset: 4
           }]
         },
-        options: donutOptions
+        options: donutOptionsNoLegend
       });
     }
 
@@ -1905,7 +2175,7 @@
             hoverOffset: 4
           }]
         },
-        options: donutOptions
+        options: donutOptionsNoLegend
       });
     }
 
