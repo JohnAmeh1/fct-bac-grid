@@ -81,6 +81,8 @@ urlpatterns = [
     # ── Admin: Defaulters ──────────────────────────────────────
     path('management/defaulters/', views.admin_defaulters_list, name='admin_defaulters_list'),
     path('management/defaulters/export/', views.admin_export_defaulters, name='admin_export_defaulters'),
+    path('management/rate-defaulters/', views.admin_rate_defaulters, name='admin_rate_defaulters'),
+    path('management/rate-defaulters/export/', views.admin_export_rate_defaulters, name='admin_export_rate_defaulters'),
     path('management/sanitation-defaulters/', views.admin_sanitation_defaulters, name='admin_sanitation_defaulters'),
     path('management/sanitation-defaulters/export/', views.admin_export_sanitation_defaulters, name='admin_export_sanitation_defaulters'),
     

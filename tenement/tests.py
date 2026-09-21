@@ -8,7 +8,7 @@ from django.urls import reverse
 from PIL import Image
 from django.contrib.auth.models import User
 
-from tenement.models import Property, USER_TYPE_CHOICES, PaymentRate
+from tenement.models import Property, USER_TYPE_CHOICES, PaymentRate, Payment
 from tenement.views import (
     get_paginator_page_range,
     import_properties_from_uploaded_file,
@@ -16,6 +16,49 @@ from tenement.views import (
     is_property_sanitation_paid,
 )
 
+
+class AdminRateListTests(TestCase):
+    def test_admin_rate_list_page_is_available_and_lists_unpaid_rate_defaulters(self):
+        admin = User.objects.create_user(
+            username='admin-rate-list',
+            email='admin-rate-list@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        from tenement.models import UserProfile
+        UserProfile.objects.create(user=admin, user_type='admin', email_verified=True)
+
+        landlord = User.objects.create_user(
+            username='rate-landlord',
+            email='rate-landlord@example.com',
+            password='StrongPass123!'
+        )
+        UserProfile.objects.create(user=landlord, user_type='landlord', email_verified=True)
+
+        property_obj = Property.objects.create(
+            owner=landlord,
+            name='Rate Property',
+            address='No. 2 Market Road',
+            district='Bwari',
+            property_type='residential',
+            num_units=4,
+        )
+
+        rate = PaymentRate.objects.create(
+            property_type='residential',
+            name='Annual Residential Tenement Rate 2025',
+            amount='25000.00',
+            is_active=True,
+            is_per_unit=False,
+        )
+
+        self.client.force_login(admin)
+        response = self.client.get(reverse('admin_rate_defaulters'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Rate List')
+        self.assertContains(response, 'Rate Property')
+        self.assertContains(response, 'Annual Residential Tenement Rate 2025')
 
 class BulkImportAccountTests(TestCase):
     def test_user_type_choices_do_not_include_tenant(self):

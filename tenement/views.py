@@ -252,6 +252,16 @@ def get_latest_valid_payment(property_obj, rate):
         django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
     ).order_by('-paid_at').first()
 
+
+def get_property_rate_amount(property_obj, rate):
+    """Return the effective charge for a property-type payment rate."""
+    if not property_obj or not rate:
+        return Decimal('0.00')
+    if rate.is_per_unit and property_obj.property_type == 'residential' and property_obj.num_flats > 0:
+        return Decimal(str(rate.amount)) * property_obj.num_flats
+    return Decimal(str(rate.amount))
+
+
 MANAGED_PROPERTY_ROLES = ['admin', 'staff', 'field_staff']
 
 
@@ -3314,141 +3324,244 @@ def admin_pay_bypass_update(request, property_id, rate_id):
     return redirect('admin_pay_bypass')
 
 
-# ── Admin: Defaulters ───────────────────────────────────────────────────────
+# ── Admin: Rate List (tenement rate defaulters) ────────────────────────────
 @staff_member_required
-def admin_defaulters_list(request):
+def admin_rate_defaulters(request):
     profile = request.user.userprofile
     if profile.user_type not in ['admin', 'staff', 'field_staff']:
-        messages.error(request, "Access denied.")
+        messages.error(request, 'Access denied.')
         return redirect('dashboard')
 
-    defaulters = []
-    landlords = User.objects.filter(userprofile__user_type='landlord').select_related('userprofile')
+    active_rates = list(
+        PaymentRate.objects.filter(is_active=True, is_sanitation=False)
+        .exclude(property_type__isnull=True)
+        .exclude(property_type='')
+        .order_by('-created_at')
+    )
+    landlords = list(
+        User.objects.filter(
+            userprofile__user_type='landlord',
+            userprofile__email_verified=True,
+        ).select_related('userprofile')
+    )
     now = timezone.now()
 
+    properties_by_owner = defaultdict(list)
+    property_ids = []
+    landlord_ids = [landlord.id for landlord in landlords]
     for landlord in landlords:
-        for prop in Property.objects.filter(owner=landlord):
-            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True):
-                valid = Payment.objects.filter(
-                    landlord=landlord, property=prop, payment_rate=rate, status='success',
-                ).filter(
-                    django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
-                ).exists()
-                if not valid:
-                    defaulters.append({
-                        'landlord': landlord,
-                        'property': prop,
-                        'rate': rate,
-                    })
+        props = list(Property.objects.filter(owner=landlord).select_related('owner'))
+        properties_by_owner[landlord.id] = props
+        property_ids.extend(prop.id for prop in props)
 
-    return render(request, 'admin/defaulters_list.html', {'defaulters': defaulters})
+    rate_ids = [rate.id for rate in active_rates]
+    valid_payment_lookup = {}
+    if property_ids and rate_ids and landlord_ids:
+        valid_payments = (
+            Payment.objects.filter(
+                landlord_id__in=landlord_ids,
+                property_id__in=property_ids,
+                payment_rate_id__in=rate_ids,
+                status='success',
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .order_by('landlord_id', 'property_id', 'payment_rate_id', '-paid_at')
+        )
+        for payment in valid_payments:
+            key = (payment.landlord_id, payment.property_id, payment.payment_rate_id)
+            if key not in valid_payment_lookup:
+                valid_payment_lookup[key] = payment
+
+    all_records = []
+    for landlord in landlords:
+        for prop in properties_by_owner.get(landlord.id, []):
+            for rate in PaymentRate.objects.filter(
+                property_type=prop.property_type,
+                is_active=True,
+                is_sanitation=False,
+            ):
+                valid_payment = valid_payment_lookup.get((landlord.id, prop.id, rate.id))
+                amount = get_property_rate_amount(prop, rate)
+                all_records.append({
+                    'landlord': landlord,
+                    'property': prop,
+                    'rate': rate,
+                    'amount': amount,
+                    'has_paid': valid_payment is not None,
+                    'payment': valid_payment,
+                })
+
+    defaulters_count = sum(1 for r in all_records if not r['has_paid'])
+    paid_count = sum(1 for r in all_records if r['has_paid'])
+    total_records_count = len(all_records)
+    total_amount_due = sum(Decimal(str(r['amount'])) for r in all_records if not r['has_paid'])
+
+    status_filter = request.GET.get('status', 'all')
+    if status_filter == 'defaulters':
+        filtered_records = [r for r in all_records if not r['has_paid']]
+    elif status_filter == 'paid':
+        filtered_records = [r for r in all_records if r['has_paid']]
+    else:
+        status_filter = 'all'
+        filtered_records = all_records
+
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        q_lower = search_query.lower()
+        filtered_records = [
+            r for r in filtered_records
+            if q_lower in (r['landlord'].username or '').lower()
+            or q_lower in (r['landlord'].email or '').lower()
+            or q_lower in (r['landlord'].get_full_name() or '').lower()
+            or q_lower in (r['property'].name or '').lower()
+            or q_lower in (r['property'].address or '').lower()
+            or q_lower in (r['rate'].name or '').lower()
+        ]
+
+    paginator = Paginator(filtered_records, 50)
+    page_number = request.GET.get('page')
+    records_page = paginator.get_page(page_number)
+    page_range = get_paginator_page_range(records_page)
+
+    return render(request, 'admin/rate_defaulters.html', {
+        'all_records': records_page,
+        'page_range': page_range,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'defaulters_count': defaulters_count,
+        'paid_count': paid_count,
+        'total_records_count': total_records_count,
+        'total_amount_due': total_amount_due,
+    })
 
 
-def _build_defaulters_workbook():
+def _build_rate_defaulters_workbook(export_all):
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Defaulters"
+    ws.title = 'Rate List' if export_all else 'Rate Defaulters'
 
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill("solid", fgColor="1E3A5F")
-    header_align = Alignment(horizontal="center", vertical="center")
-    thin = Side(border_style="thin", color="D1D5DB")
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_fill = PatternFill('solid', fgColor='1E3A5F')
+    header_align = Alignment(horizontal='center', vertical='center')
+    thin = Side(border_style='thin', color='D1D5DB')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     headers = [
-        "Landlord Username", "Full Name", "Email", "Phone",
-        "Property Name", "Address", "District", "Property Type",
-        "No. of Units", "Rate Name", "Amount Due (₦)", "Property Registered"
+        'Username', 'Full Name', 'Email', 'Phone', 'Property Name', 'Address',
+        'District', 'Property Type', 'Rate Name', 'Amount Due (₦)',
+        'Payment Status', 'Paid On', 'Expires On'
     ]
-    col_widths = [20, 22, 28, 16, 25, 32, 14, 16, 12, 28, 18, 22]
+    widths = [18, 22, 28, 16, 25, 32, 16, 16, 28, 18, 16, 20, 20]
 
-    for i, (h, w) in enumerate(zip(headers, col_widths), 1):
-        cell = ws.cell(row=1, column=i, value=h)
+    for i, (label, width) in enumerate(zip(headers, widths), 1):
+        cell = ws.cell(row=1, column=i, value=label)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = header_align
         cell.border = border
-        ws.column_dimensions[get_column_letter(i)].width = w
+        ws.column_dimensions[get_column_letter(i)].width = width
+    ws.row_dimensions[1].height = 24
 
-    ws.row_dimensions[1].height = 22
-
-    landlords = list(User.objects.filter(userprofile__user_type='landlord').select_related('userprofile'))
-    row_num = 2
-    alt_fill = PatternFill("solid", fgColor="F7F8FA")
-    now = timezone.now()
-
-    # Bulk-fetch properties, rates, and valid payments up front instead of
-    # running a Property query per landlord, a PaymentRate query per
-    # property, AND a Payment query per (property, rate) pair below — that
-    # triple-nested per-row querying is what was timing this export out
-    # once there were 100k+ landlords to walk.
-    landlord_ids = [l.id for l in landlords]
-    properties_by_owner = defaultdict(list)
-    for prop in Property.objects.filter(owner_id__in=landlord_ids):
-        properties_by_owner[prop.owner_id].append(prop)
-
-    active_rates = list(PaymentRate.objects.filter(is_active=True))
-    rates_by_property_type = defaultdict(list)
-    for rate in active_rates:
-        if rate.property_type:
-            rates_by_property_type[rate.property_type].append(rate)
-
-    active_rate_ids = [r.id for r in active_rates]
-    valid_pairs = set(
-        Payment.objects
-        .filter(
-            payment_rate_id__in=active_rate_ids,
-            status='success',
-            property_id__isnull=False,
-        )
-        .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
-        .values_list('property_id', 'payment_rate_id')
+    landlords = list(
+        User.objects.filter(
+            userprofile__user_type='landlord',
+            userprofile__email_verified=True,
+        ).select_related('userprofile')
     )
+    now = timezone.now()
+    row_num = 2
+    alt_fill = PatternFill('solid', fgColor='F7F8FA')
+    paid_fill = PatternFill('solid', fgColor='DCFCE7')
+
+    property_ids = list(Property.objects.filter(owner_id__in=[l.id for l in landlords]).values_list('id', flat=True))
+    rate_ids = list(PaymentRate.objects.filter(is_active=True, is_sanitation=False).values_list('id', flat=True))
+    valid_payment_lookup = {}
+    if property_ids and rate_ids:
+        valid_payments = (
+            Payment.objects.filter(
+                landlord_id__in=[l.id for l in landlords],
+                property_id__in=property_ids,
+                payment_rate_id__in=rate_ids,
+                status='success',
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .order_by('-paid_at')
+            .only('landlord_id', 'property_id', 'payment_rate_id', 'paid_at', 'expires_at')
+        )
+        for payment in valid_payments:
+            key = (payment.landlord_id, payment.property_id, payment.payment_rate_id)
+            if key not in valid_payment_lookup:
+                valid_payment_lookup[key] = payment
 
     for landlord in landlords:
-        for prop in properties_by_owner.get(landlord.id, []):
-            for rate in rates_by_property_type.get(prop.property_type, []):
-                valid = (prop.id, rate.id) in valid_pairs
-                if not valid:
-                    row_fill = alt_fill if row_num % 2 == 0 else PatternFill("solid", fgColor="FFFFFF")
-                    row_data = [
-                        landlord.username,
-                        landlord.get_full_name() or '—',
-                        landlord.email,
-                        getattr(landlord.userprofile, 'phone_number', '') or '—',
-                        prop.name,
-                        prop.address,
-                        prop.district.title(),
-                        prop.get_property_type_display(),
-                        prop.num_units,
-                        rate.name,
-                        float(rate.amount),
-                        prop.created_at.strftime("%Y-%m-%d") if prop.created_at else '—',
-                    ]
-                    for col, value in enumerate(row_data, 1):
-                        cell = ws.cell(row=row_num, column=col, value=value)
-                        cell.border = border
-                        cell.fill = row_fill
-                        cell.alignment = Alignment(vertical="center")
-                        if col == 11:
-                            cell.number_format = '#,##0.00'
-                    row_num += 1
+        for prop in Property.objects.filter(owner=landlord):
+            for rate in PaymentRate.objects.filter(property_type=prop.property_type, is_active=True, is_sanitation=False):
+                valid_payment = valid_payment_lookup.get((landlord.id, prop.id, rate.id))
+                has_paid = valid_payment is not None
+                if not export_all and has_paid:
+                    continue
+                row_fill = paid_fill if has_paid else (alt_fill if row_num % 2 == 0 else PatternFill('solid', fgColor='FFFFFF'))
+                amount = get_property_rate_amount(prop, rate)
+                row_data = [
+                    landlord.username,
+                    landlord.get_full_name() or '—',
+                    landlord.email,
+                    getattr(landlord.userprofile, 'phone_number', '') or '—',
+                    prop.name,
+                    prop.address,
+                    prop.district.title(),
+                    prop.get_property_type_display(),
+                    rate.name,
+                    float(amount),
+                    'Paid' if has_paid else 'Outstanding',
+                    valid_payment.paid_at.strftime('%Y-%m-%d') if has_paid and valid_payment.paid_at else '—',
+                    valid_payment.expires_at.strftime('%Y-%m-%d') if has_paid and valid_payment.expires_at else '—',
+                ]
+                for col, value in enumerate(row_data, 1):
+                    cell = ws.cell(row=row_num, column=col, value=value)
+                    cell.border = border
+                    cell.fill = row_fill
+                    cell.alignment = Alignment(vertical='center')
+                    if col == 10:
+                        cell.number_format = '#,##0.00'
+                    if col == 11:
+                        cell.font = Font(bold=True, color='15803D' if has_paid else 'DC2626')
+                row_num += 1
 
     if row_num == 2:
-        ws.cell(row=2, column=1, value="No defaulters found.")
+        ws.cell(row=2, column=1, value='No rate records found.')
 
     return wb
 
 
 @staff_member_required
-def admin_export_defaulters(request):
+def admin_export_rate_defaulters(request):
     profile = request.user.userprofile
     if profile.user_type not in ['admin', 'staff', 'field_staff']:
-        messages.error(request, "Access denied.")
+        messages.error(request, 'Access denied.')
         return redirect('dashboard')
 
-    filename = f'defaulters_enforcement_{timezone.now().strftime("%Y%m%d")}.xlsx'
-    return _start_background_export(request, _build_defaulters_workbook, filename, 'admin_defaulters_list')
+    export_mode = request.GET.get('mode', 'defaulters')
+    export_all = export_mode == 'all'
+    filename_prefix = 'rate_list_all' if export_all else 'rate_defaulters'
+    filename = f'{filename_prefix}_{timezone.now().strftime("%Y%m%d")}.xlsx'
+
+    return _start_background_export(
+        request,
+        lambda: _build_rate_defaulters_workbook(export_all),
+        filename,
+        'admin_rate_defaulters',
+    )
+
+
+@staff_member_required
+def admin_defaulters_list(request):
+    return admin_rate_defaulters(request)
+
+
+@staff_member_required
+def admin_export_defaulters(request):
+    return admin_export_rate_defaulters(request)
 
 
 # ── Forgot Password views ────────────────────────────────────────────────────
