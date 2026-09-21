@@ -1049,7 +1049,6 @@
       <a href="#" class="sidebar-link">
         <i class="fas fa-map-location-dot"></i> Maps &amp; GIS <span class="soon-tag">Soon</span>
       </a>
-      {% if user.userprofile.user_type == 'admin' %}
       <a href="{% url 'admin_site_configuration' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_site_configuration' %}active{% endif %}">
         <i class="fas fa-gear"></i> Settings
       </a>
