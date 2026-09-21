@@ -727,6 +727,41 @@
 </div>
   </nav>
 
+  {% if user.is_authenticated %}
+  <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
+    <a href="{% url 'dashboard' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="fas fa-house"></i><span>Home</span>
+    </a>
+    {% if user.userprofile.user_type == 'admin' or user.userprofile.user_type == 'staff' or user.userprofile.user_type == 'field_staff' %}
+    <a href="{% url 'admin_manage_properties' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'admin_manage_properties' %}active{% endif %}">
+      <i class="fas fa-building"></i><span>Properties</span>
+    </a>
+    <a href="{% url 'staff_verify_payment' %}" class="mobile-bottom-link mobile-bottom-action {% if request.resolver_match.url_name == 'staff_verify_payment' %}active{% endif %}">
+      <span class="mobile-bottom-action-icon"><i class="fas fa-qrcode"></i></span><span>Verify</span>
+    </a>
+    <a href="{% url 'admin_all_payments' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'admin_all_payments' %}active{% endif %}">
+      <i class="fas fa-credit-card"></i><span>Payments</span>
+    </a>
+    <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-ellipsis"></i><span>More</span>
+    </a>
+    {% else %}
+    <a href="{% url 'landlord_properties' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'landlord_properties' %}active{% endif %}">
+      <i class="fas fa-building"></i><span>Properties</span>
+    </a>
+    <a href="{% url 'register_property' %}" class="mobile-bottom-link mobile-bottom-action {% if request.resolver_match.url_name == 'register_property' %}active{% endif %}">
+      <span class="mobile-bottom-action-icon"><i class="fas fa-qrcode"></i></span><span>Add</span>
+    </a>
+    <a href="{% url 'landlord_payments' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'landlord_payments' %}active{% endif %}">
+      <i class="fas fa-credit-card"></i><span>Payments</span>
+    </a>
+    <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-ellipsis"></i><span>More</span>
+    </a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
   <!-- ===== MAIN CONTENT ===== -->
   <main id="main-content">
     {% if messages %}

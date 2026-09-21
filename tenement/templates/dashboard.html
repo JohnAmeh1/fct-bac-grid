@@ -905,9 +905,107 @@
     .command-strip { grid-template-columns: 1fr 1fr; margin: -8px 8px 22px; }
     .command-intro { grid-column: 1 / -1; }
   }
+
+  .landlord-mobile-experience { display: none; }
+  @media (max-width: 640px) {
+    .adm-wrap.dashboard-landlord { padding: 16px 14px 36px; background: #f6f8fb; }
+    .dashboard-landlord > .hero-banner,
+    .dashboard-landlord > .command-strip,
+    .dashboard-landlord > .landlord-desktop-content,
+    .dashboard-landlord > .section-label,
+    .dashboard-landlord > .profile-card { display: none; }
+    .landlord-mobile-experience { display: block; }
+    .lm-profile {
+      display: grid;
+      grid-template-columns: 62px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 17px;
+      border-radius: 16px;
+      color: var(--ink);
+      background: linear-gradient(120deg, #fff 0%, #e7f8f0 100%);
+      border: 1px solid rgba(20,108,67,.10);
+      box-shadow: var(--shadow-sm);
+    }
+    .lm-avatar {
+      width: 62px; height: 62px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, var(--green), #0a4a30);
+      color: #fff; font-family: 'Fraunces', serif; font-size: 1.4rem;
+      box-shadow: 0 0 0 4px rgba(255,255,255,.85);
+    }
+    .lm-greeting { color: var(--ink-3); font-size: .7rem; }
+    .lm-name { margin-top: 1px; font-size: 1.13rem; font-weight: 800; line-height: 1.15; }
+    .lm-role { margin-top: 3px; color: var(--ink-3); font-size: .72rem; }
+    .lm-edit {
+      width: 36px; height: 36px; display: grid; place-items: center;
+      border-radius: 10px; color: var(--green); background: #fff;
+      border: 1px solid rgba(20,108,67,.12);
+    }
+    .lm-contact {
+      grid-column: 1 / -1;
+      display: flex; gap: 12px; padding-top: 10px;
+      border-top: 1px solid rgba(20,108,67,.10);
+      color: var(--ink-3); font-size: .68rem; overflow: hidden;
+    }
+    .lm-contact span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lm-contact i { color: var(--green); margin-right: 3px; }
+    .lm-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .lm-kpi {
+      min-height: 104px; padding: 14px;
+      border-radius: 14px; background: #fff;
+      box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+    }
+    .lm-kpi-top { display: flex; align-items: center; gap: 9px; }
+    .lm-kpi-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; font-size: .94rem; }
+    .lm-kpi.green .lm-kpi-icon { color: var(--green); background: var(--green-dim); }
+    .lm-kpi.blue .lm-kpi-icon { color: var(--accent); background: var(--accent-dim); }
+    .lm-kpi.amber .lm-kpi-icon { color: var(--amber); background: var(--amber-dim); }
+    .lm-kpi.red .lm-kpi-icon { color: var(--red); background: var(--red-dim); }
+    .lm-kpi-label { font-size: .68rem; color: var(--ink-3); font-weight: 600; }
+    .lm-kpi-value { margin-top: 8px; font-size: 1.15rem; font-family: 'DM Mono', monospace; font-weight: 700; color: var(--ink); line-height: 1; }
+    .lm-kpi-link { display: block; margin-top: 8px; color: var(--accent); font-size: .67rem; font-weight: 700; }
+    .lm-rate-cta {
+      position: relative; overflow: hidden; min-height: 96px; margin: 0 0 22px;
+      padding: 18px 126px 18px 18px; border-radius: 15px; color: #fff;
+      background: linear-gradient(105deg, #0a4a30, #146c43 58%, #0b6f68);
+      box-shadow: var(--shadow);
+    }
+    .lm-rate-cta::after { content: ''; position: absolute; width: 140px; height: 140px; right: -30px; bottom: -72px; border: 20px solid rgba(255,255,255,.12); border-radius: 50%; }
+    .lm-rate-cta h2 { margin: 0 0 5px; font-size: .91rem; line-height: 1.25; }
+    .lm-rate-cta p { margin: 0; font-size: .68rem; line-height: 1.45; color: rgba(255,255,255,.82); }
+    .lm-rate-cta a { position: absolute; right: 14px; top: 31px; z-index: 1; padding: 8px 11px; border-radius: 9px; color: var(--green); background: #fff; font-size: .68rem; font-weight: 800; }
+    .lm-section-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+    .lm-section-head h2 { font-size: .96rem; color: var(--ink); }
+    .lm-section-head a { color: var(--accent); font-size: .7rem; font-weight: 700; }
+    .lm-property-row, .lm-activity-list { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); }
+    .lm-property-row { display: flex; align-items: center; gap: 10px; padding: 12px; margin-bottom: 22px; }
+    .lm-property-image { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 10px; overflow: hidden; flex: 0 0 auto; color: var(--green); background: var(--green-dim); }
+    .lm-property-image img { width: 100%; height: 100%; object-fit: cover; }
+    .lm-property-copy { min-width: 0; flex: 1; }
+    .lm-property-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+    .lm-property-copy span { display: block; margin-top: 3px; font-size: .67rem; color: var(--ink-3); }
+    .lm-property-actions { display: flex; gap: 5px; }
+    .lm-property-actions a { padding: 6px 9px; border-radius: 7px; background: var(--accent-dim); color: var(--accent); font-size: .65rem; font-weight: 700; }
+    .lm-activity-list { margin-bottom: 22px; padding: 2px 13px; }
+    .lm-activity { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .lm-activity:last-child { border-bottom: 0; }
+    .lm-activity-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; flex: 0 0 auto; font-size: .68rem; }
+    .lm-activity-copy { min-width: 0; flex: 1; }
+    .lm-activity-copy strong { display: block; font-size: .72rem; }
+    .lm-activity-copy span { display: block; color: var(--ink-3); font-size: .65rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lm-activity time { color: var(--ink-4); font-size: .61rem; white-space: nowrap; }
+    .lm-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+    .lm-action { min-height: 91px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border-radius: 12px; text-align: center; font-size: .64rem; font-weight: 700; line-height: 1.25; }
+    .lm-action i { font-size: 1.05rem; }
+    .lm-action.green { color: var(--green); background: var(--green-dim); }
+    .lm-action.blue { color: var(--accent); background: var(--accent-dim); }
+    .lm-action.amber { color: var(--amber); background: var(--amber-dim); }
+    .lm-action.red { color: var(--red); background: var(--red-dim); }
+  }
 </style>
 
-<div class="adm-wrap">
+<div class="adm-wrap dashboard-{{ user_type }}">
 
   <!-- ══════════════════════════════════════════════════════
        SHARED HERO BANNER
@@ -967,6 +1065,63 @@
       <i class="fas fa-signal"></i>
     </div>
   </div>
+
+  {% if user_type == 'landlord' %}
+  <section class="landlord-mobile-experience">
+    <div class="lm-profile">
+      <div class="lm-avatar">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</div>
+      <div>
+        <div class="lm-greeting">Welcome back,</div>
+        <div class="lm-name">{{ user.get_full_name|default:user.username }}</div>
+        <div class="lm-role">Property Owner</div>
+      </div>
+      <a class="lm-edit" href="{% url 'profile' %}" aria-label="Edit profile"><i class="fas fa-pen"></i></a>
+      <div class="lm-contact">
+        <span><i class="fas fa-phone"></i>{{ user.userprofile.phone_number|default:"No phone" }}</span>
+        <span><i class="fas fa-location-dot"></i>{{ user.userprofile.address|default:"Bwari, FCT" }}</span>
+      </div>
+    </div>
+
+    <div class="lm-kpis">
+      <div class="lm-kpi green"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-house"></i></span><span class="lm-kpi-label">My Properties</span></div><div class="lm-kpi-value">{{ total_properties|default:0|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_properties' %}">View properties <i class="fas fa-arrow-right"></i></a></div>
+      <div class="lm-kpi blue"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-wallet"></i></span><span class="lm-kpi-label">Payments Made</span></div><div class="lm-kpi-value">₦{{ total_paid|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_payments' %}">View payments <i class="fas fa-arrow-right"></i></a></div>
+      <div class="lm-kpi amber"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-file-invoice"></i></span><span class="lm-kpi-label">Outstanding Bills</span></div><div class="lm-kpi-value">₦{{ outstanding_bills|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_payments' %}">Pay now <i class="fas fa-arrow-right"></i></a></div>
+      <div class="lm-kpi red"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-flag"></i></span><span class="lm-kpi-label">Open Reports</span></div><div class="lm-kpi-value">{{ open_complaints|default:0|money:0 }}</div><a class="lm-kpi-link" href="{% url 'my_complaints' %}">View reports <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+
+    <div class="lm-rate-cta"><h2>Keep Your Property Records Updated</h2><p>Pay your tenement rates and sanitation levies easily and securely.</p><a href="{% url 'landlord_payments' %}">Pay Now <i class="fas fa-arrow-right"></i></a></div>
+
+    <div class="lm-section-head"><h2>My Portfolio</h2><a href="{% url 'register_property' %}">Register New <i class="fas fa-plus"></i></a></div>
+    {% if properties %}
+      {% with property=properties.0 %}
+      <div class="lm-property-row">
+        <div class="lm-property-image">{% if property.main_image %}<img src="{{ property.main_image.url }}" alt="{{ property.name }}">{% else %}<i class="fas fa-house"></i>{% endif %}</div>
+        <div class="lm-property-copy"><strong>{{ property.name }}</strong><span><i class="fas fa-location-dot"></i> {{ property.district|default:"Bwari, FCT" }} · {{ property.get_property_type_display }}</span></div>
+        <div class="lm-property-actions"><a href="{% url 'view_property' property.id %}">View</a></div>
+      </div>
+      {% endwith %}
+    {% else %}
+      <div class="lm-property-row"><div class="lm-property-image"><i class="fas fa-house"></i></div><div class="lm-property-copy"><strong>No property registered</strong><span>Register your first property to start.</span></div></div>
+    {% endif %}
+
+    <div class="lm-section-head"><h2>Recent Activities</h2><a href="{% url 'landlord_payments' %}">View all</a></div>
+    <div class="lm-activity-list">
+      {% for item in recent_activity|slice:":3" %}
+      <div class="lm-activity"><span class="lm-activity-icon {% if item.color == 'green' %}chip green{% elif item.color == 'red' %}chip red{% elif item.color == 'amber' %}chip amber{% else %}chip blue{% endif %}"><i class="fas {{ item.icon }}"></i></span><div class="lm-activity-copy"><strong>{{ item.title }}</strong><span>{{ item.subtitle }}</span></div><time>{{ item.when|timesince }} ago</time></div>
+      {% empty %}
+      <div class="lm-activity"><span class="lm-activity-icon chip blue"><i class="fas fa-circle-info"></i></span><div class="lm-activity-copy"><strong>No activity yet</strong><span>Your updates will appear here.</span></div></div>
+      {% endfor %}
+    </div>
+
+    <div class="lm-section-head"><h2>Quick Actions</h2></div>
+    <div class="lm-actions">
+      <a class="lm-action green" href="{% url 'register_property' %}"><i class="fas fa-plus-circle"></i><span>Register Property</span></a>
+      <a class="lm-action blue" href="{% url 'landlord_payments' %}"><i class="fas fa-wallet"></i><span>Make Payment</span></a>
+      <a class="lm-action amber" href="{% url 'landlord_properties' %}"><i class="fas fa-map"></i><span>View Properties</span></a>
+      <a class="lm-action red" href="{% url 'contact' %}"><i class="fas fa-headset"></i><span>Contact Support</span></a>
+    </div>
+  </section>
+  {% endif %}
 
   {% if user_type == 'admin' %}
 
@@ -1786,6 +1941,7 @@
   <!-- ══════════════════════════════════════════════════════
        LANDLORD DASHBOARD
   ══════════════════════════════════════════════════════ -->
+  <div class="landlord-desktop-content">
 
   <div class="stats-grid cols-4">
     <div class="stat-card c-green fade fade-1">
@@ -2140,6 +2296,7 @@
       <p>Keep your properties compliant and avoid late penalties — pay outstanding bills early and track every receipt in one place.</p>
     </div>
     <a href="{% url 'landlord_payments' %}" class="cta-btn">View My Payments <i class="fas fa-arrow-right"></i></a>
+  </div>
   </div>
 
   {% endif %}

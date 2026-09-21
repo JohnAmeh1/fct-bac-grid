@@ -384,6 +384,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .mobile-sub-link:hover { background: var(--green-50); color: var(--green-700); }
 .mobile-cta { display: flex; flex-direction: column; gap: 10px; }
 
+/* ---- AUTHENTICATED MOBILE BOTTOM NAVIGATION ---- */
+.mobile-bottom-nav { display: none; }
+
 /* ---- MESSAGES ---- */
 .messages-container { padding: 16px 24px 0; max-width: 1280px; margin: 0 auto; }
 .alert {
@@ -1043,7 +1046,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 @media (max-width: 768px) {
   :root { --nav-h: 64px; --announce-h: 36px; }
-  .announce-bar { font-size: 12px; }
+  .announce-bar { display: none; }
+  .navbar { top: 0; }
   .announce-link { display: none; }
   .nav-links, .nav-actions { display: none; }
   .hamburger { display: flex; }
@@ -1070,6 +1074,50 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .stat-item { padding: 16px 24px; }
   .stat-sep { display: none; }
   .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+  body:has(.mobile-bottom-nav) { padding-bottom: 78px; }
+  .footer { padding-bottom: 16px; }
+  .mobile-bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: end;
+    position: fixed;
+    z-index: 250;
+    left: 0; right: 0; bottom: 0;
+    min-height: 68px;
+    padding: 8px max(10px, env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-right));
+    background: rgba(255,255,255,.97);
+    border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -8px 26px rgba(11,18,32,.08);
+    backdrop-filter: blur(14px);
+  }
+  .mobile-bottom-link {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    color: var(--gray-500);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .mobile-bottom-link > i { font-size: 18px; height: 20px; }
+  .mobile-bottom-link.active { color: var(--green-700); }
+  .mobile-bottom-action { position: relative; padding-top: 20px; }
+  .mobile-bottom-action-icon {
+    position: absolute;
+    top: -24px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(145deg, var(--green-700), var(--green-900));
+    border: 4px solid #fff;
+    box-shadow: 0 6px 16px rgba(20,108,67,.30);
+  }
+  .mobile-bottom-action-icon i { font-size: 18px; }
 }
 @media (max-width: 480px) {
   .hero { padding: 40px 0 60px; }
