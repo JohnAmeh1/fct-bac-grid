@@ -3346,13 +3346,27 @@ def admin_rate_defaulters(request):
     )
     now = timezone.now()
 
+    landlord_ids = [landlord.id for landlord in landlords]
+
+    # Bulk-fetch every property for every landlord in ONE query, instead of
+    # one query per landlord (which is what was timing out this page with
+    # a real number of accounts — see the note above admin_sanitation_defaulters
+    # about the same problem).
     properties_by_owner = defaultdict(list)
     property_ids = []
-    landlord_ids = [landlord.id for landlord in landlords]
-    for landlord in landlords:
-        props = list(Property.objects.filter(owner=landlord).select_related('owner'))
-        properties_by_owner[landlord.id] = props
-        property_ids.extend(prop.id for prop in props)
+    if landlord_ids:
+        all_properties = list(
+            Property.objects.filter(owner_id__in=landlord_ids).select_related('owner')
+        )
+        for prop in all_properties:
+            properties_by_owner[prop.owner_id].append(prop)
+            property_ids.append(prop.id)
+
+    # Group the already-fetched active_rates by property_type in memory,
+    # instead of re-querying PaymentRate once per property below.
+    rates_by_property_type = defaultdict(list)
+    for rate in active_rates:
+        rates_by_property_type[rate.property_type].append(rate)
 
     rate_ids = [rate.id for rate in active_rates]
     valid_payment_lookup = {}
@@ -3375,11 +3389,7 @@ def admin_rate_defaulters(request):
     all_records = []
     for landlord in landlords:
         for prop in properties_by_owner.get(landlord.id, []):
-            for rate in PaymentRate.objects.filter(
-                property_type=prop.property_type,
-                is_active=True,
-                is_sanitation=False,
-            ):
+            for rate in rates_by_property_type.get(prop.property_type, []):
                 valid_payment = valid_payment_lookup.get((landlord.id, prop.id, rate.id))
                 amount = get_property_rate_amount(prop, rate)
                 all_records.append({
