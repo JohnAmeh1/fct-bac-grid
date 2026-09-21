@@ -262,6 +262,103 @@ def get_property_rate_amount(property_obj, rate):
     return Decimal(str(rate.amount))
 
 
+def compute_total_outstanding_payments():
+    """
+    System-wide total of everything still owed: unpaid tenement rates
+    (per property x active rate matching its property type) plus unpaid
+    sanitation levy (per eligible user x active sanitation rate).
+
+    Mirrors the bulk-query approach used in admin_rate_defaulters and
+    admin_sanitation_defaulters (constant number of queries, no N+1s),
+    but only accumulates the totals rather than building per-row records,
+    since the dashboard only needs the numbers.
+    """
+    now = timezone.now()
+
+    # ---- Tenement rates ----------------------------------------------
+    active_rates = list(
+        PaymentRate.objects.filter(is_active=True, is_sanitation=False)
+        .exclude(property_type__isnull=True)
+        .exclude(property_type='')
+    )
+    rates_by_property_type = defaultdict(list)
+    for rate in active_rates:
+        rates_by_property_type[rate.property_type].append(rate)
+
+    landlord_ids = list(
+        User.objects.filter(
+            userprofile__user_type='landlord',
+            userprofile__email_verified=True,
+        ).values_list('id', flat=True)
+    )
+
+    properties_by_owner = defaultdict(list)
+    property_ids = []
+    if landlord_ids:
+        for prop in Property.objects.filter(owner_id__in=landlord_ids):
+            properties_by_owner[prop.owner_id].append(prop)
+            property_ids.append(prop.id)
+
+    rate_ids = [rate.id for rate in active_rates]
+    valid_payment_pairs = set()
+    if property_ids and rate_ids and landlord_ids:
+        valid_payments = (
+            Payment.objects.filter(
+                landlord_id__in=landlord_ids,
+                property_id__in=property_ids,
+                payment_rate_id__in=rate_ids,
+                status='success',
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .values_list('landlord_id', 'property_id', 'payment_rate_id')
+        )
+        valid_payment_pairs = set(valid_payments)
+
+    tenement_outstanding = Decimal('0.00')
+    for owner_id, props in properties_by_owner.items():
+        for prop in props:
+            for rate in rates_by_property_type.get(prop.property_type, []):
+                if (owner_id, prop.id, rate.id) not in valid_payment_pairs:
+                    tenement_outstanding += get_property_rate_amount(prop, rate)
+
+    # ---- Sanitation levy -----------------------------------------------
+    sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
+    user_ids = list(
+        User.objects.filter(
+            userprofile__user_type__in=['landlord', 'tenant'],
+            userprofile__email_verified=True,
+        ).values_list('id', flat=True)
+    )
+
+    sanitation_rate_ids = [rate.id for rate in sanitation_rates]
+    paid_sanitation_pairs = set()
+    if user_ids and sanitation_rate_ids:
+        candidate_payments = (
+            Payment.objects.filter(
+                landlord_id__in=user_ids,
+                payment_rate_id__in=sanitation_rate_ids,
+                status='success',
+                property=None,
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .values_list('landlord_id', 'payment_rate_id')
+        )
+        paid_sanitation_pairs = set(candidate_payments)
+
+    sanitation_outstanding = Decimal('0.00')
+    for user_id in user_ids:
+        for rate in sanitation_rates:
+            if (user_id, rate.id) not in paid_sanitation_pairs:
+                sanitation_outstanding += Decimal(str(rate.amount))
+
+    total_outstanding = tenement_outstanding + sanitation_outstanding
+    return {
+        'tenement_outstanding': tenement_outstanding,
+        'sanitation_outstanding': sanitation_outstanding,
+        'total_outstanding': total_outstanding,
+    }
+
+
 MANAGED_PROPERTY_ROLES = ['admin', 'staff', 'field_staff']
 
 
@@ -965,6 +1062,10 @@ def dashboard(request):
         ]
         complaints_by_category_data = [row['count'] for row in complaints_by_category_qs]
 
+        # System-wide total still owed (unpaid tenement rates + unpaid
+        # sanitation levy), shown on the "Total Outstanding Payments" card.
+        outstanding_totals = compute_total_outstanding_payments()
+
         context.update({
             'residential_count': residential_count,
             'commercial_count': commercial_count,
@@ -974,6 +1075,9 @@ def dashboard(request):
             'total_landlords':           UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
             'total_properties':          Property.objects.count(),
             'open_complaints':           Complaint.objects.filter(status='open').count(),
+            'total_outstanding_payments': outstanding_totals['total_outstanding'],
+            'outstanding_tenement_total': outstanding_totals['tenement_outstanding'],
+            'outstanding_sanitation_total': outstanding_totals['sanitation_outstanding'],
             'sanitation_payers_count':   sanitation_payers_count,
             'sanitation_non_payers_count': sanitation_non_payers_count,
             'total_sanitation_eligible': total_sanitation_eligible,
