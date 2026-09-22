@@ -19,7 +19,7 @@ FROM_EMAIL        = 'hello@bacgrid.com'
 TO_EMAIL          = 'johnameh29@gmail.com'   # change if needed
 
 msg = MIMEMultipart()
-msg['Subject'] = 'Mailtrap SMTP Test – Bwari Tenement'
+msg['Subject'] = 'Mailtrap SMTP Test – FCT BAC Grid'
 msg['From']    = f'FCT BAC Grid <{FROM_EMAIL}>'
 msg['To']      = TO_EMAIL
 msg.attach(MIMEText('If you see this, Mailtrap SMTP is working correctly!', 'plain'))

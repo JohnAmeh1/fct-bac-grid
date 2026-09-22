@@ -170,3 +170,25 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR:   'error',
 }
+
+# ====================================================================
+# Logging — so email/SMTP failures show up with full detail in the
+# server console instead of being lost. Check your server logs after
+# an OTP send attempt; the exact Mailtrap/SMTP rejection reason will
+# be printed there (e.g. "unauthenticated sender domain not verified").
+# ====================================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'loggers': {
+        'tenement': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+    'root': {'handlers': ['console'], 'level': 'INFO'},
+}

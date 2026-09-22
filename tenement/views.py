@@ -147,10 +147,34 @@ def _paystack_error_mentions_email(response):
     return 'email' in str(body.get('message', '')).lower()
 
 # Helper: email sending
+import logging
 from django.core.mail import send_mail
 
+logger = logging.getLogger('tenement')
+
+
 def _configured_sender_email():
-    return SiteConfiguration.get_config().system_email or settings.DEFAULT_FROM_EMAIL
+    """
+    Prefer the admin-configured System Email, but ONLY if it's on the
+    bacgrid.com domain that's actually verified for Live sending in
+    Mailtrap. Mailtrap silently rejects mail from unverified sender
+    domains, which is what was causing "Failed to send email" even
+    though test_mailtrap.py (which hardcodes a verified @bacgrid.com
+    address) worked fine.
+
+    If the configured value is blank, malformed, or on a different
+    domain, fall back to DEFAULT_FROM_EMAIL, which is known-good.
+    """
+    configured = (SiteConfiguration.get_config().system_email or '').strip()
+    if configured.lower().endswith('@bacgrid.com'):
+        return configured
+    if configured:
+        logger.warning(
+            "SiteConfiguration.system_email (%s) is not a verified "
+            "bacgrid.com address — falling back to DEFAULT_FROM_EMAIL.",
+            configured,
+        )
+    return settings.DEFAULT_FROM_EMAIL
 
 
 def send_otp_email(user, otp_code):
@@ -170,25 +194,9 @@ def send_otp_email(user, otp_code):
             fail_silently=False,
         )
         return True
-    except Exception as e:
-        import traceback
-        traceback.print_exc()        # <-- prints full error to console
-        print(f"Email error: {e}")
+    except Exception:
+        logger.exception("Failed to send OTP email to %s", user.email)
         return False
-    # try:
-    #     send_mail(
-    #         subject,
-    #         message,
-    #         settings.DEFAULT_FROM_EMAIL,
-    #         [user.email],
-    #         fail_silently=False,
-    #     )
-    #     return True
-    # except Exception as e:
-    #     import traceback
-    #     traceback.print_exc()        # <-- prints full error to console
-    #     print(f"Email error: {e}")
-    #     return False
 
 # Decorator to require verified email for certain views
 def verified_email_required(view_func):
@@ -797,8 +805,8 @@ def send_forgot_password_email(user, otp_code):
             fail_silently=False,
         )
         return True
-    except Exception as e:
-        print(f"Forgot password email error: {e}")
+    except Exception:
+        logger.exception("Failed to send password-reset OTP email to %s", user.email)
         return False
 
 
@@ -972,8 +980,10 @@ def verify_email(request):
     except OTP.DoesNotExist:
         # Create a new OTP and send email
         otp = OTP.create_otp(request.user)
-        send_otp_email(request.user, otp.code)
-        messages.info(request, 'A new verification code has been sent to your email.')
+        if send_otp_email(request.user, otp.code):
+            messages.info(request, 'A new verification code has been sent to your email.')
+        else:
+            messages.error(request, 'Could not send the verification email. Please try again shortly.')
         return redirect('verify_email')
 
     if request.method == 'POST':
@@ -981,9 +991,11 @@ def verify_email(request):
         if form.is_valid():
             code = form.cleaned_data['otp_code']
             if not user_otp.is_valid():
-                messages.error(request, 'OTP expired. A new one has been sent.')
-                OTP.create_otp(request.user)
-                send_otp_email(request.user, OTP.objects.get(user=request.user).code)
+                new_otp = OTP.create_otp(request.user)
+                if send_otp_email(request.user, new_otp.code):
+                    messages.error(request, 'OTP expired. A new one has been sent.')
+                else:
+                    messages.error(request, 'OTP expired, and the new code could not be sent. Please try again shortly.')
                 return redirect('verify_email')
 
             if user_otp.verify(code):
