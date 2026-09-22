@@ -20,6 +20,9 @@ urlpatterns = [
     # ── Core ──────────────────────────────────────────────────
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile_view, name='profile'),
+    path('profile/verify-email-change/', views.verify_email_change, name='verify_email_change'),
+    path('profile/resend-email-change-otp/', views.resend_email_change_otp, name='resend_email_change_otp'),
+    path('profile/cancel-email-change/', views.cancel_email_change, name='cancel_email_change'),
     path('theme/toggle/', views.toggle_dark_mode, name='toggle_dark_mode'),
 
     # ── Landlord: Properties ───────────────────────────────────

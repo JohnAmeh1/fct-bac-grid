@@ -31,6 +31,10 @@ class UserProfile(models.Model):
     bio = models.TextField(max_length=500, blank=True)
     dark_mode = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
+    pending_email = models.EmailField(
+        blank=True, default='',
+        help_text='A new email address awaiting OTP confirmation. Not yet applied to the account.'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

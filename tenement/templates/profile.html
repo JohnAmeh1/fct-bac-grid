@@ -326,6 +326,28 @@ Tenement System{% endblock %} {% block content %}
   .fld-inner:focus-within .fld-ico {
     color: var(--green);
   }
+  .pending-email-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--amber-dim);
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+  .pending-email-note i {
+    margin-top: 2px;
+    font-size: 0.75rem;
+  }
+  .pending-email-note a {
+    color: #92400e;
+    font-weight: 700;
+    text-decoration: underline;
+  }
   .fld textarea {
     resize: vertical;
     min-height: 100px;
@@ -576,6 +598,14 @@ Tenement System{% endblock %} {% block content %}
                   {{ form.email }}
                   <i class="fas fa-envelope fld-ico"></i>
                 </div>
+                {% if profile.pending_email %}
+                  <div class="pending-email-note">
+                    <i class="fas fa-clock"></i>
+                    <span><strong>{{ profile.pending_email }}</strong> is awaiting confirmation.
+                    <a href="{% url 'verify_email_change' %}">Enter code</a> ·
+                    <a href="{% url 'cancel_email_change' %}">Cancel</a></span>
+                  </div>
+                {% endif %}
               </div>
               <div class="fld">
                 <label>Phone Number</label>

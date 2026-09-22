@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirm New Email | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap");
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --accent: #1e6cf0; --accent-dim: #dbeafe;
+    --red: #dc2626; --red-dim: #fee2e2;
+    --radius-sm: 6px; --radius: 10px; --radius-lg: 16px; --radius-xl: 24px;
+    --transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "DM Sans", sans-serif; color: var(--ink); background: var(--surface-2); }
+  @keyframes fadein { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .fade   { animation: fadein .4s ease both; }
+  .fade-1 { animation-delay:.06s; } .fade-2 { animation-delay:.12s; }
+
+  .evc-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+  }
+  .evc-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    overflow: hidden;
+  }
+  .evc-head {
+    padding: 28px 28px 0;
+  }
+  .evc-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-dim);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 14px;
+  }
+  .evc-title {
+    font-family: "Fraunces", serif;
+    font-size: 1.6rem; font-weight: 700; color: var(--ink);
+    letter-spacing: -.03em; margin-bottom: 6px;
+  }
+  .evc-sub { font-size: .86rem; color: var(--ink-3); line-height: 1.6; margin-bottom: 22px; }
+  .evc-sub strong { color: var(--ink); }
+
+  .evc-body { padding: 0 28px 28px; }
+
+  .fld { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .fld label { font-size: .775rem; font-weight: 600; color: var(--ink-2); letter-spacing: .01em; }
+  #id_otp_code {
+    width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: "DM Mono", monospace; font-size: 1.4rem; text-align: center; letter-spacing: .3em;
+    background: var(--surface-2); outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  }
+  #id_otp_code:focus {
+    border-color: var(--green); background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+  }
+  .field-error { font-size: .75rem; color: var(--red); margin-top: 4px; }
+
+  .btn-save {
+    width: 100%;
+    background: var(--green); color: white;
+    font-family: "DM Sans", sans-serif; font-size: .88rem; font-weight: 600;
+    padding: 12px 20px; border-radius: var(--radius); border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    margin-bottom: 18px;
+  }
+  .btn-save:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(22,163,74,.3); }
+
+  .evc-links { display: flex; flex-direction: column; gap: 8px; align-items: center; font-size: .84rem; color: var(--ink-3); }
+  .evc-links a { color: var(--green); font-weight: 600; text-decoration: none; }
+  .evc-links a:hover { color: var(--green-dk); }
+  .evc-links .cancel-link { color: var(--ink-4); font-weight: 500; }
+  .evc-links .cancel-link:hover { color: var(--red); }
+
+  .success-notice, .error-notice, .warning-notice, .info-notice {
+    display: flex; align-items: center; gap: 10px;
+    border-radius: var(--radius); padding: 12px 16px;
+    font-size: .845rem; font-weight: 500; margin: 0 24px 16px;
+  }
+  .success-notice { background: var(--green-dim); border: 1px solid #bbf7d0; color: var(--green-dk); }
+  .error-notice   { background: var(--red-dim); border: 1px solid #fca5a5; color: var(--red); }
+  .warning-notice { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+  .info-notice    { background: var(--accent-dim); border: 1px solid #bfdbfe; color: var(--accent); }
+</style>
+
+<div class="evc-page">
+  <div class="evc-card fade">
+    {% for message in messages %}
+      <div class="{% if message.tags == 'success' %}success-notice{% elif message.tags == 'error' %}error-notice{% elif message.tags == 'warning' %}warning-notice{% else %}info-notice{% endif %}" style="margin-top:24px;">
+        <i class="fas {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' %}fa-circle-exclamation{% elif message.tags == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+        {{ message }}
+      </div>
+    {% endfor %}
+
+    <div class="evc-head">
+      <div class="evc-eyebrow"><i class="fas fa-envelope-circle-check"></i> Confirm Email</div>
+      <h1 class="evc-title">Verify New Email</h1>
+      <p class="evc-sub">
+        We sent a 6-digit code to <strong>{{ new_email }}</strong>.
+        Enter it below to make this your new account email. Your current email
+        stays active until you confirm.
+      </p>
+    </div>
+
+    <div class="evc-body">
+      <form method="post" class="fade fade-1">
+        {% csrf_token %}
+        <div class="fld">
+          <label for="id_otp_code">Enter 6-digit code</label>
+          {{ form.otp_code }}
+          {% if form.otp_code.errors %}<p class="field-error">{{ form.otp_code.errors|striptags }}</p>{% endif %}
+        </div>
+        <button type="submit" class="btn-save">
+          <i class="fas fa-check-circle"></i> Confirm New Email
+        </button>
+      </form>
+
+      <div class="evc-links fade fade-2">
+        <span>Didn't get it? <a href="{% url 'resend_email_change_otp' %}">Resend code</a></span>
+        <a href="{% url 'cancel_email_change' %}" class="cancel-link">Cancel and keep my current email</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

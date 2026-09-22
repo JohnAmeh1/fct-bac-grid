@@ -131,12 +131,33 @@ class ProfileUpdateForm(forms.ModelForm):
             self.fields['last_name'].initial = self.user.last_name
             self.fields['email'].initial = self.user.email
 
-    def save(self, commit=True):
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        qs = User.objects.filter(email__iexact=email)
+        if self.user:
+            qs = qs.exclude(pk=self.user.pk)
+        if qs.exists():
+            raise forms.ValidationError('An account with this email address already exists.')
+        return email
+
+    def email_changed(self):
+        """True if the submitted email differs from the user's current email."""
+        if not self.user:
+            return False
+        return self.cleaned_data.get('email', '').lower() != (self.user.email or '').lower()
+
+    def save(self, commit=True, commit_email=True):
+        """
+        commit_email=False lets the caller apply the email separately
+        (used for the OTP-gated email-change flow) instead of writing it
+        straight to the User record.
+        """
         profile = super().save(commit=False)
         if self.user:
             self.user.first_name = self.cleaned_data['first_name']
             self.user.last_name = self.cleaned_data['last_name']
-            self.user.email = self.cleaned_data['email']
+            if commit_email:
+                self.user.email = self.cleaned_data['email']
             self.user.save()
         if commit:
             profile.save()

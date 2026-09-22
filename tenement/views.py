@@ -147,34 +147,10 @@ def _paystack_error_mentions_email(response):
     return 'email' in str(body.get('message', '')).lower()
 
 # Helper: email sending
-import logging
 from django.core.mail import send_mail
 
-logger = logging.getLogger('tenement')
-
-
 def _configured_sender_email():
-    """
-    Prefer the admin-configured System Email, but ONLY if it's on the
-    bacgrid.com domain that's actually verified for Live sending in
-    Mailtrap. Mailtrap silently rejects mail from unverified sender
-    domains, which is what was causing "Failed to send email" even
-    though test_mailtrap.py (which hardcodes a verified @bacgrid.com
-    address) worked fine.
-
-    If the configured value is blank, malformed, or on a different
-    domain, fall back to DEFAULT_FROM_EMAIL, which is known-good.
-    """
-    configured = (SiteConfiguration.get_config().system_email or '').strip()
-    if configured.lower().endswith('@bacgrid.com'):
-        return configured
-    if configured:
-        logger.warning(
-            "SiteConfiguration.system_email (%s) is not a verified "
-            "bacgrid.com address — falling back to DEFAULT_FROM_EMAIL.",
-            configured,
-        )
-    return settings.DEFAULT_FROM_EMAIL
+    return SiteConfiguration.get_config().system_email or settings.DEFAULT_FROM_EMAIL
 
 
 def send_otp_email(user, otp_code):
@@ -194,9 +170,50 @@ def send_otp_email(user, otp_code):
             fail_silently=False,
         )
         return True
-    except Exception:
-        logger.exception("Failed to send OTP email to %s", user.email)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()        # <-- prints full error to console
+        print(f"Email error: {e}")
         return False
+    # try:
+    #     send_mail(
+    #         subject,
+    #         message,
+    #         settings.DEFAULT_FROM_EMAIL,
+    #         [user.email],
+    #         fail_silently=False,
+    #     )
+    #     return True
+    # except Exception as e:
+    #     import traceback
+    #     traceback.print_exc()        # <-- prints full error to console
+    #     print(f"Email error: {e}")
+    #     return False
+
+def send_email_change_otp(user, new_email, otp_code):
+    subject = 'Confirm Your New Email – FCT BAC Grid'
+    message = (
+        f"Hello {user.first_name or user.username},\n\n"
+        f"You requested to change the email address on your FCT BAC Grid account "
+        f"to this address ({new_email}).\n\n"
+        f"Your verification code is:\n\n"
+        f"    {otp_code}\n\n"
+        f"It expires in 10 minutes. If you didn't request this, you can safely "
+        f"ignore this email — your account email will not be changed."
+    )
+    try:
+        send_mail(
+            subject,
+            message,
+            _configured_sender_email(),
+            [new_email],
+            fail_silently=False,
+        )
+        return True
+    except Exception:
+        logger.exception("Failed to send email-change OTP to %s", new_email)
+        return False
+
 
 # Decorator to require verified email for certain views
 def verified_email_required(view_func):
@@ -805,8 +822,8 @@ def send_forgot_password_email(user, otp_code):
             fail_silently=False,
         )
         return True
-    except Exception:
-        logger.exception("Failed to send password-reset OTP email to %s", user.email)
+    except Exception as e:
+        print(f"Forgot password email error: {e}")
         return False
 
 
@@ -980,10 +997,8 @@ def verify_email(request):
     except OTP.DoesNotExist:
         # Create a new OTP and send email
         otp = OTP.create_otp(request.user)
-        if send_otp_email(request.user, otp.code):
-            messages.info(request, 'A new verification code has been sent to your email.')
-        else:
-            messages.error(request, 'Could not send the verification email. Please try again shortly.')
+        send_otp_email(request.user, otp.code)
+        messages.info(request, 'A new verification code has been sent to your email.')
         return redirect('verify_email')
 
     if request.method == 'POST':
@@ -991,11 +1006,9 @@ def verify_email(request):
         if form.is_valid():
             code = form.cleaned_data['otp_code']
             if not user_otp.is_valid():
-                new_otp = OTP.create_otp(request.user)
-                if send_otp_email(request.user, new_otp.code):
-                    messages.error(request, 'OTP expired. A new one has been sent.')
-                else:
-                    messages.error(request, 'OTP expired, and the new code could not be sent. Please try again shortly.')
+                messages.error(request, 'OTP expired. A new one has been sent.')
+                OTP.create_otp(request.user)
+                send_otp_email(request.user, OTP.objects.get(user=request.user).code)
                 return redirect('verify_email')
 
             if user_otp.verify(code):
@@ -1298,13 +1311,110 @@ def profile_view(request):
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, instance=profile, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Profile updated successfully.")
-            return redirect('profile')
+            if form.email_changed():
+                # Don't apply the new email yet — save everything else,
+                # stash the requested address, and require OTP confirmation
+                # sent to the NEW address before it takes effect.
+                form.save(commit_email=False)
+                new_email = form.cleaned_data['email']
+                profile.pending_email = new_email
+                profile.save(update_fields=['pending_email'])
+
+                otp = OTP.create_otp(request.user)
+                if send_email_change_otp(request.user, new_email, otp.code):
+                    messages.info(
+                        request,
+                        f'We sent a verification code to {new_email}. '
+                        f'Enter it to confirm your new email address.'
+                    )
+                    return redirect('verify_email_change')
+                else:
+                    profile.pending_email = ''
+                    profile.save(update_fields=['pending_email'])
+                    messages.error(request, 'Could not send the verification email. Please try again.')
+            else:
+                form.save()
+                messages.success(request, "Profile updated successfully.")
+                return redirect('profile')
     else:
         form = ProfileUpdateForm(instance=profile, user=request.user)
 
-    return render(request, 'profile.html', {'form': form, 'user_type': profile.user_type})
+    return render(request, 'profile.html', {'form': form, 'user_type': profile.user_type, 'profile': profile})
+
+
+@login_required
+def verify_email_change(request):
+    profile = request.user.userprofile
+    if not profile.pending_email:
+        messages.info(request, 'You have no pending email change to verify.')
+        return redirect('profile')
+
+    try:
+        user_otp = OTP.objects.get(user=request.user)
+    except OTP.DoesNotExist:
+        messages.error(request, 'Your verification code expired. Please request the email change again.')
+        profile.pending_email = ''
+        profile.save(update_fields=['pending_email'])
+        return redirect('profile')
+
+    if request.method == 'POST':
+        form = OTPVerificationForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['otp_code']
+            if not user_otp.is_valid():
+                messages.error(request, 'That code expired. Please request the email change again.')
+                profile.pending_email = ''
+                profile.save(update_fields=['pending_email'])
+                return redirect('profile')
+
+            if user_otp.verify(code):
+                request.user.email = profile.pending_email
+                request.user.save(update_fields=['email'])
+                profile.pending_email = ''
+                profile.save(update_fields=['pending_email'])
+                messages.success(request, 'Your email address has been updated.')
+                return redirect('profile')
+            else:
+                messages.error(request, 'Invalid code. Please try again.')
+    else:
+        form = OTPVerificationForm()
+
+    return render(request, 'auth/verify_email_change.html', {
+        'form': form,
+        'new_email': profile.pending_email,
+    })
+
+
+@login_required
+def resend_email_change_otp(request):
+    profile = request.user.userprofile
+    if not profile.pending_email:
+        messages.error(request, 'You have no pending email change to verify.')
+        return redirect('profile')
+
+    ip = _get_client_ip(request)
+    rl_key = f'resend_email_change_otp:{request.user.pk}:{ip}'
+    if _is_rate_limited(rl_key, limit=3, window_seconds=600):
+        messages.error(request, 'Too many resend requests. Please wait a few minutes.')
+        return redirect('verify_email_change')
+
+    otp = OTP.create_otp(request.user)
+    if send_email_change_otp(request.user, profile.pending_email, otp.code):
+        messages.success(request, f'A new code was sent to {profile.pending_email}.')
+    else:
+        messages.error(request, 'Failed to send email. Please try again.')
+    return redirect('verify_email_change')
+
+
+@login_required
+def cancel_email_change(request):
+    profile = request.user.userprofile
+    if profile.pending_email:
+        profile.pending_email = ''
+        profile.save(update_fields=['pending_email'])
+        OTP.objects.filter(user=request.user).delete()
+        messages.info(request, 'Email change cancelled.')
+    return redirect('profile')
 
 
 @login_required
