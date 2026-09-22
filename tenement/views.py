@@ -149,8 +149,50 @@ def _paystack_error_mentions_email(response):
 # Helper: email sending
 from django.core.mail import send_mail
 
+# Only this domain is verified for Live sending in Mailtrap. Any configured
+# sender address outside it gets silently rejected by Mailtrap (as happened
+# with a gmail.com address set in Site Configuration), so we validate against
+# it here rather than trusting the config value directly.
+_VERIFIED_SENDER_DOMAIN = 'bacgrid.com'
+_FALLBACK_SENDER = 'FCT BAC Grid <customercare@bacgrid.com>'
+
+
+def _extract_email_address(value):
+    match = re.search(r'[\w\.\-+]+@[\w\.\-]+', value or '')
+    return match.group(0) if match else ''
+
+
+def _is_verified_sender(value):
+    return _extract_email_address(value).lower().endswith('@' + _VERIFIED_SENDER_DOMAIN)
+
+
 def _configured_sender_email():
-    return SiteConfiguration.get_config().system_email or settings.DEFAULT_FROM_EMAIL
+    """
+    Prefer the admin-configured System Email, but only if it's on the
+    verified bacgrid.com sending domain. Otherwise fall back to
+    DEFAULT_FROM_EMAIL — and if THAT isn't verified either, fall back to a
+    hardcoded known-good address, so a bad value in either place can never
+    silently break outgoing mail again.
+    """
+    configured = (SiteConfiguration.get_config().system_email or '').strip()
+    if _is_verified_sender(configured):
+        return configured
+    if configured:
+        logger.warning(
+            "SiteConfiguration.system_email (%s) is not on the verified "
+            "%s sending domain — ignoring it.",
+            configured, _VERIFIED_SENDER_DOMAIN,
+        )
+
+    if _is_verified_sender(settings.DEFAULT_FROM_EMAIL):
+        return settings.DEFAULT_FROM_EMAIL
+
+    logger.warning(
+        "DEFAULT_FROM_EMAIL (%s) is not on the verified %s sending domain "
+        "either — using the hardcoded fallback sender.",
+        settings.DEFAULT_FROM_EMAIL, _VERIFIED_SENDER_DOMAIN,
+    )
+    return _FALLBACK_SENDER
 
 
 def send_otp_email(user, otp_code):
@@ -170,27 +212,16 @@ def send_otp_email(user, otp_code):
             fail_silently=False,
         )
         return True
-    except Exception as e:
-        import traceback
-        traceback.print_exc()        # <-- prints full error to console
-        print(f"Email error: {e}")
+    except Exception:
+        logger.exception("Failed to send OTP email to %s", user.email)
         return False
-    # try:
-    #     send_mail(
-    #         subject,
-    #         message,
-    #         settings.DEFAULT_FROM_EMAIL,
-    #         [user.email],
-    #         fail_silently=False,
-    #     )
-    #     return True
-    # except Exception as e:
-    #     import traceback
-    #     traceback.print_exc()        # <-- prints full error to console
-    #     print(f"Email error: {e}")
-    #     return False
 
 def send_email_change_otp(user, new_email, otp_code):
+    """
+    Returns (success: bool, error_detail: str | None). error_detail is the
+    real exception message so the caller can surface it in the UI without
+    needing access to server logs.
+    """
     subject = 'Confirm Your New Email – FCT BAC Grid'
     message = (
         f"Hello {user.first_name or user.username},\n\n"
@@ -209,10 +240,10 @@ def send_email_change_otp(user, new_email, otp_code):
             [new_email],
             fail_silently=False,
         )
-        return True
-    except Exception:
+        return True, None
+    except Exception as e:
         logger.exception("Failed to send email-change OTP to %s", new_email)
-        return False
+        return False, f"{type(e).__name__}: {e}"
 
 
 # Decorator to require verified email for certain views
@@ -822,8 +853,8 @@ def send_forgot_password_email(user, otp_code):
             fail_silently=False,
         )
         return True
-    except Exception as e:
-        print(f"Forgot password email error: {e}")
+    except Exception:
+        logger.exception("Failed to send password-reset OTP email to %s", user.email)
         return False
 
 
@@ -1321,7 +1352,8 @@ def profile_view(request):
                 profile.save(update_fields=['pending_email'])
 
                 otp = OTP.create_otp(request.user)
-                if send_email_change_otp(request.user, new_email, otp.code):
+                sent, error_detail = send_email_change_otp(request.user, new_email, otp.code)
+                if sent:
                     messages.info(
                         request,
                         f'We sent a verification code to {new_email}. '
@@ -1331,7 +1363,10 @@ def profile_view(request):
                 else:
                     profile.pending_email = ''
                     profile.save(update_fields=['pending_email'])
-                    messages.error(request, 'Could not send the verification email. Please try again.')
+                    messages.error(
+                        request,
+                        f'Could not send the verification email. Details: {error_detail}'
+                    )
             else:
                 form.save()
                 messages.success(request, "Profile updated successfully.")
@@ -1399,10 +1434,11 @@ def resend_email_change_otp(request):
         return redirect('verify_email_change')
 
     otp = OTP.create_otp(request.user)
-    if send_email_change_otp(request.user, profile.pending_email, otp.code):
+    sent, error_detail = send_email_change_otp(request.user, profile.pending_email, otp.code)
+    if sent:
         messages.success(request, f'A new code was sent to {profile.pending_email}.')
     else:
-        messages.error(request, 'Failed to send email. Please try again.')
+        messages.error(request, f'Failed to send email. Details: {error_detail}')
     return redirect('verify_email_change')
 
 
