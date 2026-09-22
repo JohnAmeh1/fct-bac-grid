@@ -122,10 +122,6 @@
                 <span class="chip green"><i class="fas fa-house"></i> Residential</span>
               {% elif item.property.property_type == 'commercial' %}
                 <span class="chip blue"><i class="fas fa-store"></i> Commercial</span>
-              {% elif item.property.property_type == 'industrial' %}
-                <span class="chip amber"><i class="fas fa-industry"></i> Industrial</span>
-              {% elif item.property.property_type == 'land' %}
-                <span class="chip teal"><i class="fas fa-mountain-sun"></i> Land</span>
               {% endif %}
             </td>
             <td>{{ item.rate.name }}</td>
@@ -172,10 +168,6 @@
                 <span class="chip green"><i class="fas fa-house"></i> Residential</span>
               {% elif item.property.property_type == 'commercial' %}
                 <span class="chip blue"><i class="fas fa-store"></i> Commercial</span>
-              {% elif item.property.property_type == 'industrial' %}
-                <span class="chip amber"><i class="fas fa-industry"></i> Industrial</span>
-              {% elif item.property.property_type == 'land' %}
-                <span class="chip teal"><i class="fas fa-mountain-sun"></i> Land</span>
               {% endif %}
             </td>
             <td>{{ item.rate.name }}</td>
@@ -230,10 +222,6 @@
                 <span class="chip green"><i class="fas fa-house"></i> Residential</span>
               {% elif payment.property.property_type == 'commercial' %}
                 <span class="chip blue"><i class="fas fa-store"></i> Commercial</span>
-              {% elif payment.property.property_type == 'industrial' %}
-                <span class="chip amber"><i class="fas fa-industry"></i> Industrial</span>
-              {% elif payment.property.property_type == 'land' %}
-                <span class="chip teal"><i class="fas fa-mountain-sun"></i> Land</span>
               {% endif %}
             </td>
             <td>{{ payment.payment_rate.name|default:"—" }}</td>

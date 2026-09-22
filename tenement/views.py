@@ -584,12 +584,8 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
             prop_type = 'residential'
         elif prop_type_value in ('commercial', 'commercialproperty'):
             prop_type = 'commercial'
-        elif prop_type_value in ('industrial', 'industrialproperty'):
-            prop_type = 'industrial'
-        elif prop_type_value in ('land', 'plot', 'landproperty'):
-            prop_type = 'land'
         else:
-            prop_type = 'land' if (latitude or longitude or property_ref) else 'residential'
+            prop_type = 'residential'
 
         latitude_value = normalize_coordinate(latitude)
         longitude_value = normalize_coordinate(longitude)
@@ -1016,8 +1012,6 @@ def dashboard(request):
     if profile.user_type in ['admin', 'staff', 'field_staff']:
         residential_count = Property.objects.filter(property_type='residential').count()
         commercial_count = Property.objects.filter(property_type='commercial').count()
-        industrial_count = Property.objects.filter(property_type='industrial').count()
-        land_count = Property.objects.filter(property_type='land').count()
 
         # Sanitation payer counts — mirror the exact logic used in
         # admin_sanitation_defaulters so the dashboard numbers always match
@@ -1126,8 +1120,6 @@ def dashboard(request):
             'new_properties_this_month': new_properties_this_month,
             'residential_count': residential_count,
             'commercial_count': commercial_count,
-            'industrial_count': industrial_count,
-            'land_count': land_count,
             'total_users':               UserProfile.objects.filter(email_verified=True).count(),
             'total_landlords':           UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
             'total_properties':          Property.objects.count(),
@@ -1276,6 +1268,15 @@ def profile_view(request):
     return render(request, 'profile.html', {'form': form, 'user_type': profile.user_type})
 
 
+@login_required
+@require_POST
+def toggle_dark_mode(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile.dark_mode = not profile.dark_mode
+    profile.save(update_fields=['dark_mode'])
+    return redirect(request.POST.get('next') or 'dashboard')
+
+
 # ── Properties (landlord) ─────────────────────────────────────────────────────
 @login_required
 @verified_email_required
@@ -1390,7 +1391,7 @@ def landlord_properties(request):
         )
 
     prop_type = request.GET.get('property_type', '')
-    if prop_type in ('residential', 'commercial', 'industrial', 'land'):
+    if prop_type in ('residential', 'commercial'):
         properties = properties.filter(property_type=prop_type)
 
     district = request.GET.get('district', '')
@@ -1726,7 +1727,7 @@ def admin_manage_properties(request):
     properties = Property.objects.select_related('owner').all()
 
     prop_type = request.GET.get('property_type')
-    if prop_type in ('residential', 'commercial', 'industrial', 'land'):
+    if prop_type in ('residential', 'commercial'):
         properties = properties.filter(property_type=prop_type)
 
     district = request.GET.get('district')
@@ -1751,8 +1752,6 @@ def admin_manage_properties(request):
     total_properties  = Property.objects.count()
     residential_count = Property.objects.filter(property_type='residential').count()
     commercial_count  = Property.objects.filter(property_type='commercial').count()
-    industrial_count  = Property.objects.filter(property_type='industrial').count()
-    land_count        = Property.objects.filter(property_type='land').count()
 
     district_counts = {
         val: Property.objects.filter(district=val).count()
@@ -1776,8 +1775,6 @@ def admin_manage_properties(request):
         'total_properties':  total_properties,
         'residential_count': residential_count,
         'commercial_count':  commercial_count,
-        'industrial_count':  industrial_count,
-        'land_count':        land_count,
         'district_choices':  DISTRICT_CHOICES,
         'district_counts':   district_counts,
         'paid_status':       paid_status,

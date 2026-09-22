@@ -429,10 +429,10 @@
         We're here to help every step of the way.
       </p>
       <div class="c-hero-actions fade fade-3">
-        <a href="tel:+2348003BWARITC" class="c-pill c-pill-green">
+        <a href="tel:{{ site_config.contact_phone|default:'+234800000000'|cut:' ' }}" class="c-pill c-pill-green">
           <i class="fas fa-phone"></i> Call Support
         </a>
-        <a href="mailto:support@bwari.gov.ng" class="c-pill c-pill-ghost">
+        <a href="mailto:{{ site_config.contact_email|default:'info@bwaricouncil.gov.ng' }}" class="c-pill c-pill-ghost">
           <i class="fas fa-envelope"></i> Send Email
         </a>
         <a href="https://maps.google.com/?q=Bwari+Area+Council+Secretariat" target="_blank" class="c-pill c-pill-ghost">
@@ -476,9 +476,9 @@
             <div class="c-ch-name">Phone Support</div>
           </div>
         </div>
-        <div class="c-ch-val">+234 (0) 800 BWARI TC</div>
+        <div class="c-ch-val">{{ site_config.contact_phone|default:'+234 (0) 800 BWARI TC' }}</div>
         <div class="c-ch-note">Our support team is available Monday to Friday, 8:00 am – 5:00 pm WAT. Calls are handled in the order received.</div>
-        <a href="tel:+2348003BWARITC" class="c-ch-action green">
+        <a href="tel:{{ site_config.contact_phone|default:'+234800000000'|cut:' ' }}" class="c-ch-action green">
           Call Now <i class="fas fa-arrow-right"></i>
         </a>
       </div>
@@ -492,9 +492,9 @@
             <div class="c-ch-name">Email Us</div>
           </div>
         </div>
-        <div class="c-ch-val">support@bwari.gov.ng</div>
+        <div class="c-ch-val">{{ site_config.contact_email|default:'support@bwari.gov.ng' }}</div>
         <div class="c-ch-note">Send a detailed message and receive a written response within 1–2 business days. Best for formal enquiries and documentation.</div>
-        <a href="mailto:support@bwari.gov.ng" class="c-ch-action blue">
+        <a href="mailto:{{ site_config.contact_email|default:'support@bwari.gov.ng' }}" class="c-ch-action blue">
           Compose Email <i class="fas fa-arrow-right"></i>
         </a>
       </div>
@@ -508,7 +508,7 @@
             <div class="c-ch-name">Visit the Secretariat</div>
           </div>
         </div>
-        <div class="c-ch-val">Bwari Town, FCT — Abuja</div>
+        <div class="c-ch-val">{{ site_config.contact_address|default:'Bwari Town, FCT — Abuja' }}</div>
         <div class="c-ch-note">Attend in person for payment receipts, dispute resolution, or property registration assistance. Bring a valid ID.</div>
         <a href="https://maps.google.com/?q=Bwari+Area+Council+Secretariat" target="_blank" class="c-ch-action amber">
           Get Directions <i class="fas fa-arrow-right"></i>
@@ -540,27 +540,27 @@
       <div class="c-address-card fade fade-2">
         <div class="c-address-inner">
           <div class="c-address-eyebrow"><i class="fas fa-map-pin"></i> &nbsp;Physical Location</div>
-          <div class="c-address-title">Bwari Area Council<br>Secretariat</div>
+          <div class="c-address-title">{{ site_config.site_name|default:'Bwari Area Council' }}</div>
 
           <div class="c-address-line">
             <div class="c-al-icon"><i class="fas fa-location-dot"></i></div>
             <div>
               <div class="c-al-label">Address</div>
-              <div class="c-al-val">Bwari Area Council Secretariat,<br>Bwari Town, FCT — Abuja, Nigeria</div>
+              <div class="c-al-val">{{ site_config.contact_address|default:'Bwari Area Council Secretariat, Bwari Town, FCT — Abuja, Nigeria' }}</div>
             </div>
           </div>
           <div class="c-address-line">
             <div class="c-al-icon"><i class="fas fa-envelope"></i></div>
             <div>
               <div class="c-al-label">Email</div>
-              <div class="c-al-val">support@bwari.gov.ng</div>
+              <div class="c-al-val">{{ site_config.contact_email|default:'support@bwari.gov.ng' }}</div>
             </div>
           </div>
           <div class="c-address-line">
             <div class="c-al-icon"><i class="fas fa-phone"></i></div>
             <div>
               <div class="c-al-label">Telephone</div>
-              <div class="c-al-val">+234 (0) 800 BWARI TC</div>
+              <div class="c-al-val">{{ site_config.contact_phone|default:'+234 (0) 800 BWARI TC' }}</div>
             </div>
           </div>
           <div class="c-address-line">

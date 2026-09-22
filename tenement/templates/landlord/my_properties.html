@@ -232,8 +232,6 @@
       <option value="">All Types</option>
       <option value="residential" {% if prop_type == 'residential' %}selected{% endif %}>Residential</option>
       <option value="commercial"  {% if prop_type == 'commercial'  %}selected{% endif %}>Commercial</option>
-      <option value="industrial"  {% if prop_type == 'industrial'  %}selected{% endif %}>Industrial</option>
-      <option value="land"        {% if prop_type == 'land'        %}selected{% endif %}>Land</option>
     </select>
     <select name="district">
       <option value="">All Districts</option>
@@ -269,8 +267,7 @@
         <div class="prop-meta">
           {% if property.property_type == 'residential' %}<span class="chip green">Residential</span>
           {% elif property.property_type == 'commercial' %}<span class="chip blue">Commercial</span>
-          {% elif property.property_type == 'industrial' %}<span class="chip amber">Industrial</span>
-          {% else %}<span class="chip slate">Land</span>{% endif %}
+          {% else %}<span class="chip blue">Commercial</span>{% endif %}
           <span class="chip slate"><i class="fas fa-layer-group"></i> {{ property.num_units }} unit{{ property.num_units|pluralize }}</span>
           <span class="chip slate">{{ property.district|title }}</span>
         </div>

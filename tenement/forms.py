@@ -146,8 +146,6 @@ class ProfileUpdateForm(forms.ModelForm):
 PROPERTY_TYPE_CHOICES = (
     ('residential', 'Residential'),
     ('commercial',  'Commercial'),
-    ('industrial',  'Industrial'),
-    ('land',        'Land'),
 )
 
 DISTRICT_CHOICES = (
@@ -329,6 +327,7 @@ class SiteConfigurationForm(forms.ModelForm):
     class Meta:
         model = SiteConfiguration
         fields = [
+            'site_name',
             'site_tagline',
             'welcome_message',
             'contact_email',

@@ -733,6 +733,71 @@
     .app-shell .status-open, .app-shell .status-pending { background: #fff3df !important; color: #a15c07 !important; }
     .app-shell .status-resolved, .app-shell .status-success, .app-shell .status-paid { background: #e3f5ea !important; color: #146c43 !important; }
     .app-shell .status-failed, .app-shell .status-overdue { background: #fbe7e8 !important; color: #ad1f2f !important; }
+    /* Persistent dark theme uses the same civic navy and green identity. */
+    .app-shell.theme-dark {
+      --ink: #eef5fb;
+      --ink-2: #c7d5e2;
+      --ink-3: #9bafc1;
+      --ink-4: #71869a;
+      --surface: #102033;
+      --surface-2: #14283d;
+      --surface-3: #1b344c;
+      --border: rgba(189,211,229,.16);
+      --border-2: rgba(189,211,229,.25);
+      --accent: #62a7e9;
+      --accent-dim: #183b5d;
+      --green: #55c889;
+      --green-dim: #153e30;
+      --amber: #f0b75d;
+      --amber-dim: #493719;
+      --red: #ff8d99;
+      --red-dim: #4b222c;
+      background: #0b1726;
+      color: #eef5fb;
+    }
+    .app-shell.theme-dark .navbar,
+    .app-shell.theme-dark .mobile-bottom-nav,
+    .app-shell.theme-dark .app-topbar { background: rgba(16,32,51,.96) !important; border-color: rgba(189,211,229,.14) !important; }
+    .app-shell.theme-dark .nav-link, .app-shell.theme-dark .mobile-bottom-link,
+    .app-shell.theme-dark .topbar-name strong { color: #c7d5e2; }
+    .app-shell.theme-dark .nav-link:hover, .app-shell.theme-dark .nav-link.active,
+    .app-shell.theme-dark .mobile-bottom-link.active { color: #7ce2a8; background: #153e30; }
+    .app-shell.theme-dark .footer { background: #07111d !important; }
+    .app-shell.theme-dark .pg-header, .app-shell.theme-dark .mp-header, .app-shell.theme-dark .page-header,
+    .app-shell.theme-dark .form-card, .app-shell.theme-dark .card, .app-shell.theme-dark .filter-bar,
+    .app-shell.theme-dark .filter-sidebar, .app-shell.theme-dark .prop-card, .app-shell.theme-dark .stat-pill,
+    .app-shell.theme-dark .table-card, .app-shell.theme-dark .bw-form-card, .app-shell.theme-dark .cu-card,
+    .app-shell.theme-dark .search-card, .app-shell.theme-dark .detail-card, .app-shell.theme-dark .property-details-card,
+    .app-shell.theme-dark .user-view-card, .app-shell.theme-dark .receipt-card, .app-shell.theme-dark .user-card,
+    .app-shell.theme-dark .form-section, .app-shell.theme-dark .detail-section, .app-shell.theme-dark .bylaw-card,
+    .app-shell.theme-dark .san-overview-card, .app-shell.theme-dark .payment-card, .app-shell.theme-dark .complaint-card {
+      background: #102033 !important;
+      border-color: rgba(189,211,229,.16) !important;
+      color: #eef5fb !important;
+    }
+    .app-shell.theme-dark .card-head, .app-shell.theme-dark .form-section-head,
+    .app-shell.theme-dark .bylaw-card-header, .app-shell.theme-dark .san-card-head,
+    .app-shell.theme-dark .prop-footer, .app-shell.theme-dark .card-footer { background: #14283d !important; border-color: rgba(189,211,229,.14) !important; }
+    .app-shell.theme-dark h1, .app-shell.theme-dark h2, .app-shell.theme-dark h3,
+    .app-shell.theme-dark .pg-title, .app-shell.theme-dark .page-header h1,
+    .app-shell.theme-dark .card-title, .app-shell.theme-dark .stat-value { color: #eef5fb !important; }
+    .app-shell.theme-dark p, .app-shell.theme-dark .pg-sub, .app-shell.theme-dark .stat-label,
+    .app-shell.theme-dark .stat-foot, .app-shell.theme-dark .list-row-sub, .app-shell.theme-dark .timeline-sub,
+    .app-shell.theme-dark .info-key, .app-shell.theme-dark .user-meta-row, .app-shell.theme-dark .fld label { color: #9bafc1 !important; }
+    .app-shell.theme-dark input:not([type="checkbox"]):not([type="radio"]), .app-shell.theme-dark select,
+    .app-shell.theme-dark textarea, .app-shell.theme-dark .fld-readonly { background: #0b1726 !important; color: #eef5fb !important; border-color: rgba(189,211,229,.22) !important; }
+    .app-shell.theme-dark table { background: #102033 !important; color: #dbe8f2; }
+    .app-shell.theme-dark table thead th { background: #1b344c !important; color: #dbe8f2 !important; }
+    .app-shell.theme-dark table tbody tr:hover { background: #14283d !important; }
+    .app-shell.theme-dark .adm-wrap, .app-shell.theme-dark .profile-page,
+    .app-shell.theme-dark .pg-wrap, .app-shell.theme-dark .mp-wrap { background: #0b1726 !important; }
+    .app-shell.theme-dark .adm-card, .app-shell.theme-dark .command-intro,
+    .app-shell.theme-dark .command-stat, .app-shell.theme-dark .profile-card,
+    .app-shell.theme-dark .lm-kpi, .app-shell.theme-dark .lm-property-row,
+    .app-shell.theme-dark .lm-activity-list { background: #102033 !important; border-color: rgba(189,211,229,.16) !important; }
+    .app-shell.theme-dark .card-head { background: #14283d !important; }
+    .app-shell.theme-dark .section-label, .app-shell.theme-dark .legend-item,
+    .app-shell.theme-dark .command-copy span, .app-shell.theme-dark .command-stat span { color: #9bafc1 !important; }
     @media (max-width: 768px) {
       .app-shell .pg-header, .app-shell .mp-header, .app-shell .page-header { padding: 17px; border-radius: 15px; margin-bottom: 18px; }
       .app-shell .pg-wrap, .app-shell .mp-wrap { padding-left: 14px !important; padding-right: 14px !important; }
@@ -745,7 +810,7 @@
     }
   </style>
 </head>
-<body class="app-shell page-{{ request.resolver_match.url_name|default:'site' }}{% if user.is_authenticated %} is-authenticated{% endif %} {% block body_class %}{% endblock %}">
+<body class="app-shell page-{{ request.resolver_match.url_name|default:'site' }}{% if user.is_authenticated %} is-authenticated{% endif %}{% if dark_mode_enabled %} theme-dark{% endif %} {% block body_class %}{% endblock %}">
 
   <!-- ===== TOP ANNOUNCEMENT BAR ===== -->
   <div class="announce-bar">

@@ -20,6 +20,7 @@ urlpatterns = [
     # ── Core ──────────────────────────────────────────────────
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile_view, name='profile'),
+    path('theme/toggle/', views.toggle_dark_mode, name='toggle_dark_mode'),
 
     # ── Landlord: Properties ───────────────────────────────────
     path('properties/register/', views.register_property, name='register_property'),

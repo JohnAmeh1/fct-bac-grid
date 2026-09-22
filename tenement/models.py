@@ -21,8 +21,6 @@ USER_TYPE_CHOICES = (
 PROPERTY_TYPE_CHOICES = (
     ('residential', 'Residential'),
     ('commercial', 'Commercial'),
-    ('industrial', 'Industrial'),
-    ('land', 'Land'),
 )
 
 class UserProfile(models.Model):
@@ -31,6 +29,7 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True)
     address = models.CharField(max_length=255, blank=True)
     bio = models.TextField(max_length=500, blank=True)
+    dark_mode = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1013,6 +1013,7 @@
   .dashboard-staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.94), rgba(13,63,115,.68) 48%, rgba(20,108,67,.26)), url("{% static 'images/city_gate.jpg' %}") center / cover, var(--accent-dk); }
   .dashboard-field_staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.93), rgba(11,111,104,.62) 53%, rgba(20,108,67,.22)), url("{% static 'images/city_gate2.jpg' %}") center / cover, var(--accent-dk); }
   .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { gap: 18px; }
+  .sanitation-summary-card { display: none !important; }
   .dashboard-admin .qa-tile, .dashboard-staff .qa-tile, .dashboard-field_staff .qa-tile {
     min-height: 132px;
     justify-content: flex-start;
@@ -1059,12 +1060,6 @@
     .dashboard-admin .stats-grid.cols-4 .stat-value, .dashboard-staff .stats-grid.cols-4 .stat-value, .dashboard-field_staff .stats-grid.cols-4 .stat-value { font-size: 1.45rem; }
     .dashboard-admin .stats-grid.cols-4 .stat-value.sm, .dashboard-staff .stats-grid.cols-4 .stat-value.sm, .dashboard-field_staff .stats-grid.cols-4 .stat-value.sm { font-size: 1rem; }
     .dashboard-admin .stats-grid.cols-4 .stat-foot, .dashboard-staff .stats-grid.cols-4 .stat-foot, .dashboard-field_staff .stats-grid.cols-4 .stat-foot { padding: 8px 43px 0 0; font-size: .61rem; line-height: 1.25; }
-    .dashboard-admin .sanitation-summary-card, .dashboard-staff .sanitation-summary-card { min-height: 132px !important; }
-    .dashboard-admin .sanitation-summary-card > div:nth-child(2), .dashboard-staff .sanitation-summary-card > div:nth-child(2) { min-height: 72px; }
-    .dashboard-admin .sanitation-summary-card > div:nth-child(2) > div, .dashboard-staff .sanitation-summary-card > div:nth-child(2) > div { padding: 10px 11px 8px !important; }
-    .dashboard-admin .sanitation-summary-card > div:nth-child(2) > div > div:nth-child(3), .dashboard-staff .sanitation-summary-card > div:nth-child(2) > div > div:nth-child(3) { font-size: 1.35rem !important; white-space: nowrap; }
-    .dashboard-admin .sanitation-summary-card > div:nth-child(2) > div > div:last-child, .dashboard-staff .sanitation-summary-card > div:nth-child(2) > div > div:last-child { font-size: .58rem !important; white-space: nowrap; }
-    .dashboard-admin .sanitation-summary-card > div:last-child, .dashboard-staff .sanitation-summary-card > div:last-child { padding: 7px 11px 8px !important; }
     .dashboard-admin .stats-grid.cols-4 .stat-trend, .dashboard-staff .stats-grid.cols-4 .stat-trend, .dashboard-field_staff .stats-grid.cols-4 .stat-trend { display: none; }
     .dashboard-admin .section-label, .dashboard-staff .section-label, .dashboard-field_staff .section-label { margin: 23px 0 11px; font-size: .62rem; }
     .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -1108,6 +1103,14 @@
     <div class="hero-right">
       <span class="hero-time" id="adm-clock">--:-- --</span>
       <span class="hero-status-pill"><span class="dot"></span>Systems Online</span>
+      <form method="post" action="{% url 'toggle_dark_mode' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="hero-status-pill" title="Toggle colour theme" style="cursor:pointer;font-family:inherit;">
+          <i class="fas {% if dark_mode_enabled %}fa-sun{% else %}fa-moon{% endif %}"></i>
+          {% if dark_mode_enabled %}Light mode{% else %}Dark mode{% endif %}
+        </button>
+      </form>
     </div>
   </div>
 
@@ -1269,6 +1272,20 @@
       </div>
     </div>
     <!-- ──────────────────────────────────────────────────────── -->
+    <div class="stat-card c-teal fade fade-2">
+      <div class="stat-top">
+        <div><div class="stat-label">Sanitation Paid</div><div class="stat-value">{{ sanitation_payers_count|default:0|money:0 }}</div></div>
+        <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+      </div>
+      <div class="stat-foot">Active sanitation levy payments</div>
+    </div>
+    <div class="stat-card c-red fade fade-3">
+      <div class="stat-top">
+        <div><div class="stat-label">Sanitation Unpaid</div><div class="stat-value">{{ sanitation_non_payers_count|default:0|money:0 }}</div></div>
+        <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      </div>
+      <div class="stat-foot">Levy payments awaiting settlement</div>
+    </div>
     <div class="stat-card c-amber fade fade-3">
       <div class="stat-top">
         <div>
@@ -1315,26 +1332,6 @@
       </div>
       <div class="stat-foot">Commercial properties</div>
     </div>
-    <div class="stat-card c-amber">
-      <div class="stat-top">
-        <div>
-          <div class="stat-label">Industrial</div>
-          <div class="stat-value">{{ industrial_count|default:0|money:0 }}</div>
-        </div>
-        <div class="stat-icon"><i class="fas fa-industry"></i></div>
-      </div>
-      <div class="stat-foot">Industrial properties</div>
-    </div>
-    <div class="stat-card c-teal">
-      <div class="stat-top">
-        <div>
-          <div class="stat-label">Land</div>
-          <div class="stat-value">{{ land_count|default:0|money:0 }}</div>
-        </div>
-        <div class="stat-icon"><i class="fas fa-mountain-sun"></i></div>
-      </div>
-      <div class="stat-foot">Land properties</div>
-    </div>
   </div>
 
   <div class="section-label fade">Quick Actions</div>
@@ -1372,8 +1369,6 @@
         <div class="legend-list">
           <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Residential</span><span class="legend-value">{{ residential_count|default:0 }} ({% if total_properties > 0 %}{% widthratio residential_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
           <div class="legend-item"><span class="legend-dot" style="background:#0d3f73;"></span><span class="legend-label">Commercial</span><span class="legend-value">{{ commercial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio commercial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Industrial</span><span class="legend-value">{{ industrial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio industrial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:#0b6f68;"></span><span class="legend-label">Land</span><span class="legend-value">{{ land_count|default:0 }} ({% if total_properties > 0 %}{% widthratio land_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
         </div>
       </div>
       {% else %}
@@ -1667,6 +1662,20 @@
         <div style="font-size:.66rem;color:var(--ink-4);margin-top:4px;">compliance rate</div>
       </div>
     </div>
+    <div class="stat-card c-teal fade fade-2">
+      <div class="stat-top">
+        <div><div class="stat-label">Sanitation Paid</div><div class="stat-value">{{ sanitation_payers_count|default:0|money:0 }}</div></div>
+        <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+      </div>
+      <div class="stat-foot">Active sanitation levy payments</div>
+    </div>
+    <div class="stat-card c-red fade fade-3">
+      <div class="stat-top">
+        <div><div class="stat-label">Sanitation Unpaid</div><div class="stat-value">{{ sanitation_non_payers_count|default:0|money:0 }}</div></div>
+        <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      </div>
+      <div class="stat-foot">Levy payments awaiting settlement</div>
+    </div>
     <div class="stat-card c-amber fade fade-3">
       <div class="stat-top">
         <div>
@@ -1707,20 +1716,6 @@
       </div>
       <div class="stat-foot">Commercial properties</div>
     </div>
-    <div class="stat-card c-amber">
-      <div class="stat-top">
-        <div><div class="stat-label">Industrial</div><div class="stat-value">{{ industrial_count|default:0|money:0 }}</div></div>
-        <div class="stat-icon"><i class="fas fa-industry"></i></div>
-      </div>
-      <div class="stat-foot">Industrial properties</div>
-    </div>
-    <div class="stat-card c-teal">
-      <div class="stat-top">
-        <div><div class="stat-label">Land</div><div class="stat-value">{{ land_count|default:0|money:0 }}</div></div>
-        <div class="stat-icon"><i class="fas fa-mountain-sun"></i></div>
-      </div>
-      <div class="stat-foot">Land properties</div>
-    </div>
   </div>
 
   <div class="section-label fade">Quick Actions</div>
@@ -1757,8 +1752,6 @@
         <div class="legend-list">
           <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Residential</span><span class="legend-value">{{ residential_count|default:0 }} ({% if total_properties > 0 %}{% widthratio residential_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
           <div class="legend-item"><span class="legend-dot" style="background:#0d3f73;"></span><span class="legend-label">Commercial</span><span class="legend-value">{{ commercial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio commercial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Industrial</span><span class="legend-value">{{ industrial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio industrial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:#0b6f68;"></span><span class="legend-label">Land</span><span class="legend-value">{{ land_count|default:0 }} ({% if total_properties > 0 %}{% widthratio land_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
         </div>
       </div>
       {% else %}
@@ -1896,13 +1889,6 @@
       </div>
       <div class="stat-foot">Business and retail spaces</div>
     </div>
-    <div class="stat-card c-teal fade fade-4">
-      <div class="stat-top">
-        <div><div class="stat-label">Land</div><div class="stat-value">{{ land_count|default:0|money:0 }}</div></div>
-        <div class="stat-icon"><i class="fas fa-map-location-dot"></i></div>
-      </div>
-      <div class="stat-foot">Plots and undeveloped land</div>
-    </div>
   </div>
 
   <div class="section-label fade">Quick Actions</div>
@@ -1939,8 +1925,6 @@
         <div class="legend-list">
           <div class="legend-item"><span class="legend-dot" style="background:#146c43;"></span><span class="legend-label">Residential</span><span class="legend-value">{{ residential_count|default:0 }} ({% if total_properties > 0 %}{% widthratio residential_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
           <div class="legend-item"><span class="legend-dot" style="background:#0d3f73;"></span><span class="legend-label">Commercial</span><span class="legend-value">{{ commercial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio commercial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:#a15c07;"></span><span class="legend-label">Industrial</span><span class="legend-value">{{ industrial_count|default:0 }} ({% if total_properties > 0 %}{% widthratio industrial_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:#0b6f68;"></span><span class="legend-label">Land</span><span class="legend-value">{{ land_count|default:0 }} ({% if total_properties > 0 %}{% widthratio land_count total_properties 100 %}{% else %}0{% endif %}%)</span></div>
         </div>
       </div>
       {% else %}
@@ -2204,10 +2188,6 @@
                       <span class="chip green" style="margin-left:6px;"><i class="fas fa-house"></i> Residential</span>
                     {% elif item.property.property_type == 'commercial' %}
                       <span class="chip blue" style="margin-left:6px;"><i class="fas fa-store"></i> Commercial</span>
-                    {% elif item.property.property_type == 'industrial' %}
-                      <span class="chip amber" style="margin-left:6px;"><i class="fas fa-industry"></i> Industrial</span>
-                    {% elif item.property.property_type == 'land' %}
-                      <span class="chip teal" style="margin-left:6px;"><i class="fas fa-mountain-sun"></i> Land</span>
                     {% endif %}
                   {% else %}
                     Environmental Sanitation Levy
@@ -2521,15 +2501,13 @@
       new Chart(propertyCanvas, {
         type: 'doughnut',
         data: {
-          labels: ['Residential', 'Commercial', 'Industrial', 'Land'],
+          labels: ['Residential', 'Commercial'],
           datasets: [{
             data: [
               {{ residential_count|default:0 }},
-              {{ commercial_count|default:0 }},
-              {{ industrial_count|default:0 }},
-              {{ land_count|default:0 }}
+              {{ commercial_count|default:0 }}
             ],
-            backgroundColor: ['#146c43', '#0d3f73', '#a15c07', '#0b6f68'],
+            backgroundColor: ['#146c43', '#0d3f73'],
             borderColor: '#ffffff',
             borderWidth: 2,
             hoverOffset: 4

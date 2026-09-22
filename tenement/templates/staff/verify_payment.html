@@ -367,8 +367,7 @@
             <span class="chip
               {% if prop.property_type == 'residential' %}green
               {% elif prop.property_type == 'commercial' %}blue
-              {% elif prop.property_type == 'industrial' %}amber
-              {% else %}teal{% endif %}">
+              {% endif %}">
               {{ prop.get_property_type_display }}
             </span>
           </span>

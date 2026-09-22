@@ -227,8 +227,6 @@
   .prop-accent{height:4px;}
   .prop-accent.residential{background:var(--green);}
   .prop-accent.commercial{background:var(--accent);}
-  .prop-accent.industrial{background:var(--amber);}
-  .prop-accent.land{background:var(--teal);}
 
   .prop-body{padding:18px 20px;flex:1;display:flex;flex-direction:column;gap:12px;}
   .prop-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
@@ -240,8 +238,6 @@
   }
   .type-chip.residential{background:var(--green-dim);color:var(--green);}
   .type-chip.commercial{background:var(--accent-dim);color:var(--accent);}
-  .type-chip.industrial{background:var(--amber-dim);color:var(--amber);}
-  .type-chip.land{background:var(--teal-dim);color:var(--teal);}
 
   .prop-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
   .pmk{font-size:.67rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-4);}
@@ -318,14 +314,6 @@
       <div class="stat-ico"><i class="fas fa-store"></i></div>
       <div><div class="stat-num">{{ commercial_count }}</div><div class="stat-lbl">Commercial</div></div>
     </div>
-    <div class="stat-pill c-amber">
-      <div class="stat-ico"><i class="fas fa-industry"></i></div>
-      <div><div class="stat-num">{{ industrial_count }}</div><div class="stat-lbl">Industrial</div></div>
-    </div>
-    <div class="stat-pill c-teal">
-      <div class="stat-ico"><i class="fas fa-mountain-sun"></i></div>
-      <div><div class="stat-num">{{ land_count }}</div><div class="stat-lbl">Land</div></div>
-    </div>
   </div>
 
   <!-- Sidebar + content layout -->
@@ -377,20 +365,6 @@
               <span class="fsb-opt-lbl">Commercial</span>
             </div>
             <span class="fcnt cb">{{ commercial_count }}</span>
-          </label>
-          <label class="fsb-opt">
-            <div class="fsb-opt-l">
-              <input type="radio" name="property_type" value="industrial" {% if request.GET.property_type == 'industrial' %}checked{% endif %}>
-              <span class="fsb-opt-lbl">Industrial</span>
-            </div>
-            <span class="fcnt ca">{{ industrial_count }}</span>
-          </label>
-          <label class="fsb-opt">
-            <div class="fsb-opt-l">
-              <input type="radio" name="property_type" value="land" {% if request.GET.property_type == 'land' %}checked{% endif %}>
-              <span class="fsb-opt-lbl">Land</span>
-            </div>
-            <span class="fcnt ct">{{ land_count }}</span>
           </label>
         </div>
 
@@ -487,8 +461,6 @@
               <span class="type-chip {{ prop.property_type }}">
                 {% if prop.property_type == 'residential' %}<i class="fas fa-house"></i>
                 {% elif prop.property_type == 'commercial' %}<i class="fas fa-store"></i>
-                {% elif prop.property_type == 'industrial' %}<i class="fas fa-industry"></i>
-                {% elif prop.property_type == 'land' %}<i class="fas fa-mountain-sun"></i>
                 {% endif %}
                 {{ prop.get_property_type_display }}
               </span>
