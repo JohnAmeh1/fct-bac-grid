@@ -1243,8 +1243,8 @@
             <span style="width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;flex-shrink:0;"></span>
             <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);">Paid</span>
           </div>
-          <div style="font-size:2rem;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-1px;">{{ sanitation_payers_count|default:0|money:0 }}</div>
-          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Active payments</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-1px;">₦{{ sanitation_paid_amount|default:0|money:0 }}</div>
+          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Levy amount collected</div>
         </div>
         <!-- Unpaid -->
         <div style="padding:14px 16px 12px;position:relative;overflow:hidden;">
@@ -1253,8 +1253,8 @@
             <span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0;"></span>
             <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);">Unpaid</span>
           </div>
-          <div style="font-size:2rem;font-weight:800;color:var(--red);line-height:1;letter-spacing:-1px;">{{ sanitation_non_payers_count|default:0|money:0 }}</div>
-          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">No active payment</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--red);line-height:1;letter-spacing:-1px;">₦{{ sanitation_unpaid_amount|default:0|money:0 }}</div>
+          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Levy amount outstanding</div>
         </div>
       </div>
       <!-- Progress bar -->
@@ -1274,14 +1274,14 @@
     <!-- ──────────────────────────────────────────────────────── -->
     <div class="stat-card c-teal fade fade-2">
       <div class="stat-top">
-        <div><div class="stat-label">Sanitation Paid</div><div class="stat-value">{{ sanitation_payers_count|default:0|money:0 }}</div></div>
+        <div><div class="stat-label">Sanitation Paid</div><div class="stat-value sm">₦{{ sanitation_paid_amount|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-leaf"></i></div>
       </div>
       <div class="stat-foot">Active sanitation levy payments</div>
     </div>
     <div class="stat-card c-red fade fade-3">
       <div class="stat-top">
-        <div><div class="stat-label">Sanitation Unpaid</div><div class="stat-value">{{ sanitation_non_payers_count|default:0|money:0 }}</div></div>
+        <div><div class="stat-label">Sanitation Unpaid</div><div class="stat-value sm">₦{{ sanitation_unpaid_amount|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
       </div>
       <div class="stat-foot">Levy payments awaiting settlement</div>
@@ -1636,8 +1636,8 @@
             <span style="width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;flex-shrink:0;"></span>
             <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);">Paid</span>
           </div>
-          <div style="font-size:2rem;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-1px;">{{ sanitation_payers_count|default:0|money:0 }}</div>
-          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Active payments</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-1px;">₦{{ sanitation_paid_amount|default:0|money:0 }}</div>
+          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Levy amount collected</div>
         </div>
         <div style="padding:14px 16px 12px;position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(254,226,226,.45),transparent);pointer-events:none;"></div>
@@ -1645,8 +1645,8 @@
             <span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0;"></span>
             <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);">Unpaid</span>
           </div>
-          <div style="font-size:2rem;font-weight:800;color:var(--red);line-height:1;letter-spacing:-1px;">{{ sanitation_non_payers_count|default:0|money:0 }}</div>
-          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">No active payment</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--red);line-height:1;letter-spacing:-1px;">₦{{ sanitation_unpaid_amount|default:0|money:0 }}</div>
+          <div style="margin-top:6px;font-size:.68rem;color:var(--ink-3);">Levy amount outstanding</div>
         </div>
       </div>
       <div style="padding:10px 16px 12px;border-top:1px solid var(--border);">
@@ -1664,14 +1664,14 @@
     </div>
     <div class="stat-card c-teal fade fade-2">
       <div class="stat-top">
-        <div><div class="stat-label">Sanitation Paid</div><div class="stat-value">{{ sanitation_payers_count|default:0|money:0 }}</div></div>
+        <div><div class="stat-label">Sanitation Paid</div><div class="stat-value sm">₦{{ sanitation_paid_amount|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-leaf"></i></div>
       </div>
       <div class="stat-foot">Active sanitation levy payments</div>
     </div>
     <div class="stat-card c-red fade fade-3">
       <div class="stat-top">
-        <div><div class="stat-label">Sanitation Unpaid</div><div class="stat-value">{{ sanitation_non_payers_count|default:0|money:0 }}</div></div>
+        <div><div class="stat-label">Sanitation Unpaid</div><div class="stat-value sm">₦{{ sanitation_unpaid_amount|default:0|money:0 }}</div></div>
         <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
       </div>
       <div class="stat-foot">Levy payments awaiting settlement</div>

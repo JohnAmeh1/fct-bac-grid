@@ -266,11 +266,77 @@ def get_property_rate_amount(property_obj, rate):
     return Decimal(str(rate.amount))
 
 
-def compute_total_outstanding_payments():
+def compute_sanitation_summary():
+    """
+    System-wide sanitation levy summary: paid/unpaid counts AND paid/unpaid
+    amounts, in one pass, across every (user x active sanitation rate) pair
+    for users subject to the levy (landlords and tenants).
+
+    Mirrors the bulk-query approach used in admin_sanitation_defaulters
+    (constant number of queries, no N+1s) — this is the single source of
+    truth for sanitation numbers shown on the admin/staff dashboard, so the
+    "Paid"/"Unpaid" split card, the standalone Sanitation Paid/Unpaid stat
+    cards, and the Total Outstanding Payments card all agree with each
+    other and with the Sanitation Records page.
+    """
+    now = timezone.now()
+
+    sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
+    user_ids = list(
+        User.objects.filter(
+            userprofile__user_type__in=['landlord', 'tenant'],
+            userprofile__email_verified=True,
+        ).values_list('id', flat=True)
+    )
+
+    sanitation_rate_ids = [rate.id for rate in sanitation_rates]
+    paid_sanitation_pairs = set()
+    if user_ids and sanitation_rate_ids:
+        candidate_payments = (
+            Payment.objects.filter(
+                landlord_id__in=user_ids,
+                payment_rate_id__in=sanitation_rate_ids,
+                status='success',
+                property=None,
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .values_list('landlord_id', 'payment_rate_id')
+        )
+        paid_sanitation_pairs = set(candidate_payments)
+
+    paid_count = 0
+    unpaid_count = 0
+    paid_amount = Decimal('0.00')
+    unpaid_amount = Decimal('0.00')
+    for user_id in user_ids:
+        for rate in sanitation_rates:
+            amount = Decimal(str(rate.amount))
+            if (user_id, rate.id) in paid_sanitation_pairs:
+                paid_count += 1
+                paid_amount += amount
+            else:
+                unpaid_count += 1
+                unpaid_amount += amount
+
+    return {
+        'paid_count': paid_count,
+        'unpaid_count': unpaid_count,
+        'total_eligible': paid_count + unpaid_count,
+        'paid_amount': paid_amount,
+        'unpaid_amount': unpaid_amount,
+    }
+
+
+def compute_total_outstanding_payments(sanitation_summary=None):
     """
     System-wide total of everything still owed: unpaid tenement rates
     (per property x active rate matching its property type) plus unpaid
     sanitation levy (per eligible user x active sanitation rate).
+
+    `sanitation_summary`, if provided (see compute_sanitation_summary()),
+    is reused instead of being recomputed — callers that already need the
+    sanitation paid/unpaid breakdown (e.g. the dashboard) can pass it in
+    to avoid running the same sanitation queries twice.
 
     Mirrors the bulk-query approach used in admin_rate_defaulters and
     admin_sanitation_defaulters (constant number of queries, no N+1s),
@@ -326,34 +392,9 @@ def compute_total_outstanding_payments():
                     tenement_outstanding += get_property_rate_amount(prop, rate)
 
     # ---- Sanitation levy -----------------------------------------------
-    sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
-    user_ids = list(
-        User.objects.filter(
-            userprofile__user_type__in=['landlord', 'tenant'],
-            userprofile__email_verified=True,
-        ).values_list('id', flat=True)
-    )
-
-    sanitation_rate_ids = [rate.id for rate in sanitation_rates]
-    paid_sanitation_pairs = set()
-    if user_ids and sanitation_rate_ids:
-        candidate_payments = (
-            Payment.objects.filter(
-                landlord_id__in=user_ids,
-                payment_rate_id__in=sanitation_rate_ids,
-                status='success',
-                property=None,
-            )
-            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
-            .values_list('landlord_id', 'payment_rate_id')
-        )
-        paid_sanitation_pairs = set(candidate_payments)
-
-    sanitation_outstanding = Decimal('0.00')
-    for user_id in user_ids:
-        for rate in sanitation_rates:
-            if (user_id, rate.id) not in paid_sanitation_pairs:
-                sanitation_outstanding += Decimal(str(rate.amount))
+    if sanitation_summary is None:
+        sanitation_summary = compute_sanitation_summary()
+    sanitation_outstanding = sanitation_summary['unpaid_amount']
 
     total_outstanding = tenement_outstanding + sanitation_outstanding
     return {
@@ -1013,40 +1054,22 @@ def dashboard(request):
         residential_count = Property.objects.filter(property_type='residential').count()
         commercial_count = Property.objects.filter(property_type='commercial').count()
 
-        # Sanitation payer counts — mirror the exact logic used in
-        # admin_sanitation_defaulters so the dashboard numbers always match
-        # the Sanitation Records page (per-user × per-rate records).
+        # Sanitation levy summary (counts AND amounts, paid + unpaid) —
+        # computed once via compute_sanitation_summary(), the same bulk,
+        # constant-query logic used by admin_sanitation_defaulters, so the
+        # dashboard numbers always match the Sanitation Records page.
         #
         # NOTE: this used to issue one .exists() query per (landlord, rate)
         # pair in a Python loop. That was fine with a handful of landlords,
         # but with 100k+ imported landlord accounts it meant 100k+ synchronous
         # database round trips on every dashboard load — which is what was
-        # timing out the whole page. Replaced with a handful of bulk queries
-        # that compute the same per-(user, rate) paid/unpaid counts.
-        sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
-        eligible_user_ids = list(User.objects.filter(
-            userprofile__user_type='landlord',
-            userprofile__email_verified=True,
-        ).values_list('id', flat=True))
-
-        total_pairs = len(eligible_user_ids) * len(sanitation_rates)
-        _san_paid = 0
-        if eligible_user_ids and sanitation_rates:
-            for _rate in sanitation_rates:
-                paid_landlord_ids = Payment.objects.filter(
-                    landlord_id__in=eligible_user_ids,
-                    payment_rate=_rate,
-                    status='success',
-                    property=None,
-                ).filter(
-                    django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now)
-                ).values_list('landlord_id', flat=True).distinct()
-                _san_paid += len(set(paid_landlord_ids))
-        _san_unpaid = total_pairs - _san_paid
-
-        sanitation_payers_count   = _san_paid
-        sanitation_non_payers_count = _san_unpaid
-        total_sanitation_eligible = _san_paid + _san_unpaid
+        # timing out the whole page.
+        sanitation_summary = compute_sanitation_summary()
+        sanitation_payers_count     = sanitation_summary['paid_count']
+        sanitation_non_payers_count = sanitation_summary['unpaid_count']
+        total_sanitation_eligible   = sanitation_summary['total_eligible']
+        sanitation_paid_amount      = sanitation_summary['paid_amount']
+        sanitation_unpaid_amount    = sanitation_summary['unpaid_amount']
 
         # Revenue trend — successful payments, system-wide, by month (last 6 months)
         revenue_trend_labels, revenue_trend_data = _monthly_revenue_trend(Payment.objects.all())
@@ -1066,7 +1089,9 @@ def dashboard(request):
 
         # System-wide total still owed (unpaid tenement rates + unpaid
         # sanitation levy), shown on the "Total Outstanding Payments" card.
-        outstanding_totals = compute_total_outstanding_payments()
+        # Reuses sanitation_summary computed above instead of re-running
+        # the same sanitation queries a second time.
+        outstanding_totals = compute_total_outstanding_payments(sanitation_summary=sanitation_summary)
 
         # Recent activity feed — pulled from real records (no synthetic data),
         # merged across a few sources and sorted by recency.
@@ -1130,6 +1155,8 @@ def dashboard(request):
             'sanitation_payers_count':   sanitation_payers_count,
             'sanitation_non_payers_count': sanitation_non_payers_count,
             'total_sanitation_eligible': total_sanitation_eligible,
+            'sanitation_paid_amount':    sanitation_paid_amount,
+            'sanitation_unpaid_amount':  sanitation_unpaid_amount,
             'revenue_trend_labels':      json.dumps(revenue_trend_labels),
             'revenue_trend_data':        json.dumps(revenue_trend_data),
             'revenue_trend_total':       sum(revenue_trend_data),
