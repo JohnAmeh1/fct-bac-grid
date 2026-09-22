@@ -51,8 +51,19 @@ EMAIL_PORT       = 587
 EMAIL_USE_TLS    = True   # STARTTLS on port 587
 EMAIL_USE_SSL    = False
 EMAIL_HOST_USER  = 'api'
-EMAIL_HOST_PASSWORD = '73a133a1dc2c01f8e4a3de6f8e83e63f'
+EMAIL_HOST_PASSWORD = '6fda8db8ec83d4e24bfd6b2c4d35202e'
 DEFAULT_FROM_EMAIL = 'FCT BAC Grid <customercare@bacgrid.com>'
+
+# EMAIL_BACKEND    = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST       = 'live.smtp.mailtrap.io'
+# EMAIL_PORT       = 587
+# EMAIL_USE_TLS    = True   # STARTTLS on port 587
+# EMAIL_USE_SSL    = False
+# EMAIL_HOST_USER  = 'api'
+# EMAIL_HOST_PASSWORD = '73a133a1dc2c01f8e4a3de6f8e83e63f'
+# DEFAULT_FROM_EMAIL = 'FCT BAC Grid <customercare@bacgrid.com>'
+
+
 
 # EMAIL_BACKEND    = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST       = 'sandbox.smtp.mailtrap.io'   # ← sandbox, not live
