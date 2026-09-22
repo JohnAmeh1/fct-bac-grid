@@ -14,13 +14,13 @@ from email.mime.multipart import MIMEMultipart
 MAILTRAP_HOST     = 'live.smtp.mailtrap.io'
 MAILTRAP_PORT     = 587
 MAILTRAP_USER     = 'api'
-MAILTRAP_PASSWORD = '73a133a1dc2c01f8e4a3de6f8e83e63f'
-FROM_EMAIL        = 'hello@bwari-revenue.com'
+MAILTRAP_PASSWORD = '6fda8db8ec83d4e24bfd6b2c4d35202e'
+FROM_EMAIL        = 'hello@bacgrid.com'
 TO_EMAIL          = 'johnameh29@gmail.com'   # change if needed
 
 msg = MIMEMultipart()
 msg['Subject'] = 'Mailtrap SMTP Test – Bwari Tenement'
-msg['From']    = f'Bwari Tenement <{FROM_EMAIL}>'
+msg['From']    = f'FCT BAC Grid <{FROM_EMAIL}>'
 msg['To']      = TO_EMAIL
 msg.attach(MIMEText('If you see this, Mailtrap SMTP is working correctly!', 'plain'))
 
