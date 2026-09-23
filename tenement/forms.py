@@ -206,9 +206,34 @@ class PropertyRegistrationForm(forms.Form):
         required=False, label='Notes',
         widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Any additional details…'})
     )
+    # Landlord account this property is registered under. Only required
+    # (and only shown) when a staff / field_staff member fills the form on
+    # a landlord's behalf — see `require_owner` below. For a landlord
+    # filling out their own registration, this stays empty and the view
+    # falls back to the logged-in user as owner.
+    owner = forms.ModelChoiceField(
+        queryset=User.objects.filter(userprofile__user_type='landlord'),
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    landlord_search = forms.CharField(
+        label='Landlord Account',
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Search by landlord name, username, or email...',
+            'autocomplete': 'off',
+            'class': 'landlord-search-input'
+        }),
+    )
+
+    def __init__(self, *args, require_owner=False, **kwargs):
+        self.require_owner = require_owner
+        super().__init__(*args, **kwargs)
 
     def clean(self):
         cleaned_data = super().clean()
+        if self.require_owner and not cleaned_data.get('owner'):
+            self.add_error('owner', 'Please search for and select the landlord this property belongs to.')
         prop_type = cleaned_data.get('property_type')
         num_flats = cleaned_data.get('num_flats')
         if prop_type == 'residential' and not num_flats:
@@ -216,8 +241,11 @@ class PropertyRegistrationForm(forms.Form):
         return cleaned_data
 
     def save(self, owner):
+        # When a landlord was explicitly selected (staff/field_staff flow),
+        # that always takes precedence over whichever user is logged in.
+        selected_owner = self.cleaned_data.get('owner')
         return Property.objects.create(
-            owner=owner,
+            owner=selected_owner or owner,
             name=self.cleaned_data['name'],
             address=self.cleaned_data['address'],
             district=self.cleaned_data['district'],

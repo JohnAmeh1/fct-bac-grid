@@ -274,6 +274,40 @@
     font-size: .76rem; color: var(--green-dk); margin-top: 8px;
     display: flex; align-items: center; gap: 6px;
   }
+
+  /* ── Landlord search (staff / field_staff flow) ── */
+  .landlord-results {
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+    border-radius: var(--radius); max-height: 220px; overflow-y: auto;
+    display: none; border: 1.5px solid var(--border); background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .landlord-results.visible { display: block; }
+  .landlord-result-item {
+    padding: 10px 14px; cursor: pointer; font-size: .84rem; color: var(--ink-2);
+    border-bottom: 1px solid var(--border); transition: background var(--transition);
+  }
+  .landlord-result-item:last-child { border-bottom: none; }
+  .landlord-result-item:hover, .landlord-result-item.active { background: var(--green-dim); color: var(--green-dk); }
+  .landlord-result-item small { display: block; color: var(--ink-3); font-weight: 500; margin-top: 2px; }
+  .landlord-result-empty, .landlord-result-loading {
+    padding: 12px 14px; font-size: .82rem; color: var(--ink-4);
+  }
+  .landlord-selected {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--green-dim); border: 1.5px solid #86efac; border-radius: var(--radius);
+    padding: 12px 14px; margin-top: 14px;
+  }
+  .landlord-selected i.fa-circle-check { color: var(--green-dk); font-size: 1.1rem; }
+  .landlord-selected-info { display: flex; flex-direction: column; flex: 1; }
+  .landlord-selected-info strong { font-size: .86rem; color: var(--green-dk); }
+  .landlord-selected-info span { font-size: .76rem; color: var(--ink-3); }
+  .landlord-clear-btn {
+    background: none; border: none; color: var(--ink-3); cursor: pointer; font-size: .9rem;
+    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transition: background var(--transition), color var(--transition);
+  }
+  .landlord-clear-btn:hover { background: rgba(0,0,0,.06); color: var(--red); }
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -285,9 +319,15 @@
   </a>
 
   <div class="fade">
+    {% if is_staff_flow %}
+    <div class="reg-eyebrow"><i class="fas fa-user-tie"></i> Staff Portal</div>
+    <h1 class="reg-title">Register a Landlord's Property</h1>
+    <p class="reg-sub">Search for the landlord this property belongs to, then fill in the details below. GPS location is required.</p>
+    {% else %}
     <div class="reg-eyebrow"><i class="fas fa-home"></i> Landlord Portal</div>
     <h1 class="reg-title">Register Your Property</h1>
     <p class="reg-sub">Fill in the details below to register your property. GPS location is required.</p>
+    {% endif %}
   </div>
 
   <!-- Device warning (shown if GPS unavailable) -->
@@ -311,6 +351,43 @@
     <form method="post" id="propertyForm" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="hidden" id="id_gps_accuracy" name="gps_accuracy" value="">
+
+      {% if is_staff_flow %}
+      <!-- Landlord Account -->
+      <div class="form-section-head"><i class="fas fa-user-tie"></i> Landlord Account <span class="gps-required-badge">REQUIRED</span></div>
+
+      <div class="gps-block" style="margin-bottom: 28px;">
+        <div class="gps-block-title">
+          <i class="fas fa-id-card"></i>
+          Attach This Property to a Landlord
+        </div>
+        <p style="font-size:.82rem;color:var(--ink-3);margin:8px 0 14px;">
+          <i class="fas fa-info-circle"></i> Search for the landlord's account below. The property will be registered under their name and will appear on their dashboard.
+        </p>
+
+        <div class="fld" style="position: relative;">
+          <label for="id_landlord_search">Landlord Name, Username, or Email <span class="req">*</span></label>
+          <div class="fld-inner">
+            {{ form.landlord_search }}
+            <i class="fas fa-magnifying-glass fld-ico"></i>
+          </div>
+          <div id="landlordResults" class="landlord-results"></div>
+          {{ form.owner }}
+          {% if form.owner.errors %}<p class="field-error"><i class="fas fa-circle-exclamation"></i>{{ form.owner.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div id="landlordSelected" class="landlord-selected" style="display:none;">
+          <i class="fas fa-circle-check"></i>
+          <div class="landlord-selected-info">
+            <strong id="landlordSelectedName"></strong>
+            <span id="landlordSelectedEmail"></span>
+          </div>
+          <button type="button" id="landlordClearBtn" class="landlord-clear-btn" title="Change landlord">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      {% endif %}
 
       <!-- Property Info -->
       <div class="form-section-head"><i class="fas fa-building"></i> Property Information</div>
@@ -493,6 +570,97 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // ----- Landlord search (staff / field_staff flow only) -----
+    const landlordSearchInput = document.getElementById('id_landlord_search');
+    const landlordOwnerInput  = document.getElementById('id_owner');
+    const landlordResults     = document.getElementById('landlordResults');
+    const landlordSelected    = document.getElementById('landlordSelected');
+    const landlordSelectedName  = document.getElementById('landlordSelectedName');
+    const landlordSelectedEmail = document.getElementById('landlordSelectedEmail');
+    const landlordClearBtn    = document.getElementById('landlordClearBtn');
+    const requiresLandlord    = !!landlordSearchInput;
+    let landlordSelectedFlag  = !!(landlordOwnerInput && landlordOwnerInput.value);
+    let landlordSearchTimer   = null;
+
+    function hideLandlordResults() {
+      landlordResults.classList.remove('visible');
+      landlordResults.innerHTML = '';
+    }
+
+    function selectLandlord(landlord) {
+      landlordOwnerInput.value = landlord.id;
+      landlordSelectedName.textContent = landlord.text.replace(/\s*\(.*\)$/, '') || landlord.username;
+      landlordSelectedEmail.textContent = landlord.email;
+      landlordSelected.style.display = 'flex';
+      landlordSearchInput.value = '';
+      landlordSearchInput.style.display = 'none';
+      hideLandlordResults();
+      landlordSelectedFlag = true;
+      refreshSubmitState();
+    }
+
+    function clearLandlordSelection() {
+      landlordOwnerInput.value = '';
+      landlordSelected.style.display = 'none';
+      landlordSearchInput.style.display = '';
+      landlordSearchInput.value = '';
+      landlordSearchInput.focus();
+      landlordSelectedFlag = false;
+      refreshSubmitState();
+    }
+
+    if (requiresLandlord) {
+      landlordSearchInput.addEventListener('input', function () {
+        const query = this.value.trim();
+        landlordOwnerInput.value = '';
+        landlordSelectedFlag = false;
+        refreshSubmitState();
+
+        clearTimeout(landlordSearchTimer);
+        if (query.length < 2) {
+          hideLandlordResults();
+          return;
+        }
+
+        landlordResults.innerHTML = '<div class="landlord-result-loading"><i class="fas fa-circle-notch fa-spin"></i> Searching…</div>';
+        landlordResults.classList.add('visible');
+
+        landlordSearchTimer = setTimeout(function () {
+          fetch('{% url "search_landlords" %}?q=' + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+              const results = data.results || [];
+              if (!results.length) {
+                landlordResults.innerHTML = '<div class="landlord-result-empty">No matching landlord accounts found.</div>';
+                landlordResults.classList.add('visible');
+                return;
+              }
+              landlordResults.innerHTML = '';
+              results.forEach(function (landlord) {
+                const item = document.createElement('div');
+                item.className = 'landlord-result-item';
+                item.innerHTML = `<span>${landlord.text}</span><small>@${landlord.username}</small>`;
+                item.addEventListener('click', function () { selectLandlord(landlord); });
+                landlordResults.appendChild(item);
+              });
+              landlordResults.classList.add('visible');
+            })
+            .catch(function () {
+              landlordResults.innerHTML = '<div class="landlord-result-empty">Search failed. Please try again.</div>';
+              landlordResults.classList.add('visible');
+            });
+        }, 300);
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!landlordResults.contains(e.target) && e.target !== landlordSearchInput) {
+          hideLandlordResults();
+        }
+      });
+
+      landlordClearBtn.addEventListener('click', clearLandlordSelection);
+    }
+
     // ----- GPS variables -----
     const latInput      = document.getElementById('id_latitude');
     const lngInput      = document.getElementById('id_longitude');
@@ -574,9 +742,14 @@
       gpsStatusTxt.textContent = msg;
     }
 
+    function refreshSubmitState() {
+      const gpsOk = locationCaptured && !(currentAccuracy && currentAccuracy > REQUIRED_ACCURACY);
+      submitBtn.disabled = !(gpsOk && (!requiresLandlord || landlordSelectedFlag));
+    }
+
     function enableSubmit(enable) {
-      // In landlord form there's no landlord selection, so just use locationCaptured
-      submitBtn.disabled = !enable;
+      locationCaptured = !!enable;
+      refreshSubmitState();
     }
 
     // ----- Initial coordinates (if already filled) -----

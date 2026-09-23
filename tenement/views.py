@@ -1471,6 +1471,11 @@ def register_property(request):
         messages.error(request, "Only landlords, staff, and field staff can register properties.")
         return redirect('dashboard')
 
+    # Staff and field staff register properties on behalf of a landlord, so
+    # they must search for and attach the landlord's account; a landlord
+    # filling out their own form just becomes the owner automatically.
+    is_staff_flow = profile.user_type in ['staff', 'field_staff']
+
     config = SiteConfiguration.get_config()
     if (
         profile.user_type == 'landlord'
@@ -1481,17 +1486,20 @@ def register_property(request):
         return redirect('landlord_properties')
 
     if request.method == 'POST':
-        form = PropertyRegistrationForm(request.POST, request.FILES)
+        form = PropertyRegistrationForm(request.POST, request.FILES, require_owner=is_staff_flow)
         if form.is_valid():
             prop = form.save(owner=request.user)
-            messages.success(request, f'Property "{prop.name}" registered successfully!')
+            if is_staff_flow:
+                messages.success(request, f'Property "{prop.name}" registered for {prop.owner.username}.')
+            else:
+                messages.success(request, f'Property "{prop.name}" registered successfully!')
             return redirect('dashboard')
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        form = PropertyRegistrationForm()
+        form = PropertyRegistrationForm(require_owner=is_staff_flow)
 
-    return render(request, 'register_property.html', {'form': form})
+    return render(request, 'register_property.html', {'form': form, 'is_staff_flow': is_staff_flow})
 
 
 def view_property(request, property_id):
