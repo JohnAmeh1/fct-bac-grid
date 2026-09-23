@@ -76,8 +76,21 @@
   .map-frame-wrap iframe, .map-frame-wrap img.property-main-image {
     width: 100%; height: 100%; border: 0; display: block; object-fit: cover;
   }
+  .map-frame-wrap #mapCanvas, .map-frame-wrap .leaflet-container {
+    width: 100%; height: 100%; background: var(--surface-3); font-family: 'DM Sans', sans-serif;
+  }
   .map-frame-wrap:fullscreen iframe,
-  .map-frame-wrap:fullscreen img.property-main-image { height: 100vh; }
+  .map-frame-wrap:fullscreen img.property-main-image,
+  .map-frame-wrap:fullscreen #mapCanvas { height: 100vh; }
+
+  /* Custom map pin */
+  .property-pin { position: relative; display: flex; flex-direction: column; align-items: center; }
+  .property-pin-dot {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: .85rem;
+    border: 3px solid #fff; box-shadow: 0 3px 10px rgba(30,108,240,.5);
+  }
+  .property-pin-stem { width: 3px; height: 9px; background: var(--accent); }
 
   .map-overlay-top {
     position: absolute; top: 12px; left: 12px; right: 64px; z-index: 5;
@@ -180,6 +193,14 @@
     display: inline-flex; align-items: center; gap: 6px; color: var(--accent); text-decoration: none; font-weight: 700;
   }
   .info-value a.gps-link:hover { text-decoration: underline; }
+  .view-map-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 12px; padding: 11px 16px;
+    background: var(--accent-dim); color: var(--accent-dk); border: 1.5px solid var(--accent-dim);
+    border-radius: var(--radius); font-weight: 700; font-size: .86rem; text-decoration: none;
+    transition: background var(--transition), border-color var(--transition), transform var(--transition);
+  }
+  .view-map-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); }
 
   .chip { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-pill); }
   .chip.green { background: var(--green-dim); color: var(--green-dk); }
@@ -211,6 +232,9 @@
   .property-notes h3 i { color: var(--green); }
   .property-notes p { font-size: .92rem; line-height: 1.7; color: var(--ink-2); margin: 0; }
 </style>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <div class="property-view-wrapper">
 
@@ -248,9 +272,7 @@
 
     <div class="map-frame-wrap" id="mapFrameWrap">
       {% if property.latitude and property.longitude %}
-      <iframe id="mapFrame"
-              src="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&t=p&z=20&output=embed"
-              loading="lazy" allowfullscreen></iframe>
+      <div id="mapCanvas"></div>
       <div class="map-overlay-top">
         <div class="map-search-pill">
           <i class="fas fa-magnifying-glass"></i>
@@ -363,12 +385,10 @@
         <span class="info-label">GPS Coordinates</span>
         <span class="info-value mono">{{ property.latitude }}, {{ property.longitude }}</span>
       </div>
-      <div class="info-row">
-        <span class="info-label">Map</span>
-        <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&t=p&z=20" target="_blank" class="gps-link">
-          <i class="fas fa-location-dot"></i> View Map
-        </a>
-      </div>
+      <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&t=p&z=20"
+         target="_blank" rel="noopener" class="view-map-btn">
+        <i class="fas fa-location-dot"></i> View on Map
+      </a>
       {% endif %}
     </div>
 
@@ -458,43 +478,110 @@
     var lat = {{ property.latitude }};
     var lng = {{ property.longitude }};
     {% endif %}
-    var zoom = 20;
+
+    var propertyMap = null;
+    var propertyLayers = null;
+    var activeBaseLayer = null;
+
     var mapTypes = [
-      { code: 'p', label: 'Terrain' },
-      { code: 'k', label: 'Satellite' },
-      { code: 'h', label: 'Hybrid' },
-      { code: 'm', label: 'Roadmap' }
+      { key: 'terrain',   label: 'Terrain' },
+      { key: 'satellite', label: 'Satellite' },
+      { key: 'hybrid',    label: 'Hybrid' },
+      { key: 'roadmap',   label: 'Roadmap' }
     ];
     var mapTypeIndex = 0;
 
-    function mapEmbedSrc() {
-      var t = mapTypes[mapTypeIndex].code;
-      return 'https://www.google.com/maps?q=' + lat + ',' + lng + '&t=' + t + '&z=' + zoom + '&output=embed';
+    // Free, no-API-key tile sources (OpenStreetMap + Esri). These load
+    // reliably on desktop and mobile, unlike the unofficial Google Maps
+    // "output=embed" iframe, which frequently renders a blank/white
+    // background because it isn't an officially supported embed method.
+    function buildLayers() {
+      return {
+        roadmap: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 19,
+          attribution: 'Tiles &copy; Esri'
+        }),
+        hybrid: L.layerGroup([
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: 'Tiles &copy; Esri'
+          }),
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+          })
+        ]),
+        terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          maxZoom: 17,
+          attribution: 'Map data: &copy; OpenStreetMap, SRTM | Style: &copy; OpenTopoMap (CC-BY-SA)'
+        })
+      };
     }
 
-    function refreshMapFrame() {
-      var frame = document.getElementById('mapFrame');
-      if (frame) { frame.src = mapEmbedSrc(); }
+    function pinIcon() {
+      return L.divIcon({
+        className: 'property-pin',
+        html: '<div class="property-pin-dot"><i class="fas fa-house"></i></div><div class="property-pin-stem"></div>',
+        iconSize: [32, 41],
+        iconAnchor: [16, 41]
+      });
+    }
+
+    function updateChip() {
       var chip = document.getElementById('mapTypeChip');
       if (chip) { chip.textContent = mapTypes[mapTypeIndex].label; }
       var label = document.querySelector('.map-search-pill span');
       if (label) { label.textContent = label.textContent.replace(/\(.*\)/, '(' + mapTypes[mapTypeIndex].label + ' View)'); }
     }
 
+    function initMap() {
+      var el = document.getElementById('mapCanvas');
+      if (!el || typeof lat === 'undefined') return;
+
+      propertyMap = L.map(el, {
+        center: [lat, lng],
+        zoom: 19,
+        zoomControl: false
+      });
+
+      propertyLayers = buildLayers();
+      activeBaseLayer = propertyLayers[mapTypes[mapTypeIndex].key];
+      activeBaseLayer.addTo(propertyMap);
+
+      L.marker([lat, lng], { icon: pinIcon() }).addTo(propertyMap);
+
+      updateChip();
+      // Re-measure the container once layout settles (fixes grey/blank
+      // tiles that can happen when a map is created inside a card that
+      // hasn't finished its own layout pass yet).
+      setTimeout(function () { if (propertyMap) propertyMap.invalidateSize(); }, 200);
+    }
+
     window.cycleMapType = function () {
+      if (!propertyMap) return;
+      propertyMap.removeLayer(activeBaseLayer);
       mapTypeIndex = (mapTypeIndex + 1) % mapTypes.length;
-      refreshMapFrame();
+      activeBaseLayer = propertyLayers[mapTypes[mapTypeIndex].key];
+      activeBaseLayer.addTo(propertyMap);
+      updateChip();
     };
 
     window.zoomMap = function (delta) {
-      zoom = Math.min(21, Math.max(3, zoom + delta));
-      refreshMapFrame();
+      if (!propertyMap) return;
+      propertyMap.setZoom(propertyMap.getZoom() + delta);
     };
 
     window.resetMap = function () {
-      zoom = 20;
+      if (!propertyMap) return;
+      propertyMap.removeLayer(activeBaseLayer);
       mapTypeIndex = 0;
-      refreshMapFrame();
+      activeBaseLayer = propertyLayers[mapTypes[mapTypeIndex].key];
+      activeBaseLayer.addTo(propertyMap);
+      propertyMap.setView([lat, lng], 19);
+      updateChip();
     };
 
     window.toggleFullscreenMap = function () {
@@ -507,6 +594,10 @@
       }
     };
 
+    document.addEventListener('fullscreenchange', function () {
+      if (propertyMap) { setTimeout(function () { propertyMap.invalidateSize(); }, 150); }
+    });
+
     function clearActiveTabs() {
       document.querySelectorAll('.media-tab').forEach(function (el) { el.classList.remove('active'); });
     }
@@ -514,7 +605,7 @@
     window.showMap = function () {
       var wrap = document.getElementById('mapFrameWrap');
       wrap.innerHTML =
-        '<iframe id="mapFrame" src="' + mapEmbedSrc() + '" loading="lazy" allowfullscreen></iframe>' +
+        '<div id="mapCanvas"></div>' +
         '<div class="map-overlay-top"><div class="map-search-pill"><i class="fas fa-magnifying-glass"></i> <span>{{ property.district|default:property.name|escapejs }} (' + mapTypes[mapTypeIndex].label + ' View)</span></div></div>' +
         '<div class="map-controls">' +
           '<button type="button" class="map-ctrl-btn" title="Layers" onclick="cycleMapType()"><i class="fas fa-layer-group"></i></button>' +
@@ -529,6 +620,7 @@
       clearActiveTabs();
       var tab = document.getElementById('mapTab');
       if (tab) tab.classList.add('active');
+      initMap();
     };
 
     window.showImage = function (src, alt, tabEl) {
@@ -546,6 +638,10 @@
         navigator.clipboard.writeText(url);
       }
     };
+
+    if (typeof lat !== 'undefined') {
+      initMap();
+    }
   })();
 </script>
 {% endblock %}
