@@ -79,7 +79,6 @@
   .map-frame-wrap #mapCanvas, .map-frame-wrap .leaflet-container {
     width: 100%; height: 100%; background: var(--surface-3); font-family: 'DM Sans', sans-serif;
   }
-  .hillshade-tiles { mix-blend-mode: multiply; }
   .map-frame-wrap:fullscreen iframe,
   .map-frame-wrap:fullscreen img.property-main-image,
   .map-frame-wrap:fullscreen #mapCanvas { height: 100vh; }
@@ -492,42 +491,30 @@
     ];
     var mapTypeIndex = 0;
 
-    // Free, no-API-key tile sources (OpenStreetMap + Esri). These load
-    // reliably on desktop and mobile, unlike the unofficial Google Maps
-    // "output=embed" iframe, which frequently renders a blank/white
-    // background because it isn't an officially supported embed method.
+    // Google's own tile source (the same imagery behind Google Maps and
+    // Google Earth). Esri's free imagery layer has gaps outside the
+    // US/Europe at close zoom, which is what produced the "map not
+    // available" placeholder tiles here. Google's coverage is far more
+    // complete, so this is the more reliable choice for this location.
+    function googleLayer(lyrs, maxZoom) {
+      return L.tileLayer('https://{s}.google.com/vt/lyrs=' + lyrs + '&x={x}&y={y}&z={z}', {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        maxZoom: maxZoom || 20,
+        attribution: 'Imagery &copy; Google'
+      });
+    }
+
     function buildLayers() {
       return {
-        roadmap: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors'
-        }),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          maxZoom: 19,
-          attribution: 'Tiles &copy; Esri'
-        }),
-        hybrid: L.layerGroup([
-          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            attribution: 'Tiles &copy; Esri'
-          }),
-          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19
-          })
-        ]),
-        terrain: L.layerGroup([
-          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            attribution: 'Tiles &copy; Esri'
-          }),
-          L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {
-            maxNativeZoom: 13,
-            maxZoom: 19,
-            opacity: 0.55,
-            className: 'hillshade-tiles',
-            attribution: 'Hillshade &copy; Esri'
-          })
-        ])
+        // Satellite photography + place/road labels — the classic
+        // "Google Earth" look, used as the default view.
+        terrain: googleLayer('y'),
+        // Clean satellite photography, no labels.
+        satellite: googleLayer('s'),
+        // Google's elevation-shaded terrain/roadmap.
+        hybrid: googleLayer('p'),
+        // Standard road map.
+        roadmap: googleLayer('m')
       };
     }
 
