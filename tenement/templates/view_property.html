@@ -231,50 +231,6 @@
   }
   .property-notes h3 i { color: var(--green); }
   .property-notes p { font-size: .92rem; line-height: 1.7; color: var(--ink-2); margin: 0; }
-
-  /* ── Image zoom (lightbox) ──────────────────────────── */
-  .property-main-image { cursor: zoom-in; }
-  .image-zoom-btn { position: absolute; top: 12px; right: 12px; z-index: 5; }
-
-  .image-lightbox {
-    position: fixed; inset: 0; background: rgba(15,17,23,.94); z-index: 9999;
-    display: none; align-items: center; justify-content: center;
-  }
-  .image-lightbox.active { display: flex; }
-  .lightbox-img-wrap {
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-    overflow: hidden; cursor: zoom-in; touch-action: none;
-  }
-  .lightbox-img-wrap.zoomed { cursor: grab; }
-  .lightbox-img-wrap.dragging { cursor: grabbing; }
-  .lightbox-img {
-    max-width: 90vw; max-height: 88vh; user-select: none; -webkit-user-drag: none;
-    transform-origin: center center; will-change: transform;
-  }
-  .lightbox-close {
-    position: absolute; top: 16px; right: 16px; z-index: 2;
-    width: 44px; height: 44px; border-radius: 50%; border: none;
-    background: rgba(255,255,255,.12); color: #fff; font-size: 1.1rem;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: background var(--transition);
-  }
-  .lightbox-close:hover { background: rgba(255,255,255,.24); }
-  .lightbox-controls {
-    position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 2;
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(255,255,255,.12); backdrop-filter: blur(6px);
-    border-radius: var(--radius-pill); padding: 6px;
-  }
-  .lightbox-controls button {
-    width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent;
-    color: #fff; font-size: .95rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background var(--transition);
-  }
-  .lightbox-controls button:hover { background: rgba(255,255,255,.18); }
-  .lightbox-zoom-level {
-    color: #fff; font-size: .76rem; font-weight: 700; font-family: 'DM Mono', monospace;
-    min-width: 44px; text-align: center; user-select: none;
-  }
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -333,9 +289,10 @@
         <button type="button" class="map-ctrl-btn" title="Fullscreen" onclick="toggleFullscreenMap()"><i class="fas fa-expand"></i></button>
       </div>
       <div class="map-type-chip" id="mapTypeChip">Terrain</div>
-      {% elif property.get_primary_image %}
-      <img src="{{ property.get_primary_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage" onclick="openLightbox(this.src, this.alt)">
-      <button type="button" class="map-ctrl-btn image-zoom-btn" title="View full size" onclick="openLightbox(document.getElementById('mainImage').src, document.getElementById('mainImage').alt)"><i class="fas fa-magnifying-glass-plus"></i></button>
+      {% elif property.main_image %}
+      <img src="{{ property.main_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
+      {% else %}
+      <img src="{{ property.image_1.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
       {% endif %}
     </div>
 
@@ -410,20 +367,6 @@
     {% endif %}
   </div>
   {% endif %}
-
-  <!-- Image zoom lightbox -->
-  <div class="image-lightbox" id="imageLightbox">
-    <button type="button" class="lightbox-close" onclick="closeLightbox()" title="Close"><i class="fas fa-xmark"></i></button>
-    <div class="lightbox-img-wrap" id="lightboxImgWrap">
-      <img src="" alt="" class="lightbox-img" id="lightboxImg">
-    </div>
-    <div class="lightbox-controls">
-      <button type="button" onclick="lightboxZoom(-0.25)" title="Zoom out"><i class="fas fa-minus"></i></button>
-      <span class="lightbox-zoom-level" id="lightboxZoomLevel">100%</span>
-      <button type="button" onclick="lightboxZoom(0.25)" title="Zoom in"><i class="fas fa-plus"></i></button>
-      <button type="button" onclick="resetLightbox()" title="Reset"><i class="fas fa-arrows-rotate"></i></button>
-    </div>
-  </div>
 
   <!-- Location + Property Info -->
   <div class="info-grid">
@@ -679,8 +622,7 @@
 
     window.showImage = function (src, alt, tabEl) {
       var wrap = document.getElementById('mapFrameWrap');
-      wrap.innerHTML = '<img src="' + src + '" alt="' + alt + '" class="property-main-image" id="mainImage" onclick="openLightbox(this.src, this.alt)">' +
-        '<button type="button" class="map-ctrl-btn image-zoom-btn" title="View full size" onclick="openLightbox(document.getElementById(\'mainImage\').src, document.getElementById(\'mainImage\').alt)"><i class="fas fa-magnifying-glass-plus"></i></button>';
+      wrap.innerHTML = '<img src="' + src + '" alt="' + alt + '" class="property-main-image" id="mainImage">';
       clearActiveTabs();
       if (tabEl) tabEl.classList.add('active');
     };
@@ -697,125 +639,6 @@
     if (typeof lat !== 'undefined') {
       initMap();
     }
-  })();
-</script>
-
-<script>
-  // ── Image lightbox: click-to-zoom (wheel, pinch, drag-pan, buttons) ──
-  (function () {
-    var lightbox = document.getElementById('imageLightbox');
-    var wrap = document.getElementById('lightboxImgWrap');
-    var img = document.getElementById('lightboxImg');
-    var zoomLevelEl = document.getElementById('lightboxZoomLevel');
-
-    var MIN_SCALE = 1, MAX_SCALE = 4;
-    var scale = 1, originX = 0, originY = 0;
-    var isDragging = false, startX = 0, startY = 0, startOriginX = 0, startOriginY = 0;
-    var pinchStartDist = 0, pinchStartScale = 1;
-
-    function applyTransform() {
-      img.style.transform = 'translate(' + originX + 'px, ' + originY + 'px) scale(' + scale + ')';
-      zoomLevelEl.textContent = Math.round(scale * 100) + '%';
-      wrap.classList.toggle('zoomed', scale > MIN_SCALE);
-    }
-
-    function setScale(next) {
-      scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
-      if (scale === MIN_SCALE) { originX = 0; originY = 0; }
-      applyTransform();
-    }
-
-    window.openLightbox = function (src, alt) {
-      img.src = src;
-      img.alt = alt || '';
-      scale = 1; originX = 0; originY = 0;
-      applyTransform();
-      lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    };
-
-    window.closeLightbox = function () {
-      lightbox.classList.remove('active');
-      document.body.style.overflow = '';
-    };
-
-    window.resetLightbox = function () { setScale(1); };
-
-    window.lightboxZoom = function (delta) { setScale(scale + delta); };
-
-    // Click on the dark backdrop (not the image) closes it
-    lightbox.addEventListener('click', function (e) {
-      if (e.target === lightbox) closeLightbox();
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && lightbox.classList.contains('active')) closeLightbox();
-    });
-
-    // Scroll-wheel zoom
-    wrap.addEventListener('wheel', function (e) {
-      e.preventDefault();
-      setScale(scale + (e.deltaY < 0 ? 0.2 : -0.2));
-    }, { passive: false });
-
-    // Double-click / double-tap to toggle zoom
-    wrap.addEventListener('dblclick', function () {
-      setScale(scale > MIN_SCALE ? MIN_SCALE : 2.5);
-    });
-
-    // Drag to pan (mouse) once zoomed in
-    wrap.addEventListener('mousedown', function (e) {
-      if (scale <= MIN_SCALE) return;
-      isDragging = true;
-      wrap.classList.add('dragging');
-      startX = e.clientX; startY = e.clientY;
-      startOriginX = originX; startOriginY = originY;
-    });
-    window.addEventListener('mousemove', function (e) {
-      if (!isDragging) return;
-      originX = startOriginX + (e.clientX - startX);
-      originY = startOriginY + (e.clientY - startY);
-      applyTransform();
-    });
-    window.addEventListener('mouseup', function () {
-      isDragging = false;
-      wrap.classList.remove('dragging');
-    });
-
-    // Touch: one-finger pan, two-finger pinch zoom
-    function touchDist(touches) {
-      var dx = touches[0].clientX - touches[1].clientX;
-      var dy = touches[0].clientY - touches[1].clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    wrap.addEventListener('touchstart', function (e) {
-      if (e.touches.length === 1 && scale > MIN_SCALE) {
-        isDragging = true;
-        startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-        startOriginX = originX; startOriginY = originY;
-      } else if (e.touches.length === 2) {
-        isDragging = false;
-        pinchStartDist = touchDist(e.touches);
-        pinchStartScale = scale;
-      }
-    }, { passive: true });
-
-    wrap.addEventListener('touchmove', function (e) {
-      if (e.touches.length === 1 && isDragging) {
-        originX = startOriginX + (e.touches[0].clientX - startX);
-        originY = startOriginY + (e.touches[0].clientY - startY);
-        applyTransform();
-      } else if (e.touches.length === 2) {
-        e.preventDefault();
-        var dist = touchDist(e.touches);
-        setScale(pinchStartScale * (dist / pinchStartDist));
-      }
-    }, { passive: false });
-
-    wrap.addEventListener('touchend', function (e) {
-      if (e.touches.length === 0) isDragging = false;
-    });
   })();
 </script>
 {% endblock %}
