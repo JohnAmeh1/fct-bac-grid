@@ -333,11 +333,8 @@
         <button type="button" class="map-ctrl-btn" title="Fullscreen" onclick="toggleFullscreenMap()"><i class="fas fa-expand"></i></button>
       </div>
       <div class="map-type-chip" id="mapTypeChip">Terrain</div>
-      {% elif property.main_image %}
-      <img src="{{ property.main_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage" onclick="openLightbox(this.src, this.alt)">
-      <button type="button" class="map-ctrl-btn image-zoom-btn" title="View full size" onclick="openLightbox(document.getElementById('mainImage').src, document.getElementById('mainImage').alt)"><i class="fas fa-magnifying-glass-plus"></i></button>
-      {% else %}
-      <img src="{{ property.image_1.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage" onclick="openLightbox(this.src, this.alt)">
+      {% elif property.get_primary_image %}
+      <img src="{{ property.get_primary_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage" onclick="openLightbox(this.src, this.alt)">
       <button type="button" class="map-ctrl-btn image-zoom-btn" title="View full size" onclick="openLightbox(document.getElementById('mainImage').src, document.getElementById('mainImage').alt)"><i class="fas fa-magnifying-glass-plus"></i></button>
       {% endif %}
     </div>
