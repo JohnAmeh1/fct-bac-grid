@@ -4,401 +4,548 @@
 
 {% block content %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
     --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
-    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
-    --border: #e5e7eb; --border-2: #d1d5db;
-    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --surface: #ffffff; --surface-2: #f5f7f9; --surface-3: #eef1f4;
+    --border: #e7e9ec; --border-2: #d1d5db;
+    --green: #17a34a; --green-dk: #0e7a37; --green-dim: #dcfce7;
     --accent: #1e6cf0; --accent-dim: #dbeafe; --accent-dk: #1558c8;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
-    --shadow: 0 4px 12px rgba(0,0,0,.07);
-    --shadow-lg: 0 10px 30px rgba(0,0,0,.12);
-    --radius: 10px; --radius-lg: 16px;
+    --amber: #d97706; --amber-dim: #fef3c7;
+    --red: #dc2626; --red-dim: #fee2e2;
+    --shadow-sm: 0 1px 3px rgba(15,17,23,.06);
+    --shadow: 0 6px 20px rgba(15,17,23,.08);
+    --shadow-lg: 0 14px 34px rgba(15,17,23,.14);
+    --radius: 12px; --radius-lg: 20px; --radius-pill: 999px;
     --transition: 160ms cubic-bezier(.4,0,.2,1);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
   body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface-2); }
 
   .property-view-wrapper {
-    max-width: 1200px; margin: 0 auto; padding: 40px 24px 60px;
+    max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px;
   }
 
-  .property-view-header {
+  /* ── Header ─────────────────────────────────────────── */
+  .app-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 32px; gap: 16px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 16px; margin-bottom: 18px; box-shadow: var(--shadow-sm);
   }
-
-  .property-view-back {
+  .back-link {
     display: inline-flex; align-items: center; gap: 8px;
-    color: var(--ink-3); text-decoration: none; font-weight: 500; font-size: .9rem;
-    padding: 8px 12px; border-radius: var(--radius);
-    transition: color var(--transition), background var(--transition);
+    color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: .92rem;
   }
-  .property-view-back:hover { color: var(--green); background: var(--green-dim); }
+  .back-link:hover { color: var(--green-dk); }
+  .header-icons { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--ink-3); display: inline-flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: .9rem; transition: background var(--transition), color var(--transition);
+  }
+  .icon-btn:hover { background: var(--border); color: var(--ink); }
 
+  /* ── Title block ────────────────────────────────────── */
+  .title-block { padding: 4px 4px 18px; }
   .property-view-title {
-    font-size: 2rem; font-weight: 700; color: var(--ink); letter-spacing: -.4px;
+    font-size: 1.9rem; font-weight: 800; color: var(--ink); letter-spacing: -.5px; margin-bottom: 10px;
   }
-
-  .property-meta-strip {
-    display: flex; gap: 12px; flex-wrap: wrap;
-    padding-bottom: 16px; border-bottom: 1px solid var(--border);
-  }
-
-  .meta-badge {
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .badge {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 99px; font-size: .8rem; font-weight: 600;
+    padding: 6px 13px; border-radius: var(--radius-pill); font-size: .78rem; font-weight: 700;
   }
-  .meta-badge.type { background: var(--accent-dim); color: var(--accent); }
-  .meta-badge.status { background: var(--green-dim); color: var(--green); }
+  .badge-active { background: var(--green-dim); color: var(--green-dk); }
+  .badge-type { background: var(--accent-dim); color: var(--accent-dk); }
+  .address-line {
+    display: flex; align-items: center; gap: 7px;
+    color: var(--ink-3); font-size: .92rem; font-weight: 500;
+  }
+  .address-line i { color: var(--ink-4); }
 
-  .property-content {
-    display: grid; grid-template-columns: 1fr 380px; gap: 28px; margin-top: 32px;
+  /* ── Map card ───────────────────────────────────────── */
+  .map-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px;
   }
-  @media (max-width: 1024px) { .property-content { grid-template-columns: 1fr; } }
+  .map-frame-wrap {
+    position: relative; width: 100%; height: 400px; background: var(--surface-3);
+  }
+  .map-frame-wrap iframe, .map-frame-wrap img.property-main-image {
+    width: 100%; height: 100%; border: 0; display: block; object-fit: cover;
+  }
+  .map-frame-wrap:fullscreen iframe,
+  .map-frame-wrap:fullscreen img.property-main-image { height: 100vh; }
 
-  /* Images Gallery */
-  .property-images {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 0; overflow: hidden;
-    box-shadow: var(--shadow); margin-bottom: 28px;
+  .map-overlay-top {
+    position: absolute; top: 12px; left: 12px; right: 64px; z-index: 5;
+    pointer-events: none;
   }
+  .map-search-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.96); backdrop-filter: blur(4px);
+    padding: 10px 14px; border-radius: var(--radius-pill); box-shadow: var(--shadow-sm);
+    font-size: .82rem; font-weight: 600; color: var(--ink-2); max-width: 100%;
+  }
+  .map-search-pill i.fa-magnifying-glass { color: var(--ink-4); }
+  .map-search-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .property-main-image {
-    width: 100%; height: 380px; object-fit: cover; display: block;
+  .map-controls {
+    position: absolute; top: 12px; right: 12px; z-index: 5;
+    display: flex; flex-direction: column; gap: 8px;
   }
+  .map-ctrl-btn {
+    width: 42px; height: 42px; border-radius: 12px; border: none;
+    background: rgba(255,255,255,.96); box-shadow: var(--shadow-sm); color: var(--ink-2);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .95rem;
+    transition: background var(--transition);
+  }
+  .map-ctrl-btn:hover { background: var(--surface-3); }
+  .zoom-group { display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .zoom-group .map-ctrl-btn { box-shadow: none; border-radius: 0; }
+  .zoom-group .map-ctrl-btn:first-child { border-bottom: 1px solid var(--border); }
 
-  .property-main-display {
-    width: 100%; height: 380px; position: relative; background: var(--surface-3);
-  }
-  .property-main-display iframe {
-    width: 100%; height: 100%; border: 0; display: block;
-  }
-  .property-main-placeholder {
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 8px; color: var(--ink-4); font-size: .9rem;
-  }
-  .property-main-placeholder i { font-size: 1.6rem; }
-
-  .property-thumbnails {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px;
-    background: var(--surface-2);
-  }
-
-  .property-thumbnail {
-    width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius);
-    border: 2px solid var(--border); cursor: pointer;
-    transition: border-color var(--transition), transform var(--transition);
-  }
-  .property-thumbnail:hover { border-color: var(--green); transform: scale(1.02); }
-  .property-thumbnail.active { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
-
-  .property-thumbnail.map-thumb {
-    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;
-    background: var(--accent-dim); color: var(--accent-dk); font-size: .75rem; font-weight: 600;
-  }
-  .property-thumbnail.map-thumb i { font-size: 1.1rem; }
-
-  .property-location-line {
-    display: flex; align-items: center; gap: 6px;
-    color: var(--ink-3); font-size: .9rem; font-weight: 500; margin-bottom: 16px;
-  }
-
-  /* Details Card */
-  .property-details-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow);
+  .map-type-chip {
+    position: absolute; bottom: 12px; left: 12px; z-index: 5;
+    background: rgba(15,17,23,.72); color: #fff; font-size: .72rem; font-weight: 600;
+    padding: 5px 11px; border-radius: var(--radius-pill); letter-spacing: .02em; text-transform: uppercase;
   }
 
-  .detail-section {
-    margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
-  }
-  .detail-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-
-  .detail-section h3 {
-    font-size: .75rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .1em; color: var(--ink-3); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
-  }
-
-  .detail-item {
-    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .detail-label {
-    font-size: .8rem; font-weight: 600; color: var(--ink-3); flex: 0 0 40%;
-  }
-
-  .detail-value {
-    font-size: .95rem; color: var(--ink); flex: 1; word-break: break-word; font-weight: 500;
-  }
-
-  .detail-value.empty {
-    color: var(--ink-4); font-style: italic;
-  }
-
-  /* GPS Link */
-  .gps-link {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--accent); text-decoration: none; font-weight: 600;
-    padding: 8px 12px; border-radius: var(--radius); background: var(--accent-dim);
-    transition: all var(--transition);
-  }
-  .gps-link:hover { background: var(--accent); color: white; }
-  .gps-link i { font-size: .75rem; }
-
-  /* Owner Card */
-  .owner-card {
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 20px; text-align: center;
-  }
-
-  .owner-avatar {
-    width: 60px; height: 60px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--green), #4ade80);
-    color: white; font-weight: 700; font-size: 1.2rem;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 12px;
-  }
-
-  .owner-name {
-    font-size: 1rem; font-weight: 700; color: var(--ink); margin: 0 0 4px;
-  }
-
-  .owner-username {
-    font-size: .8rem; color: var(--ink-3); margin: 0; font-family: 'DM Mono', monospace;
-  }
-
-  .owner-info {
-    font-size: .75rem; color: var(--ink-4); margin-top: 12px; padding-top: 12px;
+  /* ── Media tabs ─────────────────────────────────────── */
+  .media-tabs {
+    display: flex; gap: 10px; padding: 14px; overflow-x: auto; background: var(--surface-2);
     border-top: 1px solid var(--border);
   }
+  .media-tab {
+    flex: 0 0 auto; width: 88px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    border: none; background: none; cursor: pointer; padding: 0; position: relative;
+  }
+  .media-tab-icon {
+    width: 100%; height: 66px; border-radius: var(--radius); background: var(--surface) center/cover no-repeat;
+    border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3); font-size: 1.1rem; transition: border-color var(--transition), transform var(--transition);
+  }
+  .media-tab:hover .media-tab-icon { transform: scale(1.03); }
+  .media-tab.active .media-tab-icon { border-color: var(--green); color: var(--green); }
+  .media-tab span { font-size: .72rem; font-weight: 600; color: var(--ink-3); }
+  .media-tab.active span { color: var(--green-dk); }
+  .media-tab-check {
+    position: absolute; top: -5px; right: 8px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--green); color: #fff; display: none; align-items: center; justify-content: center; font-size: .6rem;
+    border: 2px solid var(--surface-2);
+  }
+  .media-tab.active .media-tab-check { display: flex; }
 
-  /* Notes */
+  /* ── Action buttons ─────────────────────────────────── */
+  .map-action-buttons {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px 14px;
+  }
+  @media (max-width: 560px) { .map-action-buttons { grid-template-columns: 1fr; } }
+  .action-btn {
+    display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: var(--radius);
+    text-decoration: none; font-weight: 700; transition: filter var(--transition), background var(--transition);
+  }
+  .action-btn i { font-size: 1.05rem; }
+  .action-btn-text strong { display: block; font-size: .88rem; }
+  .action-btn-text span { display: block; font-size: .74rem; font-weight: 500; opacity: .85; }
+  .action-btn-primary { background: var(--green); color: #fff; }
+  .action-btn-primary:hover { filter: brightness(0.95); }
+  .action-btn-secondary { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent-dim); }
+  .action-btn-secondary:hover { background: var(--accent-dim); }
+
+  /* ── Info grid ──────────────────────────────────────── */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 720px) { .info-grid { grid-template-columns: 1fr; } }
+
+  .info-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px; box-shadow: var(--shadow-sm);
+  }
+  .info-card h3 {
+    font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--ink-3); margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+  }
+  .info-card h3 i { color: var(--green); }
+  .info-row {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid var(--surface-3);
+  }
+  .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .info-label { font-size: .8rem; font-weight: 600; color: var(--ink-3); }
+  .info-value { font-size: .9rem; color: var(--ink); font-weight: 600; text-align: right; word-break: break-word; }
+  .info-value.mono { font-family: 'DM Mono', monospace; font-weight: 500; }
+  .info-value a.gps-link {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--accent); text-decoration: none; font-weight: 700;
+  }
+  .info-value a.gps-link:hover { text-decoration: underline; }
+
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-pill); }
+  .chip.green { background: var(--green-dim); color: var(--green-dk); }
+  .chip.amber { background: var(--amber-dim); color: var(--amber); }
+  .chip.red { background: var(--red-dim); color: var(--red); }
+
+  /* ── Owner card ─────────────────────────────────────── */
+  .owner-card { text-align: center; padding-top: 4px; }
+  .owner-avatar {
+    width: 58px; height: 58px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green), #4ade80);
+    color: #fff; font-weight: 700; font-size: 1.15rem;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+  }
+  .owner-name { font-size: .98rem; font-weight: 700; color: var(--ink); margin: 0 0 3px; }
+  .owner-username { font-size: .78rem; color: var(--ink-3); margin: 0; font-family: 'DM Mono', monospace; }
+  .owner-info { font-size: .78rem; color: var(--ink-4); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--surface-3); }
+  .owner-info a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  /* ── Notes ──────────────────────────────────────────── */
   .property-notes {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow);
-    margin-bottom: 28px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 16px;
   }
-
   .property-notes h3 {
-    font-size: .75rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .1em; color: var(--ink-3); margin-bottom: 12px;
+    font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--ink-3); margin-bottom: 10px; display: flex; align-items: center; gap: 7px;
   }
-
-  .property-notes p {
-    font-size: .95rem; line-height: 1.7; color: var(--ink-2); margin: 0;
-  }
-
-  .no-notes {
-    font-size: .9rem; color: var(--ink-4); font-style: italic;
-  }
-  .gps-ok{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;color:var(--green);background:var(--green-dim);padding:2px 8px;border-radius:99px;}
+  .property-notes h3 i { color: var(--green); }
+  .property-notes p { font-size: .92rem; line-height: 1.7; color: var(--ink-2); margin: 0; }
 </style>
 
 <div class="property-view-wrapper">
-  <div class="property-view-header">
-    <a href="{% url 'dashboard' %}" class="property-view-back">
+
+  <!-- Header -->
+  <div class="app-header">
+    <a href="{% url 'dashboard' %}" class="back-link">
       <i class="fas fa-arrow-left"></i> Back to Dashboard
     </a>
-    {% if can_manage %}
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="header-icons">
+      <button type="button" class="icon-btn" title="Share" onclick="shareProperty()"><i class="fas fa-arrow-up-from-bracket"></i></button>
+      <button type="button" class="icon-btn" title="Print" onclick="window.print()"><i class="fas fa-ellipsis-vertical"></i></button>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="title-block">
+    <h1 class="property-view-title">{{ property.name }}</h1>
+    <div class="badge-row">
+      <span class="badge badge-active"><i class="fas fa-check-circle"></i> Active</span>
+      <span class="badge badge-type">
+        {% if property.property_type == 'residential' %}<i class="fas fa-house"></i> Residential
+        {% elif property.property_type == 'commercial' %}<i class="fas fa-store"></i> Commercial
+        {% endif %}
+      </span>
+    </div>
+    <div class="address-line">
+      <i class="fas fa-location-dot"></i>
+      {{ property.address }}{% if property.district %}, {{ property.district|capfirst }} Area Council{% endif %}
+    </div>
+  </div>
+
+  <!-- Map card -->
+  {% if property.latitude and property.longitude or property.main_image or property.image_1 or property.image_2 or property.image_3 or property.image_4 or property.image_5 or property.image_6 %}
+  <div class="map-card">
+
+    <div class="map-frame-wrap" id="mapFrameWrap">
       {% if property.latitude and property.longitude %}
-      <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}" target="_blank" rel="noopener" class="property-view-back" style="background: var(--green-dim); color: var(--green-dk);">
-        <i class="fas fa-location-dot"></i> Open Location
+      <iframe id="mapFrame"
+              src="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&t=p&z=20&output=embed"
+              loading="lazy" allowfullscreen></iframe>
+      <div class="map-overlay-top">
+        <div class="map-search-pill">
+          <i class="fas fa-magnifying-glass"></i>
+          <span>{{ property.district|default:property.name }} (Terrain View)</span>
+        </div>
+      </div>
+      <div class="map-controls">
+        <button type="button" class="map-ctrl-btn" title="Layers" onclick="cycleMapType()"><i class="fas fa-layer-group"></i></button>
+        <button type="button" class="map-ctrl-btn" title="Recenter" onclick="resetMap()"><i class="fas fa-location-crosshairs"></i></button>
+        <div class="zoom-group">
+          <button type="button" class="map-ctrl-btn" title="Zoom in" onclick="zoomMap(1)"><i class="fas fa-plus"></i></button>
+          <button type="button" class="map-ctrl-btn" title="Zoom out" onclick="zoomMap(-1)"><i class="fas fa-minus"></i></button>
+        </div>
+        <button type="button" class="map-ctrl-btn" title="Fullscreen" onclick="toggleFullscreenMap()"><i class="fas fa-expand"></i></button>
+      </div>
+      <div class="map-type-chip" id="mapTypeChip">Terrain</div>
+      {% elif property.main_image %}
+      <img src="{{ property.main_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
+      {% else %}
+      <img src="{{ property.image_1.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
+      {% endif %}
+    </div>
+
+    <!-- Media tabs -->
+    <div class="media-tabs">
+      {% if property.latitude and property.longitude %}
+      <button type="button" class="media-tab active" id="mapTab" onclick="showMap()">
+        <div class="media-tab-icon"><i class="fas fa-map-location-dot"></i><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Map View</span>
+      </button>
+      {% endif %}
+      {% if property.main_image %}
+      <button type="button" class="media-tab{% if not property.latitude or not property.longitude %} active{% endif %}"
+              onclick="showImage('{{ property.main_image.url }}', 'Property Photo', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.main_image.url }}');">
+          {% if property.latitude and property.longitude %}<span class="media-tab-check"><i class="fas fa-check"></i></span>{% endif %}
+        </div>
+        <span>Photo</span>
+      </button>
+      {% endif %}
+      {% if property.image_1 %}
+      <button type="button" class="media-tab" onclick="showImage('{{ property.image_1.url }}', 'Image 1', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.image_1.url }}');"><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Image 1</span>
+      </button>
+      {% endif %}
+      {% if property.image_2 %}
+      <button type="button" class="media-tab" onclick="showImage('{{ property.image_2.url }}', 'Image 2', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.image_2.url }}');"><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Image 2</span>
+      </button>
+      {% endif %}
+      {% if property.image_3 %}
+      <button type="button" class="media-tab" onclick="showImage('{{ property.image_3.url }}', 'Image 3', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.image_3.url }}');"><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Image 3</span>
+      </button>
+      {% endif %}
+      {% if property.image_4 %}
+      <button type="button" class="media-tab" onclick="showImage('{{ property.image_4.url }}', 'Image 4', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.image_4.url }}');"><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Image 4</span>
+      </button>
+      {% endif %}
+      {% if property.image_5 %}
+      <button type="button" class="media-tab" onclick="showImage('{{ property.image_5.url }}', 'Image 5', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.image_5.url }}');"><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Image 5</span>
+      </button>
+      {% endif %}
+      {% if property.image_6 %}
+      <button type="button" class="media-tab" onclick="showImage('{{ property.image_6.url }}', 'Image 6', this)">
+        <div class="media-tab-icon" style="background-image:url('{{ property.image_6.url }}');"><span class="media-tab-check"><i class="fas fa-check"></i></span></div>
+        <span>Image 6</span>
+      </button>
+      {% endif %}
+    </div>
+
+    {% if can_manage %}
+    <div class="map-action-buttons">
+      {% if property.latitude and property.longitude %}
+      <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&t=p&z=20" target="_blank" rel="noopener" class="action-btn action-btn-primary">
+        <i class="fas fa-diamond-turn-right"></i>
+        <span class="action-btn-text"><strong>Open Location</strong><span>View on Google Maps</span></span>
       </a>
       {% endif %}
-      <a href="{% url 'edit_property' property.id %}" class="property-view-back" style="background: var(--accent-dim); color: var(--accent);">
-        <i class="fas fa-pen-to-square"></i> Edit Property
+      <a href="{% url 'edit_property' property.id %}" class="action-btn action-btn-secondary">
+        <i class="fas fa-pen-to-square"></i>
+        <span class="action-btn-text"><strong>Edit Property</strong><span>Update Information</span></span>
       </a>
     </div>
     {% endif %}
   </div>
+  {% endif %}
 
-  <h1 class="property-view-title">{{ property.name }}</h1>
-
-  <div class="property-meta-strip" style="border-bottom: none; padding-bottom: 0; margin-bottom: 8px;">
-    <div class="meta-badge type">
-      {% if property.property_type == 'residential' %}<i class="fas fa-house"></i> Residential
-      {% elif property.property_type == 'commercial' %}<i class="fas fa-store"></i> Commercial
+  <!-- Location + Property Info -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3><i class="fas fa-map-marker-alt"></i> Location Details</h3>
+      <div class="info-row">
+        <span class="info-label">Address</span>
+        <span class="info-value">{{ property.address }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">District</span>
+        <span class="info-value">{{ property.district|capfirst }}</span>
+      </div>
+      {% if property.latitude and property.longitude %}
+      <div class="info-row">
+        <span class="info-label">GPS Coordinates</span>
+        <span class="info-value mono">{{ property.latitude }}, {{ property.longitude }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Map</span>
+        <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&t=p&z=20" target="_blank" class="gps-link">
+          <i class="fas fa-location-dot"></i> View Map
+        </a>
+      </div>
       {% endif %}
     </div>
-    <div class="meta-badge status">
-      <i class="fas fa-check-circle"></i> Active
+
+    <div class="info-card">
+      <h3><i class="fas fa-building"></i> Property Information</h3>
+      <div class="info-row">
+        <span class="info-label">Property ID</span>
+        <span class="info-value mono">{{ property.id }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Type</span>
+        <span class="info-value">{{ property.get_property_type_display }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Units</span>
+        <span class="info-value">{{ property.num_units }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Status</span>
+        <span class="chip green"><i class="fas fa-check-circle"></i> Active</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Registered</span>
+        <span class="info-value">{{ property.created_at|date:"M d, Y" }}</span>
+      </div>
     </div>
   </div>
 
-  <div class="property-location-line">
-    <i class="fas fa-location-dot"></i> {{ property.address }}{% if property.district %}, {{ property.district|capfirst }}{% endif %}
-  </div>
-
-  <div style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 0;"></div>
-
-  <div class="property-content">
-    <div>
-      <!-- Images / Map Gallery -->
-      {% if property.latitude and property.longitude or property.main_image or property.image_1 or property.image_2 or property.image_3 or property.image_4 or property.image_5 or property.image_6 %}
-      <div class="property-images">
-        <div class="property-main-display" id="mainDisplay">
-          {% if property.latitude and property.longitude %}
-          <iframe id="mapFrame" src="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&z=18&output=embed" loading="lazy" allowfullscreen></iframe>
-          {% elif property.main_image %}
-          <img src="{{ property.main_image.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
+  <!-- Payment status + Owner -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
+      <div class="info-row">
+        <span class="info-label">Tenement Rate</span>
+        <span class="info-value">
+          {% if property_payment_status == 'paid' %}
+            <span class="chip green"><i class="fas fa-check-circle"></i> Paid</span>
+          {% elif property_payment_status == 'pending' %}
+            <span class="chip amber"><i class="fas fa-clock"></i> Pending</span>
           {% else %}
-          <img src="{{ property.image_1.url }}" alt="{{ property.name }}" class="property-main-image" id="mainImage">
+            <span class="chip red"><i class="fas fa-xmark-circle"></i> Not Paid</span>
           {% endif %}
-        </div>
-
-        <div class="property-thumbnails">
-          {% if property.latitude and property.longitude %}
-          <div class="property-thumbnail map-thumb active" id="mapThumb"
-               data-map-src="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}&z=18&output=embed"
-               onclick="showMap(this)">
-            <i class="fas fa-map-location-dot"></i><span>Map View</span>
-          </div>
-          {% endif %}
-          {% if property.main_image %}
-          <img src="{{ property.main_image.url }}" alt="Property Photo" class="property-thumbnail{% if not property.latitude or not property.longitude %} active{% endif %}" onclick="showImage(this)">
-          {% endif %}
-          {% if property.image_1 %}
-          <img src="{{ property.image_1.url }}" alt="Image 1" class="property-thumbnail" onclick="showImage(this)">
-          {% endif %}
-          {% if property.image_2 %}
-          <img src="{{ property.image_2.url }}" alt="Image 2" class="property-thumbnail" onclick="showImage(this)">
-          {% endif %}
-          {% if property.image_3 %}
-          <img src="{{ property.image_3.url }}" alt="Image 3" class="property-thumbnail" onclick="showImage(this)">
-          {% endif %}
-          {% if property.image_4 %}
-          <img src="{{ property.image_4.url }}" alt="Image 4" class="property-thumbnail" onclick="showImage(this)">
-          {% endif %}
-          {% if property.image_5 %}
-          <img src="{{ property.image_5.url }}" alt="Image 5" class="property-thumbnail" onclick="showImage(this)">
-          {% endif %}
-          {% if property.image_6 %}
-          <img src="{{ property.image_6.url }}" alt="Image 6" class="property-thumbnail" onclick="showImage(this)">
-          {% endif %}
-        </div>
+        </span>
       </div>
-      {% endif %}
-
-      <script>
-        function clearActiveThumbs() {
-          document.querySelectorAll('.property-thumbnail').forEach(function (el) {
-            el.classList.remove('active');
-          });
-        }
-
-        function showMap(el) {
-          var display = document.getElementById('mainDisplay');
-          display.innerHTML = '<iframe id="mapFrame" src="' + el.dataset.mapSrc + '" loading="lazy" allowfullscreen></iframe>';
-          clearActiveThumbs();
-          el.classList.add('active');
-        }
-
-        function showImage(imgEl) {
-          var display = document.getElementById('mainDisplay');
-          display.innerHTML = '<img src="' + imgEl.src + '" alt="' + imgEl.alt + '" class="property-main-image" id="mainImage">';
-          clearActiveThumbs();
-          imgEl.classList.add('active');
-        }
-      </script>
-
-      <!-- Notes -->
-      {% if property.notes %}
-      <div class="property-notes">
-        <h3><i class="fas fa-note-sticky"></i> Additional Notes</h3>
-        <p>{{ property.notes }}</p>
+      <div class="info-row">
+        <span class="info-label">Sanitation Levy</span>
+        <span class="info-value">
+          {% if sanitation_status == 'paid' %}
+            <span class="chip green"><i class="fas fa-check-circle"></i> Paid</span>
+          {% elif sanitation_status == 'pending' %}
+            <span class="chip amber"><i class="fas fa-clock"></i> Pending</span>
+          {% else %}
+            <span class="chip red"><i class="fas fa-xmark-circle"></i> Not Paid</span>
+          {% endif %}
+        </span>
       </div>
-      {% endif %}
     </div>
 
-    <div>
-      <!-- Details Panel -->
-      <div class="property-details-card">
-        <div class="detail-section">
-          <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
-          <div class="detail-item">
-            <span class="detail-label">Address</span>
-            <span class="detail-value">{{ property.address }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">District</span>
-            <span class="detail-value">{{ property.district|capfirst }}</span>
-          </div>
-          {% if property.latitude and property.longitude %}
-          <div class="detail-item">
-            <span class="detail-label">GPS</span>
-            <a href="https://www.google.com/maps?q={{ property.latitude }},{{ property.longitude }}" target="_blank" class="gps-link">
-              <i class="fas fa-location-dot"></i> View Map
-            </a>
-          </div>
-          {% endif %}
+    <div class="info-card">
+      <h3><i class="fas fa-user"></i> Owner</h3>
+      <div class="owner-card">
+        <div class="owner-avatar">{{ property.owner.get_full_name|default:property.owner.username|slice:":1"|upper }}</div>
+        <p class="owner-name">{{ property.owner.get_full_name|default:property.owner.username }}</p>
+        <p class="owner-username">@{{ property.owner.username }}</p>
+        {% if property.owner.email %}
+        <div class="owner-info">
+          <a href="mailto:{{ property.owner.email }}">{{ property.owner.email }}</a>
         </div>
-
-        <div class="detail-section">
-          <h3><i class="fas fa-building"></i> Property Info</h3>
-          <div class="detail-item">
-            <span class="detail-label">Type</span>
-            <span class="detail-value">{{ property.get_property_type_display }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Units</span>
-            <span class="detail-value">{{ property.num_units }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Registered</span>
-            <span class="detail-value">{{ property.created_at|date:"M d, Y" }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
-          <div class="detail-item">
-            <span class="detail-label">Tenement Rate</span>
-            <span class="detail-value">
-              {% if property_payment_status == 'paid' %}
-                <span class="gps-ok"><i class="fas fa-check-circle"></i> Paid</span>
-              {% elif property_payment_status == 'pending' %}
-                <span class="chip amber"><i class="fas fa-clock"></i> Pending</span>
-              {% else %}
-                <span class="chip red"><i class="fas fa-xmark-circle"></i> Not Paid</span>
-              {% endif %}
-            </span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Sanitation Levy</span>
-            <span class="detail-value">
-              {% if sanitation_status == 'paid' %}
-                <span class="gps-ok"><i class="fas fa-check-circle"></i> Paid</span>
-              {% elif sanitation_status == 'pending' %}
-                <span class="chip amber"><i class="fas fa-clock"></i> Pending</span>
-              {% else %}
-                <span class="chip red"><i class="fas fa-xmark-circle"></i> Not Paid</span>
-              {% endif %}
-            </span>
-          </div>
-          <!-- Optionally list individual rates and payment status -->
-        </div>
-
-        <div class="detail-section">
-          <h3><i class="fas fa-user"></i> Owner</h3>
-          <div class="owner-card">
-            <div class="owner-avatar">{{ property.owner.get_full_name|default:property.owner.username|slice:":1"|upper }}</div>
-            <p class="owner-name">{{ property.owner.get_full_name|default:property.owner.username }}</p>
-            <p class="owner-username">@{{ property.owner.username }}</p>
-            <div class="owner-info">
-              {% if property.owner.email %}
-              <a href="mailto:{{ property.owner.email }}" style="color: var(--accent); text-decoration: none;">{{ property.owner.email }}</a>
-              {% endif %}
-            </div>
-          </div>
-        </div>
+        {% endif %}
       </div>
     </div>
   </div>
+
+  <!-- Notes -->
+  {% if property.notes %}
+  <div class="property-notes">
+    <h3><i class="fas fa-note-sticky"></i> Additional Notes</h3>
+    <p>{{ property.notes }}</p>
+  </div>
+  {% endif %}
+
 </div>
+
+<script>
+  (function () {
+    {% if property.latitude and property.longitude %}
+    var lat = {{ property.latitude }};
+    var lng = {{ property.longitude }};
+    {% endif %}
+    var zoom = 20;
+    var mapTypes = [
+      { code: 'p', label: 'Terrain' },
+      { code: 'k', label: 'Satellite' },
+      { code: 'h', label: 'Hybrid' },
+      { code: 'm', label: 'Roadmap' }
+    ];
+    var mapTypeIndex = 0;
+
+    function mapEmbedSrc() {
+      var t = mapTypes[mapTypeIndex].code;
+      return 'https://www.google.com/maps?q=' + lat + ',' + lng + '&t=' + t + '&z=' + zoom + '&output=embed';
+    }
+
+    function refreshMapFrame() {
+      var frame = document.getElementById('mapFrame');
+      if (frame) { frame.src = mapEmbedSrc(); }
+      var chip = document.getElementById('mapTypeChip');
+      if (chip) { chip.textContent = mapTypes[mapTypeIndex].label; }
+      var label = document.querySelector('.map-search-pill span');
+      if (label) { label.textContent = label.textContent.replace(/\(.*\)/, '(' + mapTypes[mapTypeIndex].label + ' View)'); }
+    }
+
+    window.cycleMapType = function () {
+      mapTypeIndex = (mapTypeIndex + 1) % mapTypes.length;
+      refreshMapFrame();
+    };
+
+    window.zoomMap = function (delta) {
+      zoom = Math.min(21, Math.max(3, zoom + delta));
+      refreshMapFrame();
+    };
+
+    window.resetMap = function () {
+      zoom = 20;
+      mapTypeIndex = 0;
+      refreshMapFrame();
+    };
+
+    window.toggleFullscreenMap = function () {
+      var wrap = document.getElementById('mapFrameWrap');
+      if (!wrap) return;
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (wrap.requestFullscreen) {
+        wrap.requestFullscreen();
+      }
+    };
+
+    function clearActiveTabs() {
+      document.querySelectorAll('.media-tab').forEach(function (el) { el.classList.remove('active'); });
+    }
+
+    window.showMap = function () {
+      var wrap = document.getElementById('mapFrameWrap');
+      wrap.innerHTML =
+        '<iframe id="mapFrame" src="' + mapEmbedSrc() + '" loading="lazy" allowfullscreen></iframe>' +
+        '<div class="map-overlay-top"><div class="map-search-pill"><i class="fas fa-magnifying-glass"></i> <span>{{ property.district|default:property.name|escapejs }} (' + mapTypes[mapTypeIndex].label + ' View)</span></div></div>' +
+        '<div class="map-controls">' +
+          '<button type="button" class="map-ctrl-btn" title="Layers" onclick="cycleMapType()"><i class="fas fa-layer-group"></i></button>' +
+          '<button type="button" class="map-ctrl-btn" title="Recenter" onclick="resetMap()"><i class="fas fa-location-crosshairs"></i></button>' +
+          '<div class="zoom-group">' +
+            '<button type="button" class="map-ctrl-btn" title="Zoom in" onclick="zoomMap(1)"><i class="fas fa-plus"></i></button>' +
+            '<button type="button" class="map-ctrl-btn" title="Zoom out" onclick="zoomMap(-1)"><i class="fas fa-minus"></i></button>' +
+          '</div>' +
+          '<button type="button" class="map-ctrl-btn" title="Fullscreen" onclick="toggleFullscreenMap()"><i class="fas fa-expand"></i></button>' +
+        '</div>' +
+        '<div class="map-type-chip" id="mapTypeChip">' + mapTypes[mapTypeIndex].label + '</div>';
+      clearActiveTabs();
+      var tab = document.getElementById('mapTab');
+      if (tab) tab.classList.add('active');
+    };
+
+    window.showImage = function (src, alt, tabEl) {
+      var wrap = document.getElementById('mapFrameWrap');
+      wrap.innerHTML = '<img src="' + src + '" alt="' + alt + '" class="property-main-image" id="mainImage">';
+      clearActiveTabs();
+      if (tabEl) tabEl.classList.add('active');
+    };
+
+    window.shareProperty = function () {
+      var url = window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: document.title, url: url }).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+      }
+    };
+  })();
+</script>
 {% endblock %}
