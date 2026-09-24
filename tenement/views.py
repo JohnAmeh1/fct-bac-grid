@@ -1556,7 +1556,13 @@ def edit_property(request, property_id):
 
 @login_required
 @verified_email_required
+@require_POST
 def delete_property(request, property_id):
+    profile = getattr(request.user, 'userprofile', None)
+    if profile and profile.user_type == 'landlord':
+        messages.error(request, 'Landlord accounts are not allowed to delete properties.')
+        return redirect('landlord_properties')
+
     property_obj = get_object_or_404(Property, id=property_id)
     if not user_can_manage_property(request.user, property_obj):
         messages.error(request, 'You do not have permission to delete this property.')
@@ -1902,7 +1908,13 @@ def admin_view_user(request, user_id):
 
 
 @staff_member_required
+@require_POST
 def admin_delete_user(request, user_id):
+    profile = getattr(request.user, 'userprofile', None)
+    if not profile or profile.user_type != 'admin':
+        messages.error(request, 'Only administrators can delete users.')
+        return redirect('admin_manage_users')
+
     user_obj = get_object_or_404(User, id=user_id)
     if user_obj != request.user:
         username = user_obj.username

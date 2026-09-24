@@ -4,6 +4,54 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  /* ---- SEAMLESS THEME TOGGLE ---- */
+  const themeForms = document.querySelectorAll('form[action$="/theme/toggle/"]');
+  const themeBody = document.body;
+
+  function setThemeControls(isDark) {
+    themeForms.forEach(form => {
+      const button = form.querySelector('button');
+      if (!button) return;
+
+      const icon = button.querySelector('i');
+      if (icon) icon.className = `fas ${isDark ? 'fa-sun' : 'fa-moon'}`;
+
+      const label = button.querySelector('span');
+      if (label) {
+        label.textContent = form.closest('.mobile-cta')
+          ? (isDark ? 'Switch to light mode' : 'Switch to dark mode')
+          : (isDark ? 'Light' : 'Dark');
+      }
+    });
+  }
+
+  themeForms.forEach(form => {
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+
+      const wasDark = themeBody.classList.contains('theme-dark');
+      const isDark = !wasDark;
+      themeBody.classList.add('theme-transition');
+      themeBody.classList.toggle('theme-dark', isDark);
+      setThemeControls(isDark);
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.ok) throw new Error('Theme preference could not be saved');
+      } catch (error) {
+        themeBody.classList.toggle('theme-dark', wasDark);
+        setThemeControls(wasDark);
+      } finally {
+        window.setTimeout(() => themeBody.classList.remove('theme-transition'), 320);
+      }
+    });
+  });
+
   /* ---- NAVBAR SCROLL SHADOW ---- */
   const navbar = document.getElementById('navbar');
   if (navbar) {

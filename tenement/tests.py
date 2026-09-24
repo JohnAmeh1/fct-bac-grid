@@ -8,7 +8,7 @@ from django.urls import reverse
 from PIL import Image
 from django.contrib.auth.models import User
 
-from tenement.models import Property, USER_TYPE_CHOICES, PaymentRate, Payment
+from tenement.models import Property, USER_TYPE_CHOICES, PaymentRate, Payment, UserProfile
 from tenement.views import (
     get_paginator_page_range,
     import_properties_from_uploaded_file,
@@ -489,3 +489,79 @@ class BulkImportAccountTests(TestCase):
         created_user = User.objects.get(username='newlandlord')
         self.assertEqual(created_user.userprofile.user_type, 'landlord')
         self.assertTrue(created_user.userprofile.email_verified)
+
+
+class LandlordDeleteRestrictionsTests(TestCase):
+    def setUp(self):
+        self.landlord = User.objects.create_user(
+            username='landlord-no-delete',
+            email='landlord-no-delete@example.com',
+            password='StrongPass123!',
+        )
+        UserProfile.objects.create(user=self.landlord, user_type='landlord', email_verified=True)
+
+        self.property_obj = Property.objects.create(
+            owner=self.landlord,
+            name='No Delete Property',
+            address='No. 5 Restriction Street',
+            district='bwari',
+            property_type='residential',
+            num_units=2,
+        )
+
+    def test_landlord_cannot_delete_property_even_with_direct_post(self):
+        self.client.force_login(self.landlord)
+
+        response = self.client.post(
+            reverse('delete_property', args=[self.property_obj.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Property.objects.filter(id=self.property_obj.id).exists())
+        self.assertContains(response, 'Landlord accounts are not allowed to delete properties.')
+
+    def test_landlord_profile_hides_delete_account_action(self):
+        self.client.force_login(self.landlord)
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Delete Account')
+
+    def test_staff_cannot_delete_user(self):
+        staff_user = User.objects.create_user(
+            username='staff-no-delete',
+            email='staff-no-delete@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        UserProfile.objects.create(user=staff_user, user_type='staff', email_verified=True)
+        self.client.force_login(staff_user)
+
+        response = self.client.post(
+            reverse('admin_delete_user', args=[self.landlord.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(User.objects.filter(id=self.landlord.id).exists())
+        self.assertContains(response, 'Only administrators can delete users.')
+
+    def test_dark_mode_toggle_works_from_property_page(self):
+        self.client.force_login(self.landlord)
+
+        response = self.client.post(
+            reverse('toggle_dark_mode'),
+            {'next': reverse('view_property', args=[self.property_obj.id])},
+        )
+
+        self.assertRedirects(response, reverse('view_property', args=[self.property_obj.id]))
+        self.landlord.userprofile.refresh_from_db()
+        self.assertTrue(self.landlord.userprofile.dark_mode)
+
+        response = self.client.get(reverse('view_property', args=[self.property_obj.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'body class="app-shell page-view_property is-authenticated theme-dark')
+        self.assertContains(response, 'class="theme-toggle"')

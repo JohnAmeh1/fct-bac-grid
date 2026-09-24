@@ -1103,12 +1103,12 @@
     <div class="hero-right">
       <span class="hero-time" id="adm-clock">--:-- --</span>
       <span class="hero-status-pill"><span class="dot"></span>Systems Online</span>
-      <form method="post" action="{% url 'toggle_dark_mode' %}">
+      <form method="post" action="{% url 'toggle_dark_mode' %}" class="theme-toggle-form">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.path }}">
         <button type="submit" class="hero-status-pill" title="Toggle colour theme" style="cursor:pointer;font-family:inherit;">
           <i class="fas {% if dark_mode_enabled %}fa-sun{% else %}fa-moon{% endif %}"></i>
-          {% if dark_mode_enabled %}Light mode{% else %}Dark mode{% endif %}
+          <span>{% if dark_mode_enabled %}Light mode{% else %}Dark mode{% endif %}</span>
         </button>
       </form>
     </div>
@@ -1175,7 +1175,6 @@
         <div class="lm-property-copy"><strong>{{ property.name }} <span class="lm-status-chip">Active</span></strong><span><i class="fas fa-location-dot"></i> {{ property.district|default:"Bwari, FCT" }} · {{ property.get_property_type_display }}</span></div>
         <div class="lm-property-actions">
           <a href="{% url 'view_property' property.id %}">View</a>
-          <a href="{% url 'delete_property' property.id %}" class="danger" onclick="return confirm('Delete this property? This cannot be undone.');">Delete</a>
         </div>
       </div>
       {% endwith %}
@@ -2146,11 +2145,6 @@
               </div>
               <div style="display: flex; gap: 8px;">
                 <a href="{% url 'view_property' property.id %}" class="chip blue" style="text-decoration: none;">View</a>
-                <form method="POST" action="{% url 'delete_property' property.id %}" onsubmit="return confirm('Delete this property?');" style="margin: 0;">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="dashboard">
-                  <button type="submit" class="chip red" style="border: none; cursor: pointer;">Delete</button>
-                </form>
               </div>
             </div>
           {% endfor %}
