@@ -4,7 +4,7 @@
 
 {% block content %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&display=swap');
 
   :root {
     --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
@@ -16,7 +16,8 @@
     --red: #dc2626; --red-dim: #fee2e2;
     --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
     --shadow: 0 4px 12px rgba(0,0,0,.07);
-    --radius: 10px; --radius-lg: 16px;
+    --shadow-lg: 0 18px 40px rgba(15,17,23,.10);
+    --radius: 10px; --radius-lg: 16px; --radius-xl: 22px;
     --transition: 160ms cubic-bezier(.4,0,.2,1);
   }
 
@@ -28,12 +29,12 @@
   @media (max-width: 640px) { .user-view-wrapper { padding: 24px 16px 48px; } }
 
   @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  .fade { animation: fadein .4s ease both; }
-  .fade-1 { animation-delay: .05s; } .fade-2 { animation-delay: .1s; }
+  .fade { animation: fadein .5s cubic-bezier(.4,0,.2,1) both; }
+  .fade-1 { animation-delay: .05s; } .fade-2 { animation-delay: .12s; } .fade-3 { animation-delay: .18s; }
 
   .user-view-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
   }
   .user-view-back {
     display: inline-flex; align-items: center; gap: 8px;
@@ -43,50 +44,98 @@
   }
   .user-view-back:hover { color: var(--green); background: var(--green-dim); }
   .user-view-title { font-size: 1.7rem; font-weight: 700; color: var(--ink); letter-spacing: -.4px; margin: 0; }
+  .user-view-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--green-dk); background: var(--green-dim);
+    padding: 4px 12px; border-radius: 99px; margin-bottom: 10px;
+  }
+  .user-view-eyebrow .e-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
 
   /* Profile card */
   .user-view-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 28px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg); overflow: hidden; margin-bottom: 28px;
+  }
+
+  /* Cover banner */
+  .user-cover {
+    position: relative; height: 108px;
+    background: linear-gradient(120deg, #0f1117 0%, #1c2333 55%, #14321f 100%);
+    overflow: hidden;
+  }
+  .user-cover::before {
+    content: ''; position: absolute; top: -50px; right: -40px; width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(22,163,74,.35) 0%, transparent 70%);
+  }
+  .user-cover::after {
+    content: ''; position: absolute; bottom: -60px; left: 10%; width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(30,108,240,.22) 0%, transparent 70%);
+  }
+  .user-cover-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 34px 34px;
   }
 
   .user-view-summary {
-    display: flex; align-items: center; gap: 20px; padding: 28px;
-    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    display: flex; align-items: flex-end; gap: 20px; padding: 0 28px 24px;
+    margin-top: -44px; position: relative; flex-wrap: wrap;
   }
   .user-avatar {
-    width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
+    width: 92px; height: 92px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; font-weight: 700; color: white;
-    box-shadow: var(--shadow-sm);
+    font-family: 'Fraunces', serif;
+    font-size: 1.9rem; font-weight: 600; color: white;
+    border: 4px solid var(--surface); box-shadow: var(--shadow-lg);
   }
   .user-avatar.landlord { background: linear-gradient(135deg, var(--green), #4ade80); }
   .user-avatar.admin { background: linear-gradient(135deg, var(--purple), #a78bfa); }
   .user-avatar.default { background: linear-gradient(135deg, #6b7280, #9ca3af); }
 
-  .user-summary-info { flex: 1; min-width: 200px; }
-  .user-fullname { margin: 0 0 8px; font-size: 1.25rem; font-weight: 700; color: var(--ink); letter-spacing: -.3px; }
+  .user-summary-info { flex: 1; min-width: 200px; padding-top: 44px; }
+  .user-fullname {
+    font-family: 'Fraunces', serif; margin: 0 0 10px; font-size: 1.5rem; font-weight: 700;
+    color: var(--ink); letter-spacing: -.02em; line-height: 1.2;
+  }
+  .user-badge-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
   .role-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .04em; margin-right: 8px;
+    padding: 4px 11px; border-radius: 99px; font-size: .7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
   }
   .role-badge.landlord { background: var(--green-dim); color: var(--green-dk); }
   .role-badge.admin { background: var(--purple-dim); color: var(--purple); }
   .role-badge.default { background: var(--surface-3); color: var(--ink-3); }
 
-  .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 600; }
+  .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 99px; font-size: .7rem; font-weight: 600; }
   .status-pill.active { background: var(--green-dim); color: var(--green-dk); }
   .status-pill.inactive { background: var(--red-dim); color: var(--red); }
   .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .status-pill.active .status-dot { background: var(--green); }
   .status-pill.inactive .status-dot { background: var(--red); }
 
-  .user-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; padding: 24px 28px; margin: 0; }
-  .detail-row { display: flex; flex-direction: column; gap: 4px; }
-  .detail-row dt { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-4); }
-  .detail-row dd { margin: 0; font-size: .92rem; color: var(--ink); font-weight: 500; }
+  .section-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-3); padding: 20px 28px 0;
+  }
+  .section-label i { color: var(--green); font-size: .8rem; }
+
+  .user-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; padding: 14px 28px 28px; margin: 0; }
+  .detail-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 4px; border-bottom: 1px dashed var(--border);
+  }
+  .detail-icon {
+    width: 32px; height: 32px; border-radius: var(--radius); flex-shrink: 0;
+    background: var(--surface-3); color: var(--ink-3);
+    display: flex; align-items: center; justify-content: center; font-size: .78rem;
+  }
+  .detail-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .detail-row dt { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-4); }
+  .detail-row dd { margin: 0; font-size: .92rem; color: var(--ink); font-weight: 500; word-break: break-word; }
   .mono-text { font-family: 'DM Mono', monospace; letter-spacing: -.01em; }
   .link-action { color: var(--accent); text-decoration: none; transition: color var(--transition); }
   .link-action:hover { color: var(--accent-dk); text-decoration: underline; }
@@ -94,34 +143,47 @@
 
   /* Properties Section */
   .properties-section {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow); padding: 24px 28px 28px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg); padding: 26px 28px 30px;
   }
-  .properties-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
-  .properties-header h2 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+  .properties-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 8px; }
+  .properties-header h2 { font-family: 'Fraunces', serif; margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em; }
   .properties-count {
-    font-size: .72rem; font-weight: 700; color: var(--ink-3); background: var(--surface-3);
-    padding: 3px 10px; border-radius: 99px;
+    font-size: .72rem; font-weight: 700; color: var(--green-dk); background: var(--green-dim);
+    padding: 4px 12px; border-radius: 99px;
   }
 
-  .properties-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+  .properties-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
   .property-card {
-    border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 0; background: var(--surface);
     transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+    overflow: hidden; position: relative;
   }
-  .property-card:hover { border-color: var(--green); background: var(--surface); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .property-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--green), var(--accent)); opacity: 0; transition: opacity var(--transition);
+  }
+  .property-card:hover::before { opacity: 1; }
+  .property-card:hover { border-color: var(--border-2); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
   .property-thumb {
-    width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius);
-    border: 1px solid var(--border); margin-bottom: 14px; display: block;
+    width: 100%; height: 140px; object-fit: cover; display: block; background: var(--surface-2);
   }
-  .property-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .property-thumb-empty {
+    width: 100%; height: 90px; display: flex; align-items: center; justify-content: center;
+    background: var(--surface-3); color: var(--ink-4); font-size: 1.4rem;
+  }
+  .property-body { padding: 16px; }
+  .property-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
   .property-name { margin: 0; font-size: .95rem; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68%; }
-  .property-details { margin-bottom: 14px; }
-  .property-details .detail-row dt { font-size: .62rem; }
-  .property-details .detail-row { margin-bottom: 8px; }
+  .property-details { margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .property-details .detail-row { padding: 0; border-bottom: none; gap: 8px; align-items: center; }
+  .property-details .detail-icon { width: 24px; height: 24px; font-size: .68rem; background: transparent; color: var(--ink-4); }
+  .property-details .detail-text { flex-direction: row; align-items: baseline; gap: 6px; }
+  .property-details dt { font-size: .68rem; color: var(--ink-4); font-weight: 600; }
+  .property-details dd { font-size: .82rem; color: var(--ink-2); font-weight: 600; }
   .property-actions { display: flex; justify-content: flex-end; }
   .btn-link {
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 15px;
     color: var(--green-dk); text-decoration: none; font-size: .82rem; font-weight: 600;
     border: 1.5px solid var(--border); border-radius: var(--radius);
     transition: background var(--transition), color var(--transition), border-color var(--transition);
@@ -129,15 +191,21 @@
   .btn-link:hover { background: var(--green); color: white; border-color: var(--green); }
 
   .empty-state-box {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem;
-    color: var(--ink-3); text-align: center; gap: .75rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3.5rem 1rem;
+    color: var(--ink-3); text-align: center; gap: .85rem;
   }
-  .empty-state-box svg { opacity: .35; color: var(--ink-3); }
+  .empty-state-box .es-icon {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--surface-3);
+    display: flex; align-items: center; justify-content: center; color: var(--ink-4); font-size: 1.3rem;
+  }
   .empty-state-box p { margin: 0; font-size: .92rem; }
 
   @media (max-width: 640px) {
-    .user-view-summary { flex-direction: column; text-align: center; padding: 22px; }
-    .user-details, .properties-grid { grid-template-columns: 1fr; gap: 14px; }
+    .user-view-summary { flex-direction: column; align-items: center; text-align: center; padding: 0 20px 22px; }
+    .user-summary-info { padding-top: 8px; }
+    .user-badge-row { justify-content: center; }
+    .user-details { grid-template-columns: 1fr; gap: 0; }
+    .properties-grid { grid-template-columns: 1fr; gap: 14px; }
     .user-view-header { flex-direction: column-reverse; align-items: flex-start; }
     .properties-header { flex-direction: column; align-items: flex-start; }
   }
@@ -145,49 +213,71 @@
 
 <div class="user-view-wrapper">
   <header class="user-view-header fade">
+    <div>
+      <span class="user-view-eyebrow"><span class="e-dot"></span>Administration</span>
+      <h1 class="user-view-title">User Profile</h1>
+    </div>
     <a href="{% url 'admin_manage_users' %}" class="user-view-back">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Back to Users
     </a>
-    <h1 class="user-view-title">User Profile</h1>
   </header>
 
   <!-- User Details -->
   <article class="user-view-card fade fade-1">
+    <div class="user-cover"><div class="user-cover-grid"></div></div>
     <div class="user-view-summary">
       <div class="user-avatar {% if profile.user_type == 'landlord' %}landlord{% elif profile.user_type == 'admin' %}admin{% else %}default{% endif %}">
         {{ user_obj.get_full_name|default:user_obj.username|slice:":2"|upper }}
       </div>
       <div class="user-summary-info">
         <h2 class="user-fullname">{{ user_obj.get_full_name|default:user_obj.username }}</h2>
-        <span class="role-badge {% if profile.user_type == 'landlord' %}landlord{% elif profile.user_type == 'admin' %}admin{% else %}default{% endif %}">{{ profile.get_user_type_display }}</span>
-        <span class="status-pill {% if user_obj.is_active %}active{% else %}inactive{% endif %}">
-          <span class="status-dot"></span>
-          {% if user_obj.is_active %}Active{% else %}Inactive{% endif %}
-        </span>
+        <div class="user-badge-row">
+          <span class="role-badge {% if profile.user_type == 'landlord' %}landlord{% elif profile.user_type == 'admin' %}admin{% else %}default{% endif %}">{{ profile.get_user_type_display }}</span>
+          <span class="status-pill {% if user_obj.is_active %}active{% else %}inactive{% endif %}">
+            <span class="status-dot"></span>
+            {% if user_obj.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
+        </div>
       </div>
     </div>
 
+    <div class="section-label"><i class="fa-solid fa-id-card"></i>Account Information</div>
     <dl class="user-details">
       <div class="detail-row">
-        <dt>Username</dt>
-        <dd class="mono-text">{{ user_obj.username }}</dd>
+        <div class="detail-icon"><i class="fa-solid fa-user"></i></div>
+        <div class="detail-text">
+          <dt>Username</dt>
+          <dd class="mono-text">{{ user_obj.username }}</dd>
+        </div>
       </div>
       <div class="detail-row">
-        <dt>Email</dt>
-        <dd>{% if user_obj.email %}<a href="mailto:{{ user_obj.email }}" class="link-action">{{ user_obj.email }}</a>{% else %}<span class="empty-state">Not provided</span>{% endif %}</dd>
+        <div class="detail-icon"><i class="fa-solid fa-envelope"></i></div>
+        <div class="detail-text">
+          <dt>Email</dt>
+          <dd>{% if user_obj.email %}<a href="mailto:{{ user_obj.email }}" class="link-action">{{ user_obj.email }}</a>{% else %}<span class="empty-state">Not provided</span>{% endif %}</dd>
+        </div>
       </div>
       <div class="detail-row">
-        <dt>Phone</dt>
-        <dd>{{ profile.phone_number|default:"Not provided" }}</dd>
+        <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
+        <div class="detail-text">
+          <dt>Phone</dt>
+          <dd>{{ profile.phone_number|default:"Not provided" }}</dd>
+        </div>
       </div>
       <div class="detail-row">
-        <dt>Address</dt>
-        <dd>{{ profile.address|default:"Not provided" }}</dd>
+        <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+        <div class="detail-text">
+          <dt>Address</dt>
+          <dd>{{ profile.address|default:"Not provided" }}</dd>
+        </div>
       </div>
       <div class="detail-row">
-        <dt>Date Joined</dt>
-        <dd>{{ user_obj.date_joined|date:"F j, Y" }}</dd>
+        <div class="detail-icon"><i class="fa-solid fa-calendar"></i></div>
+        <div class="detail-text">
+          <dt>Date Joined</dt>
+          <dd>{{ user_obj.date_joined|date:"F j, Y" }}</dd>
+        </div>
       </div>
     </dl>
   </article>
@@ -205,44 +295,45 @@
         <div class="property-card">
           {% if prop.main_image %}
           <img src="{{ prop.main_image.url }}" alt="{{ prop.name }}" class="property-thumb">
+          {% else %}
+          <div class="property-thumb-empty"><i class="fa-solid fa-building"></i></div>
           {% endif %}
-          <div class="property-header">
-            <h3 class="property-name">{{ prop.name }}</h3>
-            <span class="status-pill active">
-              <span class="status-dot"></span>
-              Active
-            </span>
-          </div>
-          <dl class="property-details">
-            <div class="detail-row">
-              <dt>Address</dt>
-              <dd>{{ prop.address }}</dd>
+          <div class="property-body">
+            <div class="property-header">
+              <h3 class="property-name">{{ prop.name }}</h3>
+              <span class="status-pill active">
+                <span class="status-dot"></span>
+                Active
+              </span>
             </div>
-            <div class="detail-row">
-              <dt>Type</dt>
-              <dd>{{ prop.get_property_type_display }}</dd>
+            <dl class="property-details">
+              <div class="detail-row">
+                <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="detail-text"><dt>Address</dt><dd>{{ prop.address }}</dd></div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-icon"><i class="fa-solid fa-house"></i></div>
+                <div class="detail-text"><dt>Type</dt><dd>{{ prop.get_property_type_display }}</dd></div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <div class="detail-text"><dt>Units</dt><dd>{{ prop.num_units }}</dd></div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="detail-text"><dt>Registered</dt><dd>{{ prop.created_at|date:"M d, Y" }}</dd></div>
+              </div>
+            </dl>
+            <div class="property-actions">
+              <a href="{% url 'admin_view_property' prop.id %}" class="btn-link">View Details</a>
             </div>
-            <div class="detail-row">
-              <dt>Units</dt>
-              <dd>{{ prop.num_units }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Registered</dt>
-              <dd>{{ prop.created_at|date:"M d, Y" }}</dd>
-            </div>
-          </dl>
-          <div class="property-actions">
-            <a href="{% url 'admin_view_property' prop.id %}" class="btn-link">View Details</a>
           </div>
         </div>
         {% endfor %}
       </div>
     {% else %}
       <div class="empty-state-box">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-          <polyline points="9 22 9 12 15 12 15 22"></polyline>
-        </svg>
+        <div class="es-icon"><i class="fa-solid fa-house-circle-xmark"></i></div>
         <p>No properties are currently linked to this user.</p>
       </div>
     {% endif %}
