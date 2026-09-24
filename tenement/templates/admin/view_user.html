@@ -1,9 +1,150 @@
 {% extends 'base.html' %}
-{% block title %}View User | FCT BAC Grid{% endblock %}
+{% load static %}
+{% block title %}{{ user_obj.get_full_name|default:user_obj.username }} | FCT BAC Grid{% endblock %}
 
 {% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #0f1117; --ink-2: #3b3f4a; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --surface: #ffffff; --surface-2: #f7f8fa; --surface-3: #f0f2f5;
+    --border: #e5e7eb; --border-2: #d1d5db;
+    --green: #16a34a; --green-dim: #dcfce7; --green-dk: #15803d;
+    --accent: #1e6cf0; --accent-dim: #dbeafe; --accent-dk: #1558c8;
+    --purple: #7c3aed; --purple-dim: #ede9fe;
+    --red: #dc2626; --red-dim: #fee2e2;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow: 0 4px 12px rgba(0,0,0,.07);
+    --radius: 10px; --radius-lg: 16px;
+    --transition: 160ms cubic-bezier(.4,0,.2,1);
+  }
+
+  .user-view-wrapper * { box-sizing: border-box; }
+  .user-view-wrapper {
+    font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface-2);
+    min-height: 100vh; max-width: 1200px; margin: 0 auto; padding: 40px 24px 60px;
+  }
+  @media (max-width: 640px) { .user-view-wrapper { padding: 24px 16px 48px; } }
+
+  @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .fade { animation: fadein .4s ease both; }
+  .fade-1 { animation-delay: .05s; } .fade-2 { animation-delay: .1s; }
+
+  .user-view-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+  }
+  .user-view-back {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--ink-3); text-decoration: none; font-weight: 500; font-size: .9rem;
+    padding: 8px 12px; border-radius: var(--radius);
+    transition: color var(--transition), background var(--transition);
+  }
+  .user-view-back:hover { color: var(--green); background: var(--green-dim); }
+  .user-view-title { font-size: 1.7rem; font-weight: 700; color: var(--ink); letter-spacing: -.4px; margin: 0; }
+
+  /* Profile card */
+  .user-view-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 28px;
+  }
+
+  .user-view-summary {
+    display: flex; align-items: center; gap: 20px; padding: 28px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .user-avatar {
+    width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 700; color: white;
+    box-shadow: var(--shadow-sm);
+  }
+  .user-avatar.landlord { background: linear-gradient(135deg, var(--green), #4ade80); }
+  .user-avatar.admin { background: linear-gradient(135deg, var(--purple), #a78bfa); }
+  .user-avatar.default { background: linear-gradient(135deg, #6b7280, #9ca3af); }
+
+  .user-summary-info { flex: 1; min-width: 200px; }
+  .user-fullname { margin: 0 0 8px; font-size: 1.25rem; font-weight: 700; color: var(--ink); letter-spacing: -.3px; }
+
+  .role-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; margin-right: 8px;
+  }
+  .role-badge.landlord { background: var(--green-dim); color: var(--green-dk); }
+  .role-badge.admin { background: var(--purple-dim); color: var(--purple); }
+  .role-badge.default { background: var(--surface-3); color: var(--ink-3); }
+
+  .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 600; }
+  .status-pill.active { background: var(--green-dim); color: var(--green-dk); }
+  .status-pill.inactive { background: var(--red-dim); color: var(--red); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .status-pill.active .status-dot { background: var(--green); }
+  .status-pill.inactive .status-dot { background: var(--red); }
+
+  .user-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; padding: 24px 28px; margin: 0; }
+  .detail-row { display: flex; flex-direction: column; gap: 4px; }
+  .detail-row dt { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-4); }
+  .detail-row dd { margin: 0; font-size: .92rem; color: var(--ink); font-weight: 500; }
+  .mono-text { font-family: 'DM Mono', monospace; letter-spacing: -.01em; }
+  .link-action { color: var(--accent); text-decoration: none; transition: color var(--transition); }
+  .link-action:hover { color: var(--accent-dk); text-decoration: underline; }
+  .empty-state { color: var(--ink-4); font-style: italic; }
+
+  /* Properties Section */
+  .properties-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); padding: 24px 28px 28px;
+  }
+  .properties-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .properties-header h2 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+  .properties-count {
+    font-size: .72rem; font-weight: 700; color: var(--ink-3); background: var(--surface-3);
+    padding: 3px 10px; border-radius: 99px;
+  }
+
+  .properties-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+  .property-card {
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--surface-2);
+    transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+  }
+  .property-card:hover { border-color: var(--green); background: var(--surface); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .property-thumb {
+    width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius);
+    border: 1px solid var(--border); margin-bottom: 14px; display: block;
+  }
+  .property-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .property-name { margin: 0; font-size: .95rem; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68%; }
+  .property-details { margin-bottom: 14px; }
+  .property-details .detail-row dt { font-size: .62rem; }
+  .property-details .detail-row { margin-bottom: 8px; }
+  .property-actions { display: flex; justify-content: flex-end; }
+  .btn-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+    color: var(--green-dk); text-decoration: none; font-size: .82rem; font-weight: 600;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+  }
+  .btn-link:hover { background: var(--green); color: white; border-color: var(--green); }
+
+  .empty-state-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem;
+    color: var(--ink-3); text-align: center; gap: .75rem;
+  }
+  .empty-state-box svg { opacity: .35; color: var(--ink-3); }
+  .empty-state-box p { margin: 0; font-size: .92rem; }
+
+  @media (max-width: 640px) {
+    .user-view-summary { flex-direction: column; text-align: center; padding: 22px; }
+    .user-details, .properties-grid { grid-template-columns: 1fr; gap: 14px; }
+    .user-view-header { flex-direction: column-reverse; align-items: flex-start; }
+    .properties-header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
 <div class="user-view-wrapper">
-  <header class="user-view-header">
+  <header class="user-view-header fade">
     <a href="{% url 'admin_manage_users' %}" class="user-view-back">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Back to Users
@@ -12,18 +153,18 @@
   </header>
 
   <!-- User Details -->
-  <article class="user-view-card">
+  <article class="user-view-card fade fade-1">
     <div class="user-view-summary">
-      <div class="user-avatar">
+      <div class="user-avatar {% if profile.user_type == 'landlord' %}landlord{% elif profile.user_type == 'admin' %}admin{% else %}default{% endif %}">
         {{ user_obj.get_full_name|default:user_obj.username|slice:":2"|upper }}
       </div>
       <div class="user-summary-info">
         <h2 class="user-fullname">{{ user_obj.get_full_name|default:user_obj.username }}</h2>
-        <span class="user-type-badge">{{ profile.get_user_type_display }}</span>
-        <div class="user-status {% if user_obj.is_active %}is-active{% else %}is-inactive{% endif %}">
+        <span class="role-badge {% if profile.user_type == 'landlord' %}landlord{% elif profile.user_type == 'admin' %}admin{% else %}default{% endif %}">{{ profile.get_user_type_display }}</span>
+        <span class="status-pill {% if user_obj.is_active %}active{% else %}inactive{% endif %}">
           <span class="status-dot"></span>
           {% if user_obj.is_active %}Active{% else %}Inactive{% endif %}
-        </div>
+        </span>
       </div>
     </div>
 
@@ -34,15 +175,15 @@
       </div>
       <div class="detail-row">
         <dt>Email</dt>
-        <dd>{% if user_obj.email %}<a href="mailto:{{ user_obj.email }}" class="link-action">{{ user_obj.email }}</a>{% else %}<span class="empty-state">—</span>{% endif %}</dd>
+        <dd>{% if user_obj.email %}<a href="mailto:{{ user_obj.email }}" class="link-action">{{ user_obj.email }}</a>{% else %}<span class="empty-state">Not provided</span>{% endif %}</dd>
       </div>
       <div class="detail-row">
         <dt>Phone</dt>
-        <dd>{{ profile.phone_number|default:"—" }}</dd>
+        <dd>{{ profile.phone_number|default:"Not provided" }}</dd>
       </div>
       <div class="detail-row">
         <dt>Address</dt>
-        <dd>{{ profile.address|default:"—" }}</dd>
+        <dd>{{ profile.address|default:"Not provided" }}</dd>
       </div>
       <div class="detail-row">
         <dt>Date Joined</dt>
@@ -52,7 +193,7 @@
   </article>
 
   <!-- Linked Properties Section -->
-  <section class="properties-section">
+  <section class="properties-section fade fade-2">
     <div class="properties-header">
       <h2>Linked Properties</h2>
       <span class="properties-count">{{ properties|length|default:0 }} Total</span>
@@ -63,13 +204,11 @@
         {% for prop in properties %}
         <div class="property-card">
           {% if prop.main_image %}
-          <div style="margin-bottom: 16px; text-align: center;">
-            <img src="{{ prop.main_image.url }}" alt="{{ prop.name }}" style="max-width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;">
-          </div>
+          <img src="{{ prop.main_image.url }}" alt="{{ prop.name }}" class="property-thumb">
           {% endif %}
           <div class="property-header">
             <h3 class="property-name">{{ prop.name }}</h3>
-            <span class="property-status is-active">
+            <span class="status-pill active">
               <span class="status-dot"></span>
               Active
             </span>
@@ -109,128 +248,4 @@
     {% endif %}
   </section>
 </div>
-
-<style>
-  :root {
-    --uv-bg: #f8fafc;
-    --uv-surface: #ffffff;
-    --uv-text: #0f172a;
-    --uv-text-muted: #64748b;
-    --uv-border: #e2e8f0;
-    --uv-green: #22c55e;
-    --uv-primary: #2563eb;
-    --uv-primary-hover: #1d4ed8;
-    --uv-radius: 12px;
-    --uv-shadow: 0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.05);
-    --uv-shadow-hover: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
-    --uv-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --uv-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --uv-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  }
-
-  .user-view-wrapper {
-    max-width: 1024px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-    font-family: var(--uv-font-sans);
-    background: var(--uv-bg);
-    min-height: 100vh;
-  }
-
-  .user-view-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .user-view-title { margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--uv-text); }
-
-  .user-view-back {
-    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.8rem;
-    background: var(--uv-surface); color: var(--uv-text-muted); text-decoration: none;
-    border: 1px solid var(--uv-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500;
-    transition: var(--uv-transition);
-  }
-  .user-view-back:hover { background: var(--uv-green); color: white; border-color: var(--uv-green); transform: translateX(-3px); }
-
-  .user-view-card {
-    background: var(--uv-surface); border-radius: var(--uv-radius); box-shadow: var(--uv-shadow); overflow: hidden; margin-bottom: 2rem;
-    transition: var(--uv-transition);
-  }
-  .user-view-card:hover { box-shadow: var(--uv-shadow-hover); }
-
-  .user-view-summary {
-    display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem;
-    border-bottom: 1px solid var(--uv-border); background: linear-gradient(180deg, rgba(37,99,235,0.02) 0%, rgba(255,255,255,0) 100%);
-  }
-  .user-avatar {
-    width: 64px; height: 64px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--uv-primary), var(--uv-primary-hover));
-    color: white; display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem; font-weight: 600; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-  }
-  .user-fullname { margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 600; color: var(--uv-text); }
-  .user-type-badge {
-    display: inline-block; padding: 0.25rem 0.6rem; background: #f1f5f9; color: #475569;
-    border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;
-  }
-
-  .user-status, .property-status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 500; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .is-active .status-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-  .is-inactive .status-dot { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.2); }
-  .is-active { color: #166534; }
-  .is-inactive { color: #b91c1c; }
-
-  .user-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; padding: 1.5rem; margin: 0; }
-  .detail-row { display: flex; flex-direction: column; gap: 0.25rem; }
-  .detail-row dt { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--uv-text-muted); }
-  .detail-row dd { margin: 0; font-size: 0.95rem; color: var(--uv-text); font-weight: 500; }
-  .mono-text { font-family: var(--uv-font-mono); letter-spacing: -0.02em; }
-  .link-action { color: var(--uv-primary); text-decoration: none; transition: var(--uv-transition); }
-  .link-action:hover { color: var(--uv-primary-hover); text-decoration: underline; }
-  .empty-state { color: var(--uv-text-muted); font-style: italic; }
-
-  /* Properties Section */
-  .properties-section { background: var(--uv-surface); border-radius: var(--uv-radius); box-shadow: var(--uv-shadow); padding: 1.5rem; }
-  .properties-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem; }
-  .properties-header h2 { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--uv-text); }
-  .properties-count { font-size: 0.85rem; font-weight: 500; color: var(--uv-text-muted); background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 99px; }
-
-  .properties-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-  .property-card {
-    border: 1px solid var(--uv-border); border-radius: 10px; padding: 1rem; background: #fafbfc;
-    transition: var(--uv-transition);
-  }
-  .property-card:hover { border-color: var(--uv-green); background: #ffffff; transform: translateY(-2px); box-shadow: var(--uv-shadow-hover); }
-  .property-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem; }
-  .property-name { margin: 0; font-size: 1rem; font-weight: 600; color: var(--uv-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
-  .property-details { margin-bottom: 1rem; }
-  .property-details .detail-row dt { font-size: 0.65rem; }
-  .property-actions { display: flex; justify-content: flex-end; }
-  .btn-link {
-    display: inline-flex; align-items: center; padding: 0.4rem 0.8rem; background: transparent;
-    color: var(--uv-green); text-decoration: none; font-size: 0.85rem; font-weight: 500;
-    border: 1px solid var(--uv-border); border-radius: 6px; transition: var(--uv-transition);
-  }
-  .btn-link:hover { background: var(--uv-green); color: white; border-color: var(--uv-green); }
-
-  .empty-state-box {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 1rem;
-    color: var(--uv-text-muted); text-align: center; gap: 0.75rem;
-  }
-  .empty-state-box svg { opacity: 0.4; }
-  .empty-state-box p { margin: 0; font-size: 0.95rem; }
-
-  @media (max-width: 640px) {
-    .user-view-wrapper { padding: 1.5rem 0.75rem; }
-    .user-view-summary { flex-direction: column; text-align: center; padding: 1.25rem; }
-    .user-details, .properties-grid { grid-template-columns: 1fr; gap: 1rem; }
-    .user-view-header { flex-direction: column-reverse; align-items: flex-start; }
-    .properties-header { flex-direction: column; align-items: flex-start; }
-  }
-</style>
 {% endblock %}
