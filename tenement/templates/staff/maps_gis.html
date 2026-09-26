@@ -1,432 +1,310 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Maps &amp; GIS{% endblock %}
+{% block title %}Maps &amp; GIS | FCT BAC Grid{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  .gis-shell { max-width: 1320px; margin: 0 auto; padding: 32px 20px 60px; }
-
-  .gis-header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-  .gis-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: #dcfce7; color: #166534; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-  .gis-title { margin: 12px 0 4px; font-size: 2rem; font-weight: 700; color: #0f172a; }
-  .gis-sub { color: #6b7280; margin: 0; max-width: 620px; }
-
-  .gis-stats { display: flex; flex-wrap: wrap; gap: 10px; }
-  .gis-stat { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 10px 14px; box-shadow: 0 4px 14px rgba(15,23,42,0.05); min-width: 108px; }
-  .gis-stat .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .gis-stat .dot.total { background: #334155; }
-  .gis-stat .dot.red { background: #dc2626; }
-  .gis-stat .dot.yellow { background: #eab308; }
-  .gis-stat .dot.green { background: #16a34a; }
-  .gis-stat .num { font-weight: 700; font-size: 1.05rem; color: #0f172a; line-height: 1; }
-  .gis-stat .lbl { font-size: 0.72rem; color: #6b7280; margin-top: 2px; }
-
-  .gis-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 22px; padding: 18px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
-
-  .gis-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; position: relative; }
-
-  .gis-search { position: relative; flex: 1 1 320px; min-width: 240px; }
-  .gis-search input { width: 100%; padding: 11px 14px 11px 40px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 0.92rem; background: #f8fafc; }
-  .gis-search input:focus { outline: none; border-color: #16a34a; background: #fff; box-shadow: 0 0 0 3px rgba(22,163,74,0.12); }
-  .gis-search .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.9rem; pointer-events: none; }
-  .gis-search .clear-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #9ca3af; cursor: pointer; padding: 4px 6px; display: none; }
-
-  .gis-results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 14px 30px rgba(15,23,42,0.14); max-height: 340px; overflow-y: auto; z-index: 900; display: none; }
-  .gis-results.open { display: block; }
-  .gis-result-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-  .gis-result-item:last-child { border-bottom: none; }
-  .gis-result-item:hover, .gis-result-item.active { background: #f0fdf4; }
-  .gis-result-item .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-  .gis-result-item .dot.red { background: #dc2626; }
-  .gis-result-item .dot.yellow { background: #eab308; }
-  .gis-result-item .dot.green { background: #16a34a; }
-  .gis-result-item .meta { display: flex; flex-direction: column; min-width: 0; }
-  .gis-result-item .meta .name { font-weight: 600; font-size: 0.88rem; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .gis-result-item .meta .sub { font-size: 0.76rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .gis-results .empty, .gis-results .hint { padding: 14px; font-size: 0.85rem; color: #9ca3af; text-align: center; }
-
-  .gis-legend { display: flex; flex-wrap: wrap; gap: 8px; }
-  .gis-toggle { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #e5e7eb; border-radius: 999px; padding: 7px 13px; font-size: 0.8rem; font-weight: 600; cursor: pointer; background: #f8fafc; color: #374151; user-select: none; transition: all .12s ease; }
-  .gis-toggle input { display: none; }
-  .gis-toggle .dot { width: 9px; height: 9px; border-radius: 50%; }
-  .gis-toggle .dot.red { background: #dc2626; }
-  .gis-toggle .dot.yellow { background: #eab308; }
-  .gis-toggle .dot.green { background: #16a34a; }
-  .gis-toggle.off { opacity: 0.45; }
-  .gis-toggle:hover { border-color: #16a34a; }
-
-  .gis-fit-btn { border: 1px solid #e5e7eb; background: #f8fafc; color: #374151; border-radius: 999px; padding: 8px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-  .gis-fit-btn:hover { border-color: #16a34a; color: #166534; }
-
-  .gis-map-wrap { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb; }
-  #gisMap { height: 68vh; min-height: 460px; width: 100%; background: #eef2f7; }
-
-  .gis-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 1000; font-size: 0.9rem; color: #374151; }
-  .gis-loading.hidden { display: none; }
-  .gis-spinner { width: 34px; height: 34px; border: 3px solid #dcfce7; border-top-color: #16a34a; border-radius: 50%; animation: gis-spin 0.8s linear infinite; }
-  @keyframes gis-spin { to { transform: rotate(360deg); } }
-
-  .gis-error-banner { display: none; align-items: center; gap: 8px; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 12px; }
-  .gis-error-banner.show { display: flex; }
-
-  .gis-pin { border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid rgba(255,255,255,0.95); box-shadow: 0 1px 4px rgba(0,0,0,0.45); }
-  .gis-pin.red { background: #dc2626; }
-  .gis-pin.yellow { background: #eab308; }
-  .gis-pin.green { background: #16a34a; }
-
-  .marker-cluster-gis { background: rgba(22,163,74,0.18); }
-  .marker-cluster-gis div { background: #16a34a; color: #fff; font-weight: 700; font-size: 0.78rem; }
-
-  .gis-popup .pp-name { font-weight: 700; font-size: 0.95rem; color: #111827; margin: 0 0 4px; }
-  .gis-popup .pp-line { font-size: 0.8rem; color: #4b5563; margin: 0 0 2px; }
-  .gis-popup .pp-badges { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
-  .gis-popup .pp-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
-  .pp-badge.paid { background: #dcfce7; color: #166534; }
-  .pp-badge.unpaid { background: #fee2e2; color: #b91c1c; }
-  .gis-popup a.pp-link { display: inline-block; margin-top: 4px; font-size: 0.78rem; font-weight: 700; color: #16a34a; text-decoration: none; }
-  .gis-popup a.pp-link:hover { text-decoration: underline; }
-
-  @media (max-width: 720px) {
-    .gis-toolbar { flex-direction: column; align-items: stretch; }
-    .gis-legend { justify-content: space-between; }
-    #gisMap { height: 56vh; }
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;--border:#e5e7eb;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --green:#16a34a;--green-dim:#dcfce7;--amber:#d97706;--amber-dim:#fef3c7;--red:#dc2626;--red-dim:#fee2e2;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,.06);
   }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:1400px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .pg-header{margin-bottom:20px;}
+  .pg-title{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.4px;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+  @media(max-width:900px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .stat-pill .num{font-size:1.35rem;font-weight:800;line-height:1;}
+  .stat-pill .lbl{font-size:.72rem;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:4px;}
+  .stat-pill.total .num{color:var(--ink);}
+  .stat-pill.green .num{color:var(--green);}
+  .stat-pill.yellow .num{color:var(--amber);}
+  .stat-pill.red .num{color:var(--red);}
+  .stat-pill.muted .num{color:var(--ink-4);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .search-box{position:relative;flex:1;min-width:240px;}
+  .search-box i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-4);font-size:.85rem;}
+  .search-box input{width:100%;padding:11px 14px 11px 38px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface);font-size:.86rem;color:var(--ink);}
+  .search-box input:focus{outline:none;border-color:var(--accent);}
+  .status-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;font-size:.78rem;font-weight:700;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-3);cursor:pointer;white-space:nowrap;user-select:none;}
+  .status-chip .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .status-chip.active{border-color:transparent;color:#fff;}
+  .status-chip[data-filter="all"].active{background:var(--ink);}
+  .status-chip[data-filter="green"].active{background:var(--green);}
+  .status-chip[data-filter="yellow"].active{background:var(--amber);}
+  .status-chip[data-filter="red"].active{background:var(--red);}
+  .status-chip .dot.green{background:var(--green);}
+  .status-chip .dot.yellow{background:var(--amber);}
+  .status-chip .dot.red{background:var(--red);}
+  .status-chip .dot.all{background:var(--ink-3);}
+
+  .gis-layout{display:grid;grid-template-columns:2.4fr 1fr;gap:18px;align-items:start;}
+  @media(max-width:980px){.gis-layout{grid-template-columns:1fr;}}
+
+  .map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;}
+  #gis-map{height:640px;width:100%;background:var(--surface-3);}
+  @media(max-width:640px){#gis-map{height:420px;}}
+  .map-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(247,248,250,.9);font-size:.85rem;color:var(--ink-3);z-index:500;}
+  .map-loading i{font-size:1.4rem;color:var(--accent);}
+  .map-error{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:rgba(247,248,250,.95);font-size:.85rem;color:var(--red);z-index:500;text-align:center;padding:24px;}
+
+  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:18px;margin-bottom:16px;}
+  .side-card h3{margin:0 0 12px;font-size:.95rem;font-weight:700;}
+  .legend-row{display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--ink-2);padding:6px 0;}
+  .legend-swatch{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);flex-shrink:0;}
+  .legend-swatch.green{background:var(--green);}
+  .legend-swatch.yellow{background:var(--amber);}
+  .legend-swatch.red{background:var(--red);}
+
+  .result-list{list-style:none;margin:0;padding:0;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+  .result-item{display:flex;align-items:flex-start;gap:10px;padding:10px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;background:var(--surface-2);}
+  .result-item:hover{border-color:var(--accent);background:var(--accent-dim);}
+  .result-item .dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+  .result-item .dot.green{background:var(--green);} .result-item .dot.yellow{background:var(--amber);} .result-item .dot.red{background:var(--red);}
+  .result-item .ri-name{font-weight:700;font-size:.82rem;color:var(--ink);display:block;}
+  .result-item .ri-sub{font-size:.72rem;color:var(--ink-3);display:block;margin-top:2px;}
+  .empty-note{text-align:center;padding:24px 12px;color:var(--ink-4);font-size:.82rem;}
+
+  .popup-title{font-weight:700;font-size:.9rem;margin-bottom:4px;}
+  .popup-row{font-size:.78rem;color:var(--ink-2);margin:2px 0;}
+  .popup-badges{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;}
+  .popup-badge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+  .popup-badge.paid{background:var(--green-dim);color:var(--green);}
+  .popup-badge.unpaid{background:var(--red-dim);color:var(--red);}
+  .popup-link{display:inline-block;margin-top:6px;font-size:.78rem;font-weight:700;color:var(--accent);text-decoration:none;}
+
+  .unmapped-note{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-3);background:var(--surface-3);border-radius:var(--radius-sm);padding:10px 12px;}
 </style>
 
-<div class="gis-shell">
-  <div class="gis-header">
-    <div>
-      <div class="gis-eyebrow"><i class="fas fa-map-location-dot"></i> Property intelligence</div>
-      <h1 class="gis-title">Maps &amp; GIS</h1>
-      <p class="gis-sub">Every geolocated property, color-coded by tenement rate and sanitation levy payment status. Search for a property to jump straight to its pin.</p>
-    </div>
-    <div class="gis-stats" id="gisStats">
-      <div class="gis-stat"><span class="dot total"></span><div><div class="num" id="statTotal">–</div><div class="lbl">Mapped</div></div></div>
-      <div class="gis-stat"><span class="dot green"></span><div><div class="num" id="statGreen">–</div><div class="lbl">Fully paid</div></div></div>
-      <div class="gis-stat"><span class="dot yellow"></span><div><div class="num" id="statYellow">–</div><div class="lbl">Paid one</div></div></div>
-      <div class="gis-stat"><span class="dot red"></span><div><div class="num" id="statRed">–</div><div class="lbl">Unpaid both</div></div></div>
-    </div>
+<div class="pg-wrap">
+  <div class="pg-header">
+    <h1 class="pg-title">Maps &amp; GIS</h1>
+    <p class="pg-sub">Every geo-tagged property, plotted and colour-coded by payment status</p>
   </div>
 
-  <div class="gis-card">
-    <div class="gis-error-banner" id="gisError">
-      <i class="fas fa-triangle-exclamation"></i>
-      <span>Couldn't load property locations. <a href="#" id="gisRetry">Try again</a>.</span>
+  <div class="stat-row">
+    <div class="stat-pill total"><div class="num" id="stat-total">–</div><div class="lbl">Properties mapped</div></div>
+    <div class="stat-pill green"><div class="num" id="stat-green">–</div><div class="lbl">Fully paid</div></div>
+    <div class="stat-pill yellow"><div class="num" id="stat-yellow">–</div><div class="lbl">Partially paid</div></div>
+    <div class="stat-pill red"><div class="num" id="stat-red">–</div><div class="lbl">Unpaid (both)</div></div>
+    <div class="stat-pill muted"><div class="num" id="stat-unmapped">–</div><div class="lbl">No coordinates yet</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="fas fa-magnifying-glass"></i>
+      <input type="text" id="gis-search" placeholder="Search by property name, address, owner or district…" autocomplete="off">
+    </div>
+    <span class="status-chip active" data-filter="all"><span class="dot all"></span> All</span>
+    <span class="status-chip" data-filter="green"><span class="dot green"></span> Fully paid</span>
+    <span class="status-chip" data-filter="yellow"><span class="dot yellow"></span> Partially paid</span>
+    <span class="status-chip" data-filter="red"><span class="dot red"></span> Unpaid</span>
+  </div>
+
+  <div class="gis-layout">
+    <div class="map-card">
+      <div id="gis-map"></div>
+      <div class="map-loading" id="map-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading properties…</div>
+      <div class="map-error" id="map-error">
+        <i class="fas fa-triangle-exclamation" style="font-size:1.3rem;"></i>
+        <span>Couldn't load property locations. <a href="#" id="retry-load">Retry</a></span>
+      </div>
     </div>
 
-    <div class="gis-toolbar">
-      <div class="gis-search">
-        <i class="fas fa-magnifying-glass icon"></i>
-        <input type="text" id="gisSearchInput" placeholder="Search by property name, Bulk Property ID, address or owner…" autocomplete="off" />
-        <button type="button" class="clear-btn" id="gisClearSearch" title="Clear"><i class="fas fa-xmark"></i></button>
-        <div class="gis-results" id="gisResults"></div>
+    <div class="gis-sidebar">
+      <div class="side-card">
+        <h3>Legend</h3>
+        <div class="legend-row"><span class="legend-swatch green"></span> Paid tenement rate &amp; sanitation levy</div>
+        <div class="legend-row"><span class="legend-swatch yellow"></span> Paid only one of the two</div>
+        <div class="legend-row"><span class="legend-swatch red"></span> Paid neither</div>
+        <div class="unmapped-note" id="unmapped-note" style="margin-top:12px;display:none;">
+          <i class="fas fa-circle-info"></i>
+          <span id="unmapped-note-text"></span>
+        </div>
       </div>
 
-      <div class="gis-legend">
-        <label class="gis-toggle" id="toggleGreen">
-          <input type="checkbox" checked data-status="green" />
-          <span class="dot green"></span> Paid both
-        </label>
-        <label class="gis-toggle" id="toggleYellow">
-          <input type="checkbox" checked data-status="yellow" />
-          <span class="dot yellow"></span> Paid one
-        </label>
-        <label class="gis-toggle" id="toggleRed">
-          <input type="checkbox" checked data-status="red" />
-          <span class="dot red"></span> Unpaid both
-        </label>
-      </div>
-
-      <button type="button" class="gis-fit-btn" id="gisFitAll"><i class="fas fa-expand"></i> Fit all pins</button>
-    </div>
-
-    <div class="gis-map-wrap">
-      <div id="gisMap"></div>
-      <div class="gis-loading" id="gisLoading">
-        <div class="gis-spinner"></div>
-        <span id="gisLoadingText">Loading property locations…</span>
+      <div class="side-card">
+        <h3>Properties (<span id="results-count">0</span>)</h3>
+        <ul class="result-list" id="results-list">
+          <li class="empty-note">Loading…</li>
+        </ul>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function () {
-  const DATA_URL = "{% url 'maps_gis_data' %}";
-  const PROPERTY_URL_TEMPLATE = "{% url 'admin_view_property' 999999999 %}";
+  const dataUrl = "{% url 'maps_gis_data' %}";
+  // Placeholder-id trick: ask Django to reverse the URL once with a dummy
+  // pk, then swap the dummy back out for each property's real id in JS.
+  // Keeps this in sync with urls.py without hardcoding the path.
+  const viewPropertyUrlTemplate = "{% url 'admin_view_property' 999999999 %}";
+  const colorHex = { green: '#16a34a', yellow: '#d97706', red: '#dc2626' };
 
-  const map = L.map('gisMap', { preferCanvas: true }).setView([9.14, 7.35], 11); // Bwari/FCT area default
+  const map = L.map('gis-map').setView([9.0765, 7.3986], 11); // Abuja, FCT default
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const clusterGroup = L.markerClusterGroup({
-    chunkedLoading: true,
-    chunkInterval: 120,
-    disableClusteringAtZoom: 18,
-    maxClusterRadius: 60,
-    iconCreateFunction: function (cluster) {
-      const count = cluster.getChildCount();
-      const size = count > 1000 ? 46 : count > 100 ? 40 : 34;
-      return L.divIcon({
-        html: '<div style="width:' + size + 'px;height:' + size + 'px;line-height:' + size + 'px;border-radius:50%;text-align:center;">' + count + '</div>',
-        className: 'marker-cluster-gis',
-        iconSize: L.point(size, size),
-      });
-    },
-  });
-  map.addLayer(clusterGroup);
-
-  const pinIcons = {
-    red: L.divIcon({ className: '', html: '<div class="gis-pin red" style="width:18px;height:18px;"></div>', iconSize: [18, 18], iconAnchor: [9, 18], popupAnchor: [0, -16] }),
-    yellow: L.divIcon({ className: '', html: '<div class="gis-pin yellow" style="width:18px;height:18px;"></div>', iconSize: [18, 18], iconAnchor: [9, 18], popupAnchor: [0, -16] }),
-    green: L.divIcon({ className: '', html: '<div class="gis-pin green" style="width:18px;height:18px;"></div>', iconSize: [18, 18], iconAnchor: [9, 18], popupAnchor: [0, -16] }),
-  };
-
-  // Parallel structures: one entry per property.
-  let records = [];          // {id, lat, lng, status, name, address, district, type, owner, tenementPaid, sanitationPaid}
-  const markersByStatus = { red: [], yellow: [], green: [] };
-  let bounds = null;
+  const loadingEl = document.getElementById('map-loading');
+  const errorEl = document.getElementById('map-error');
+  const searchInput = document.getElementById('gis-search');
+  const resultsList = document.getElementById('results-list');
+  const resultsCount = document.getElementById('results-count');
+  const chips = document.querySelectorAll('.status-chip');
+  let activeColorFilter = 'all';
+  let markerEntries = [];
 
   function escapeHtml(str) {
-    return String(str || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
   }
 
-  function propertyUrl(id) {
-    return PROPERTY_URL_TEMPLATE.replace('999999999', id);
-  }
-
-  function popupHtml(rec) {
-    const tBadge = rec.tenementPaid ? '<span class="pp-badge paid">Tenement paid</span>' : '<span class="pp-badge unpaid">Tenement unpaid</span>';
-    const sBadge = rec.sanitationPaid ? '<span class="pp-badge paid">Sanitation paid</span>' : '<span class="pp-badge unpaid">Sanitation unpaid</span>';
-    return (
-      '<div class="gis-popup">' +
-      '<p class="pp-name">' + escapeHtml(rec.name) + '</p>' +
-      '<p class="pp-line">' + escapeHtml(rec.address) + (rec.district ? ', ' + escapeHtml(rec.district) : '') + '</p>' +
-      '<p class="pp-line">' + escapeHtml(rec.type) + (rec.owner ? ' &middot; ' + escapeHtml(rec.owner) : '') + '</p>' +
-      '<div class="pp-badges">' + tBadge + sBadge + '</div>' +
-      '<a class="pp-link" href="' + propertyUrl(rec.id) + '">View property details &rarr;</a>' +
-      '</div>'
-    );
+  function setStat(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
   }
 
   function buildMarkers(points) {
-    const allMarkers = [];
-    records = [];
-    bounds = L.latLngBounds([]);
+    return points.map(function (row) {
+      const [id, lat, lng, status, name, address, district, propertyType, owner, tenementPaid, sanitationPaid] = row;
 
-    points.forEach((p) => {
-      const rec = {
-        id: p[0], lat: p[1], lng: p[2], status: p[3],
-        name: p[4], address: p[5], district: p[6], type: p[7], owner: p[8],
-        tenementPaid: p[9], sanitationPaid: p[10],
+      const marker = L.circleMarker([lat, lng], {
+        radius: 9,
+        color: '#fff',
+        weight: 2,
+        fillColor: colorHex[status] || '#6b7280',
+        fillOpacity: 0.95,
+      });
+
+      const tenementBadge = '<span class="popup-badge ' + (tenementPaid ? 'paid' : 'unpaid') + '">Tenement: ' + (tenementPaid ? 'Paid' : 'Unpaid') + '</span>';
+      const sanitationBadge = '<span class="popup-badge ' + (sanitationPaid ? 'paid' : 'unpaid') + '">Sanitation: ' + (sanitationPaid ? 'Paid' : 'Unpaid') + '</span>';
+      const viewUrl = viewPropertyUrlTemplate.replace('999999999', id);
+
+      marker.bindPopup(
+        '<div class="popup-title">' + escapeHtml(name) + '</div>' +
+        '<div class="popup-row">' + escapeHtml(address) + '</div>' +
+        '<div class="popup-row">' + escapeHtml(district) + ' &middot; ' + escapeHtml(propertyType) + '</div>' +
+        '<div class="popup-row">Owner: ' + escapeHtml(owner) + '</div>' +
+        '<div class="popup-badges">' + tenementBadge + sanitationBadge + '</div>' +
+        '<a class="popup-link" href="' + viewUrl + '">View property <i class="fas fa-arrow-right"></i></a>'
+      );
+
+      return {
+        id: id, name: name, address: address, district: district,
+        owner: owner, color: status, marker: marker,
       };
-      records.push(rec);
-
-      const marker = L.marker([rec.lat, rec.lng], { icon: pinIcons[rec.status] || pinIcons.red });
-      marker.bindPopup(popupHtml(rec));
-      marker._gisStatus = rec.status;
-      marker._gisRecord = rec;
-
-      markersByStatus[rec.status].push(marker);
-      allMarkers.push(marker);
-      bounds.extend([rec.lat, rec.lng]);
     });
-
-    clusterGroup.addLayers(allMarkers);
-
-    if (allMarkers.length) {
-      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
-    }
   }
 
-  function setStats(summary) {
-    document.getElementById('statTotal').textContent = (summary.total || 0).toLocaleString();
-    document.getElementById('statGreen').textContent = (summary.green || 0).toLocaleString();
-    document.getElementById('statYellow').textContent = (summary.yellow || 0).toLocaleString();
-    document.getElementById('statRed').textContent = (summary.red || 0).toLocaleString();
-  }
+  function applyFilters() {
+    const term = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+    resultsList.innerHTML = '';
 
-  function setLoading(visible, text) {
-    const el = document.getElementById('gisLoading');
-    if (text) document.getElementById('gisLoadingText').textContent = text;
-    el.classList.toggle('hidden', !visible);
-  }
+    markerEntries.forEach(function (entry) {
+      const colorOk = activeColorFilter === 'all' || entry.color === activeColorFilter;
+      const haystack = (entry.name + ' ' + entry.address + ' ' + entry.district + ' ' + entry.owner).toLowerCase();
+      const searchOk = !term || haystack.indexOf(term) !== -1;
+      const visible = colorOk && searchOk;
 
-  function showError(show) {
-    document.getElementById('gisError').classList.toggle('show', !!show);
-  }
+      if (visible) {
+        if (!map.hasLayer(entry.marker)) entry.marker.addTo(map);
+        visibleCount++;
 
-  async function loadData() {
-    setLoading(true, 'Loading property locations…');
-    showError(false);
-    try {
-      const res = await fetch(DATA_URL, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Request failed: ' + res.status);
-      const data = await res.json();
-      setLoading(true, 'Plotting ' + (data.points || []).length.toLocaleString() + ' properties…');
-      // Let the loading text repaint before the (potentially heavy) marker build.
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      buildMarkers(data.points || []);
-      setStats(data.summary || {});
-    } catch (err) {
-      showError(true);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ---- Legend toggles: show/hide each status layer -----------------------
-  function wireToggle(id, status) {
-    const wrapper = document.getElementById(id);
-    const input = wrapper.querySelector('input');
-    input.addEventListener('change', () => {
-      wrapper.classList.toggle('off', !input.checked);
-      if (input.checked) {
-        clusterGroup.addLayers(markersByStatus[status]);
-      } else {
-        clusterGroup.removeLayers(markersByStatus[status]);
+        const li = document.createElement('li');
+        li.className = 'result-item';
+        li.innerHTML =
+          '<span class="dot ' + entry.color + '"></span>' +
+          '<span>' +
+            '<span class="ri-name">' + escapeHtml(entry.name) + '</span>' +
+            '<span class="ri-sub">' + escapeHtml(entry.district) + ' &middot; ' + escapeHtml(entry.owner) + '</span>' +
+          '</span>';
+        li.addEventListener('click', function () {
+          map.setView(entry.marker.getLatLng(), 16, { animate: true });
+          entry.marker.openPopup();
+        });
+        resultsList.appendChild(li);
+      } else if (map.hasLayer(entry.marker)) {
+        map.removeLayer(entry.marker);
       }
     });
-  }
-  wireToggle('toggleGreen', 'green');
-  wireToggle('toggleYellow', 'yellow');
-  wireToggle('toggleRed', 'red');
 
-  document.getElementById('gisFitAll').addEventListener('click', () => {
-    if (bounds && bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
+    resultsCount.textContent = visibleCount;
+    if (visibleCount === 0) {
+      resultsList.innerHTML = '<li class="empty-note">No properties match this search/filter.</li>';
     }
-  });
+  }
 
-  document.getElementById('gisRetry').addEventListener('click', (e) => {
+  function loadData() {
+    loadingEl.style.display = 'flex';
+    errorEl.style.display = 'none';
+
+    fetch(dataUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Request failed: ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        markerEntries.forEach(function (entry) { map.removeLayer(entry.marker); });
+        markerEntries = buildMarkers(data.points || []);
+
+        const s = data.summary || {};
+        setStat('stat-total', s.total || 0);
+        setStat('stat-green', s.green || 0);
+        setStat('stat-yellow', s.yellow || 0);
+        setStat('stat-red', s.red || 0);
+        setStat('stat-unmapped', s.unmapped || 0);
+
+        const noteEl = document.getElementById('unmapped-note');
+        if (s.unmapped) {
+          document.getElementById('unmapped-note-text').textContent =
+            s.unmapped + ' propert' + (s.unmapped === 1 ? 'y' : 'ies') + " without coordinates aren't shown here.";
+          noteEl.style.display = 'flex';
+        } else {
+          noteEl.style.display = 'none';
+        }
+
+        if (markerEntries.length) {
+          const bounds = L.latLngBounds(markerEntries.map(function (e) { return e.marker.getLatLng(); }));
+          map.fitBounds(bounds.pad(0.15));
+        }
+
+        applyFilters();
+        loadingEl.style.display = 'none';
+      })
+      .catch(function () {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'flex';
+      });
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeColorFilter = chip.getAttribute('data-filter');
+      applyFilters();
+    });
+  });
+  document.getElementById('retry-load').addEventListener('click', function (e) {
     e.preventDefault();
     loadData();
-  });
-
-  // ---- Search with a lightweight autocomplete dropdown -------------------
-  const searchInput = document.getElementById('gisSearchInput');
-  const resultsBox = document.getElementById('gisResults');
-  const clearBtn = document.getElementById('gisClearSearch');
-  let activeIndex = -1;
-  let currentMatches = [];
-
-  function renderResults(matches, query) {
-    currentMatches = matches;
-    activeIndex = -1;
-    if (!query) {
-      resultsBox.classList.remove('open');
-      resultsBox.innerHTML = '';
-      return;
-    }
-    if (!matches.length) {
-      resultsBox.innerHTML = '<div class="empty">No matching properties found.</div>';
-      resultsBox.classList.add('open');
-      return;
-    }
-    resultsBox.innerHTML = matches
-      .map((rec, i) => (
-        '<div class="gis-result-item" data-index="' + i + '">' +
-        '<span class="dot ' + rec.status + '"></span>' +
-        '<div class="meta"><span class="name">' + escapeHtml(rec.name) + '</span>' +
-        '<span class="sub">' + escapeHtml(rec.address) + (rec.owner ? ' &middot; ' + escapeHtml(rec.owner) : '') + '</span></div>' +
-        '</div>'
-      ))
-      .join('');
-    resultsBox.classList.add('open');
-  }
-
-  function goToRecord(rec) {
-    const marker = [...markersByStatus.red, ...markersByStatus.yellow, ...markersByStatus.green]
-      .find((m) => m._gisRecord.id === rec.id);
-    resultsBox.classList.remove('open');
-    searchInput.value = rec.name;
-    clearBtn.style.display = 'inline-flex';
-    if (!marker) return;
-    map.once('moveend', () => {
-      if (!clusterGroup.hasLayer(marker)) return;
-      clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
-    });
-    map.setView([rec.lat, rec.lng], 18, { animate: true });
-    // In case the map was already at the target view (moveend won't fire):
-    setTimeout(() => {
-      if (clusterGroup.hasLayer(marker) && !marker.getPopup().isOpen()) {
-        clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
-      }
-    }, 350);
-  }
-
-  let searchDebounce = null;
-  searchInput.addEventListener('input', () => {
-    clearBtn.style.display = searchInput.value ? 'inline-flex' : 'none';
-    clearTimeout(searchDebounce);
-    const query = searchInput.value.trim().toLowerCase();
-    searchDebounce = setTimeout(() => {
-      if (!query) {
-        renderResults([], '');
-        return;
-      }
-      const matches = records
-        .filter((rec) =>
-          rec.name.toLowerCase().includes(query) ||
-          (rec.address || '').toLowerCase().includes(query) ||
-          (rec.owner || '').toLowerCase().includes(query) ||
-          (rec.district || '').toLowerCase().includes(query)
-        )
-        .slice(0, 20);
-      renderResults(matches, query);
-    }, 150);
-  });
-
-  resultsBox.addEventListener('click', (e) => {
-    const item = e.target.closest('.gis-result-item');
-    if (!item) return;
-    const rec = currentMatches[parseInt(item.dataset.index, 10)];
-    if (rec) goToRecord(rec);
-  });
-
-  searchInput.addEventListener('keydown', (e) => {
-    const items = resultsBox.querySelectorAll('.gis-result-item');
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      activeIndex = Math.min(activeIndex + 1, items.length - 1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      activeIndex = Math.max(activeIndex - 1, 0);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const rec = currentMatches[activeIndex] || currentMatches[0];
-      if (rec) goToRecord(rec);
-      return;
-    } else if (e.key === 'Escape') {
-      resultsBox.classList.remove('open');
-      return;
-    } else {
-      return;
-    }
-    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
-    if (items[activeIndex]) items[activeIndex].scrollIntoView({ block: 'nearest' });
-  });
-
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    clearBtn.style.display = 'none';
-    renderResults([], '');
-    searchInput.focus();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.gis-search')) {
-      resultsBox.classList.remove('open');
-    }
   });
 
   loadData();

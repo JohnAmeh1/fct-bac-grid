@@ -1014,7 +1014,8 @@
   .dashboard-admin .hero-banner { background-position: center 42%; }
   .dashboard-staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.94), rgba(13,63,115,.68) 48%, rgba(20,108,67,.26)), url("{% static 'images/city_gate.jpg' %}") center / cover, var(--accent-dk); }
   .dashboard-field_staff .hero-banner { background: linear-gradient(100deg, rgba(8,39,73,.93), rgba(11,111,104,.62) 53%, rgba(20,108,67,.22)), url("{% static 'images/city_gate2.jpg' %}") center / cover, var(--accent-dk); }
-  .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { gap: 18px; }
+  .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { gap: 18px; grid-template-columns: repeat(5, 1fr); }
+  @media (max-width: 820px) { .dashboard-admin .qa-tiles, .dashboard-staff .qa-tiles, .dashboard-field_staff .qa-tiles { grid-template-columns: repeat(2, 1fr); } }
   .sanitation-summary-card { display: none !important; }
   .dashboard-admin .qa-tile, .dashboard-staff .qa-tile, .dashboard-field_staff .qa-tile {
     min-height: 132px;
@@ -1351,6 +1352,9 @@
     <a href="{% url 'admin_manage_complaints' %}" class="qa-tile amber">
       <span class="qa-icon"><i class="fas fa-flag"></i></span>Reports
       {% if open_complaints %}<span class="chip red" style="position:absolute;margin-top:-44px;margin-left:44px;">{{ open_complaints }}</span>{% endif %}
+    </a>
+    <a href="{% url 'maps_gis' %}" class="qa-tile teal">
+      <span class="qa-icon"><i class="fas fa-map-location-dot"></i></span>Maps &amp; GIS
     </a>
   </div>
 
@@ -1735,6 +1739,9 @@
     <a href="{% url 'staff_verify_payment' %}" class="qa-tile teal">
       <span class="qa-icon"><i class="fas fa-receipt"></i></span>Verify Payment
     </a>
+    <a href="{% url 'maps_gis' %}" class="qa-tile amber">
+      <span class="qa-icon"><i class="fas fa-map-location-dot"></i></span>Maps &amp; GIS
+    </a>
   </div>
 
   <div class="section-label fade">Overview</div>
@@ -1907,6 +1914,9 @@
     </a>
     <a href="{% url 'profile' %}" class="qa-tile purple">
       <span class="qa-icon"><i class="fas fa-user-gear"></i></span>My Profile
+    </a>
+    <a href="{% url 'maps_gis' %}" class="qa-tile amber">
+      <span class="qa-icon"><i class="fas fa-map-location-dot"></i></span>Maps &amp; GIS
     </a>
   </div>
 
