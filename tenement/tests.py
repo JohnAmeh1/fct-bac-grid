@@ -79,7 +79,7 @@ class BulkImportAccountTests(TestCase):
             content_type='text/csv',
         )
 
-        created_count, account_rows = import_properties_from_uploaded_file(uploaded_file)
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(uploaded_file)
 
         self.assertEqual(created_count, 1)
         self.assertEqual(User.objects.filter(userprofile__user_type='landlord').count(), 1)
@@ -102,7 +102,7 @@ class BulkImportAccountTests(TestCase):
             content_type='text/csv',
         )
 
-        created_count, account_rows = import_properties_from_uploaded_file(uploaded_file)
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(uploaded_file)
 
         self.assertEqual(created_count, 2)
         self.assertEqual(len(account_rows), 2)
@@ -121,13 +121,55 @@ class BulkImportAccountTests(TestCase):
             content_type='text/csv',
         )
 
-        created_count, account_rows = import_properties_from_uploaded_file(uploaded_file)
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(uploaded_file)
 
         self.assertEqual(created_count, 2)
         self.assertTrue(Property.objects.filter(name='L5ZE6').exists())
         self.assertTrue(Property.objects.filter(name='R095C').exists())
         self.assertEqual(len(account_rows), 2)
         self.assertTrue(all('L5ZE6' in row['property_name'] or 'R095C' in row['property_name'] for row in account_rows))
+
+    def test_property_type_is_read_from_sheet_not_defaulted(self):
+        csv_data = (
+            "No.,Bulk Property ID,Zone,Latitude,Longitude,Property Type\n"
+            "1,COM001,NW,9.2512826,7.3554834,Commercial\n"
+            "2,RES001,NW,9.2519678,7.3536488,Residential\n"
+        )
+        uploaded_file = SimpleUploadedFile(
+            'typed-properties.csv',
+            csv_data.encode('utf-8'),
+            content_type='text/csv',
+        )
+
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(uploaded_file)
+
+        self.assertEqual(created_count, 2)
+        self.assertEqual(Property.objects.get(name='COM001').property_type, 'commercial')
+        self.assertEqual(Property.objects.get(name='RES001').property_type, 'residential')
+        self.assertEqual(type_summary['commercial'], 1)
+        self.assertEqual(type_summary['residential'], 1)
+        self.assertEqual(type_summary['property_type_column'], 2)
+        self.assertEqual(type_summary['defaulted'], 0)
+
+    def test_property_type_falls_back_to_commercial_likelihood_column(self):
+        csv_data = (
+            "No.,Bulk Property ID,Zone,Latitude,Longitude,Commercial Likelihood\n"
+            "1,W5X6C,NW,9.256713,7.362381,Potential commercial - footprint/development indicators\n"
+            "2,R095C,NW,9.2519678,7.3536488,\n"
+        )
+        uploaded_file = SimpleUploadedFile(
+            'commercial-likelihood.csv',
+            csv_data.encode('utf-8'),
+            content_type='text/csv',
+        )
+
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(uploaded_file)
+
+        self.assertEqual(created_count, 2)
+        self.assertEqual(Property.objects.get(name='W5X6C').property_type, 'commercial')
+        self.assertEqual(Property.objects.get(name='R095C').property_type, 'residential')
+        self.assertEqual(type_summary['commercial_likelihood_column'], 1)
+        self.assertEqual(type_summary['defaulted'], 1)
 
     def test_same_uploaded_file_is_not_imported_twice(self):
         csv_data = (
@@ -147,8 +189,8 @@ class BulkImportAccountTests(TestCase):
             content_type='text/csv',
         )
 
-        first_count, _ = import_properties_from_uploaded_file(first_upload)
-        second_count, _ = import_properties_from_uploaded_file(second_upload)
+        first_count, _, _ = import_properties_from_uploaded_file(first_upload)
+        second_count, _, _ = import_properties_from_uploaded_file(second_upload)
 
         self.assertEqual(first_count, 2)
         self.assertEqual(second_count, 0)
@@ -175,7 +217,7 @@ class BulkImportAccountTests(TestCase):
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
 
-        created_count, account_rows = import_properties_from_uploaded_file(uploaded_file)
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(uploaded_file)
 
         self.assertEqual(created_count, 1)
         self.assertEqual(len(account_rows), 1)

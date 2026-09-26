@@ -742,8 +742,10 @@ def get_paginator_page_range(page_obj, siblings=2, boundary=1):
 
 
 def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, max_preview_rows=25):
+    empty_type_summary = {'property_type_column': 0, 'commercial_likelihood_column': 0, 'defaulted': 0}
+
     if uploaded_file is None:
-        return 0, []
+        return 0, [], empty_type_summary
 
     file_name = getattr(uploaded_file, 'name', '').lower()
     rows = []
@@ -770,7 +772,7 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
             sheet = workbook.active
             raw_rows = list(sheet.iter_rows(values_only=True))
             if not raw_rows:
-                return 0, []
+                return 0, [], empty_type_summary
             headers = [str(value).strip().lower() if value is not None else '' for value in raw_rows[0]]
             for row in raw_rows[1:]:
                 mapping = {}
@@ -781,7 +783,7 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
                 if mapping:
                     rows.append(mapping)
     except Exception:
-        return 0, []
+        return 0, [], empty_type_summary
 
     def get_value(mapping, *keys):
         for key in keys:
@@ -804,6 +806,14 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
 
     valid_rows = []
     seen_usernames = set(existing_usernames)
+    # Tracks how each imported row's property type was actually resolved, so
+    # staff can see in the import summary whether types came from the sheet
+    # or had to fall back to a default (instead of that happening silently).
+    type_source_counts = {
+        'property_type_column': 0,
+        'commercial_likelihood_column': 0,
+        'defaulted': 0,
+    }
     total_rows = len(rows)
 
     for row_index, row in enumerate(rows, start=1):
@@ -826,7 +836,22 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
         )
         address = get_value(mapping, 'address', 'propertyaddress', 'location', 'streetaddress', 'propertylocation')
         district = get_value(mapping, 'district', 'area', 'zone', 'localgovtarea')
-        property_type = get_value(mapping, 'propertytype', 'type', 'property_type', 'category')
+        property_type = get_value(
+            mapping,
+            'propertytype', 'property_type', 'type', 'category',
+            'usetype', 'use_type', 'landusetype', 'land_use_type',
+            'propertyusetype', 'propertycategory', 'buildingtype',
+        )
+        # Fallback signal for sheets that don't have an explicit "Property
+        # Type" column but do carry a commercial-likelihood note (e.g. the
+        # "Commercial Likelihood" column produced by the commercial-property
+        # detection export) — any non-empty, non-negative value there still
+        # tells us the row is commercial.
+        commercial_signal = get_value(
+            mapping,
+            'commerciallikelihood', 'commercial_likelihood', 'likelycommercial',
+            'iscommercial', 'commercialflag', 'commercialindicator',
+        )
         latitude = get_value(mapping, 'latitude', 'lat')
         longitude = get_value(mapping, 'longitude', 'lng', 'lon', 'long')
         num_units = get_value(mapping, 'num_units', 'numberofunits', 'units', 'unitcount')
@@ -845,13 +870,33 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
         if not latitude and not longitude and not property_ref:
             continue
 
+        # Determine property type from the sheet itself rather than always
+        # defaulting to residential. We check (in order):
+        #   1. An explicit "Property Type" (or similar) column — matched by
+        #      substring so values like "Commercial", "Commercial Property",
+        #      or "COMMERCIAL - retail" are all recognised.
+        #   2. A "Commercial Likelihood" style column, when present, as a
+        #      fallback signal — any populated, non-negative value there
+        #      marks the row commercial.
+        #   3. Residential, used only when neither column gives us a signal,
+        #      and recorded as a default so it's visible in the import
+        #      summary rather than being silent.
         prop_type_value = str(property_type).strip().lower() if property_type else ''
-        if prop_type_value in ('residential', 'residentialproperty'):
-            prop_type = 'residential'
-        elif prop_type_value in ('commercial', 'commercialproperty'):
+        commercial_signal_value = str(commercial_signal).strip().lower() if commercial_signal else ''
+        negative_signal_values = ('', 'no', 'none', 'n/a', 'na', 'false', '0', 'not commercial', 'unlikely', 'residential')
+
+        if 'commercial' in prop_type_value:
             prop_type = 'commercial'
+            type_source = 'property_type_column'
+        elif 'resid' in prop_type_value:
+            prop_type = 'residential'
+            type_source = 'property_type_column'
+        elif commercial_signal_value and commercial_signal_value not in negative_signal_values:
+            prop_type = 'commercial'
+            type_source = 'commercial_likelihood_column'
         else:
             prop_type = 'residential'
+            type_source = 'defaulted'
 
         latitude_value = normalize_coordinate(latitude)
         longitude_value = normalize_coordinate(longitude)
@@ -878,6 +923,7 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
                 password_index=password_index,
             )
         seen_usernames.add(username)
+        type_source_counts[type_source] += 1
 
         valid_rows.append({
             'username': username,
@@ -898,7 +944,7 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
             progress(row_index, total_rows, len(valid_rows), 'Scanning valid property rows...')
 
     if not valid_rows:
-        return 0, []
+        return 0, [], empty_type_summary
 
     created_rows = []
     property_batch = []
@@ -1001,7 +1047,13 @@ def import_properties_from_uploaded_file(uploaded_file, progress_callback=None, 
     if progress_callback:
         progress(len(valid_rows), len(valid_rows), len(valid_rows), 'Import complete.')
 
-    return len(valid_rows), created_rows
+    type_summary = {
+        'commercial': sum(1 for row in valid_rows if row['property_type'] == 'commercial'),
+        'residential': sum(1 for row in valid_rows if row['property_type'] == 'residential'),
+        **type_source_counts,
+    }
+
+    return len(valid_rows), created_rows, type_summary
 
 
 def send_forgot_password_email(user, otp_code):
@@ -4149,7 +4201,7 @@ def _run_property_import_in_background(uploaded_file_copy, progress_key):
         }, timeout=3600)
 
     try:
-        created_count, account_rows = import_properties_from_uploaded_file(
+        created_count, account_rows, type_summary = import_properties_from_uploaded_file(
             uploaded_file_copy, progress_callback=progress_callback,
         )
         cache.set(cache_key, {
@@ -4160,6 +4212,7 @@ def _run_property_import_in_background(uploaded_file_copy, progress_key):
             'done': True,
             'error': '',
             'rows': account_rows,
+            'type_summary': type_summary,
         }, timeout=3600)
     except Exception as exc:
         cache.set(cache_key, {
@@ -4170,6 +4223,7 @@ def _run_property_import_in_background(uploaded_file_copy, progress_key):
             'done': True,
             'error': str(exc),
             'rows': [],
+            'type_summary': {},
         }, timeout=3600)
     finally:
         # Each thread gets its own DB connection; close it explicitly so
@@ -4221,7 +4275,16 @@ _PROGRESS_PAGE_TEMPLATE = """
             resultEl.innerHTML = '<p class="error">Import failed: ' + (data.error || "unknown error") + '</p>' +
               '<a class="button" href="' + doneUrl + '">Back to import page</a>';
           }} else {{
+            const ts = data.type_summary || {{}};
+            let breakdown = '';
+            if (data.created_count && (ts.commercial || ts.residential)) {{
+              breakdown = '<p class="status">Property type — determined from the sheet: ' +
+                (ts.commercial || 0) + ' commercial, ' + (ts.residential || 0) + ' residential' +
+                (ts.defaulted ? ' (' + ts.defaulted + ' had no type/commercial-likelihood column and defaulted to residential)' : '') +
+                '.</p>';
+            }}
             resultEl.innerHTML = '<p class="success">' + data.created_count + ' property record(s) imported successfully.</p>' +
+              breakdown +
               '<a class="button" href="' + doneUrl + '">Back to import page</a>';
           }}
           return;
@@ -4275,6 +4338,7 @@ def staff_import_properties(request):
                 'done': False,
                 'error': '',
                 'rows': [],
+                'type_summary': {},
             }, timeout=3600)
 
             thread = threading.Thread(
@@ -4311,6 +4375,7 @@ def staff_import_properties_progress(request, progress_key):
         'done': progress_data.get('done', False),
         'error': progress_data.get('error', ''),
         'rows': progress_data.get('rows', []),
+        'type_summary': progress_data.get('type_summary', {}),
     }
     return JsonResponse(payload)
 
