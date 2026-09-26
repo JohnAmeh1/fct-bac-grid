@@ -35,12 +35,31 @@
   .pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:20px;}
   .pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid var(--border);color:var(--ink-2);}
   .pagination .current{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .pg-header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .btn-verify-all{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:700;padding:10px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;background:var(--green);color:#fff;white-space:nowrap;}
+  .btn-verify-all:disabled{background:var(--surface-3);color:var(--ink-4);cursor:not-allowed;}
 </style>
 
 <div class="pg-wrap">
-  <div class="pg-header">
-    <h1 class="pg-title">Property Verification Queue</h1>
-    <p class="pg-sub">Properties awaiting review before they appear across the platform's shared lists</p>
+  <div class="pg-header pg-header-row">
+    <div>
+      <h1 class="pg-title">Property Verification Queue</h1>
+      <p class="pg-sub">Properties awaiting review before they appear across the platform's shared lists</p>
+    </div>
+    {% if status_filter == 'pending' %}{% with queue_count=pending_count %}
+    <form method="post" action="{% url 'admin_verify_all_properties' %}" onsubmit="return confirm('Verify all {{ queue_count }} pending propert{{ queue_count|pluralize:"y,ies" }}? This cannot be undone in bulk.');">
+    {% endwith %}{% elif status_filter == 'required' %}{% with queue_count=required_count %}
+    <form method="post" action="{% url 'admin_verify_all_properties' %}" onsubmit="return confirm('Verify all {{ queue_count }} propert{{ queue_count|pluralize:"y,ies" }} flagged as requiring attention? This cannot be undone in bulk.');">
+    {% endwith %}{% else %}{% with queue_count=pending_count|add:required_count %}
+    <form method="post" action="{% url 'admin_verify_all_properties' %}" onsubmit="return confirm('Verify all {{ queue_count }} propert{{ queue_count|pluralize:"y,ies" }} in this queue? This cannot be undone in bulk.');">
+    {% endwith %}{% endif %}
+      {% csrf_token %}
+      <input type="hidden" name="status" value="{{ status_filter }}">
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button type="submit" class="btn-verify-all" {% if status_filter == 'pending' %}{% if not pending_count %}disabled{% endif %}{% elif status_filter == 'required' %}{% if not required_count %}disabled{% endif %}{% elif not pending_count and not required_count %}disabled{% endif %}>
+        <i class="fas fa-check-double"></i> Verify All{% if status_filter %} ({{ status_filter|title }}){% endif %}
+      </button>
+    </form>
   </div>
 
   <div class="filter-tabs">

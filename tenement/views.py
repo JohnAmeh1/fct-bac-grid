@@ -2398,6 +2398,39 @@ def admin_verification_queue(request):
 
 @admin_or_staff_required
 @require_POST
+def admin_verify_all_properties(request):
+    """Bulk-verifies every property currently in the queue (optionally scoped
+    to the active status filter), so staff/admins don't have to click through
+    the queue one property at a time."""
+    properties = Property.objects.select_related('owner').exclude(verification_status='verified')
+
+    status_filter = request.POST.get('status', '')
+    if status_filter in ('pending', 'required'):
+        properties = properties.filter(verification_status=status_filter)
+
+    count = 0
+    now = timezone.now()
+    for property_obj in properties:
+        property_obj.verification_status = 'verified'
+        property_obj.verified_by = request.user
+        property_obj.verified_at = now
+        property_obj.save(update_fields=['verification_status', 'verified_by', 'verified_at'])
+        Notification.notify(
+            property_obj.owner,
+            f'Your property "{property_obj.name}" has been verified.',
+            link=reverse('view_property', args=[property_obj.id]),
+        )
+        count += 1
+
+    if count:
+        messages.success(request, f'{count} propert{"y" if count == 1 else "ies"} marked as verified.')
+    else:
+        messages.info(request, 'No properties needed verification.')
+    return redirect(request.POST.get('next') or 'admin_verification_queue')
+
+
+@admin_or_staff_required
+@require_POST
 def admin_verify_property(request, property_id):
     property_obj = get_object_or_404(Property, id=property_id)
     property_obj.verification_status = 'verified'
