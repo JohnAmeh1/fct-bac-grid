@@ -50,6 +50,7 @@ urlpatterns = [
     path('management/revenue/', views.admin_revenue_list, name='admin_revenue_list'),
     path('management/verification/', views.admin_verification_queue, name='admin_verification_queue'),
     path('management/verification/verify-all/', views.admin_verify_all_properties, name='admin_verify_all_properties'),
+    path('management/verification/verify-all/progress/<str:progress_key>/', views.admin_verify_all_properties_progress, name='admin_verify_all_properties_progress'),
     path('management/verification/<int:property_id>/verify/', views.admin_verify_property, name='admin_verify_property'),
     path('management/verification/<int:property_id>/flag/', views.admin_flag_property_verification, name='admin_flag_property_verification'),
 

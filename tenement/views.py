@@ -2396,37 +2396,184 @@ def admin_verification_queue(request):
     return render(request, 'admin/verification_queue.html', context)
 
 
+def _run_verify_all_in_background(property_ids, user_id, progress_key):
+    """
+    Bulk-verifies a list of properties off the request thread. The original
+    synchronous version (loop + per-property save + notification, all inside
+    the request/response cycle) was fine for a handful of properties, but on
+    a queue of any real size it ran past gunicorn's worker timeout — the
+    worker got killed mid-request (SystemExit in the DB driver) and the user
+    just saw a bare "Internal Server Error" with no useful message. Moving
+    it to a background thread with cache-based progress mirrors the existing
+    demo-reset and bulk-import jobs.
+    """
+    cache_key = f'verify_all_progress:{progress_key}'
+    total = len(property_ids)
+
+    def set_progress(current, message):
+        percent = int((current / total) * 100) if total else 100
+        cache.set(cache_key, {
+            'status': 'running',
+            'message': message,
+            'percent': percent,
+            'done': False,
+            'error': '',
+        }, timeout=3600)
+
+    try:
+        verifying_user = User.objects.get(id=user_id)
+        now = timezone.now()
+        count = 0
+        for idx, property_obj in enumerate(
+            Property.objects.select_related('owner').filter(id__in=property_ids), start=1
+        ):
+            property_obj.verification_status = 'verified'
+            property_obj.verified_by = verifying_user
+            property_obj.verified_at = now
+            property_obj.save(update_fields=['verification_status', 'verified_by', 'verified_at'])
+            Notification.notify(
+                property_obj.owner,
+                f'Your property "{property_obj.name}" has been verified.',
+                link=reverse('view_property', args=[property_obj.id]),
+            )
+            count += 1
+            if idx % 5 == 0 or idx == total:
+                set_progress(idx, f'Verified {idx} of {total} properties…')
+
+        cache.set(cache_key, {
+            'status': 'done',
+            'message': f'{count} propert{"y" if count == 1 else "ies"} marked as verified.' if count else 'No properties needed verification.',
+            'percent': 100,
+            'done': True,
+            'error': '',
+        }, timeout=3600)
+    except Exception as exc:
+        logger.error("Bulk property verification failed: %s", exc)
+        cache.set(cache_key, {
+            'status': 'error',
+            'message': 'Bulk verification failed.',
+            'percent': 0,
+            'done': True,
+            'error': str(exc),
+        }, timeout=3600)
+    finally:
+        from django.db import connections
+        connections.close_all()
+
+
+_VERIFY_ALL_PROGRESS_PAGE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Verifying properties…</title>
+  <style>
+    body {{ font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }}
+    .bar-track {{ background: #e5e7eb; border-radius: 8px; height: 20px; overflow: hidden; margin: 16px 0; }}
+    .bar-fill {{ background: #16a34a; height: 100%; width: 0%; transition: width 0.4s ease; }}
+    .status {{ color: #4b5563; }}
+    .error {{ color: #b91c1c; font-weight: 600; }}
+    .success {{ color: #15803d; font-weight: 600; }}
+    a.button {{ display: inline-block; margin-top: 20px; padding: 10px 18px; background: #111827; color: #fff; text-decoration: none; border-radius: 6px; }}
+  </style>
+</head>
+<body>
+  <h2>Verifying properties…</h2>
+  <p class="status" id="status-message">Starting…</p>
+  <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+  <p id="percent-text">0%</p>
+  <div id="result"></div>
+
+  <script>
+    const progressUrl = "{progress_url}";
+    const doneUrl = "{done_url}";
+
+    async function poll() {{
+      try {{
+        const res = await fetch(progressUrl, {{ cache: "no-store" }});
+        const data = await res.json();
+
+        document.getElementById("status-message").textContent = data.message || "Working…";
+        document.getElementById("bar-fill").style.width = (data.percent || 0) + "%";
+        document.getElementById("percent-text").textContent = (data.percent || 0) + "%";
+
+        if (data.done) {{
+          const resultEl = document.getElementById("result");
+          if (data.status === "error") {{
+            resultEl.innerHTML = '<p class="error">Verification failed: ' + (data.error || "unknown error") + '</p>' +
+              '<a class="button" href="' + doneUrl + '">Back to verification queue</a>';
+          }} else {{
+            resultEl.innerHTML = '<p class="success">' + (data.message || "Done.") + '</p>' +
+              '<a class="button" href="' + doneUrl + '">Back to verification queue</a>';
+          }}
+          return;
+        }}
+        setTimeout(poll, 1200);
+      }} catch (e) {{
+        document.getElementById("status-message").textContent = "Lost connection to progress updates — verification is still running in the background. Reloading…";
+        setTimeout(() => window.location.reload(), 3000);
+      }}
+    }}
+    poll();
+  </script>
+</body>
+</html>
+"""
+
+
 @admin_or_staff_required
 @require_POST
 def admin_verify_all_properties(request):
     """Bulk-verifies every property currently in the queue (optionally scoped
-    to the active status filter), so staff/admins don't have to click through
-    the queue one property at a time."""
-    properties = Property.objects.select_related('owner').exclude(verification_status='verified')
+    to the active status filter). Runs as a background job (see
+    _run_verify_all_in_background) so a large queue can't time out the
+    request the way the old synchronous version did."""
+    properties = Property.objects.exclude(verification_status='verified')
 
     status_filter = request.POST.get('status', '')
     if status_filter in ('pending', 'required'):
         properties = properties.filter(verification_status=status_filter)
 
-    count = 0
-    now = timezone.now()
-    for property_obj in properties:
-        property_obj.verification_status = 'verified'
-        property_obj.verified_by = request.user
-        property_obj.verified_at = now
-        property_obj.save(update_fields=['verification_status', 'verified_by', 'verified_at'])
-        Notification.notify(
-            property_obj.owner,
-            f'Your property "{property_obj.name}" has been verified.',
-            link=reverse('view_property', args=[property_obj.id]),
-        )
-        count += 1
+    property_ids = list(properties.values_list('id', flat=True))
+    done_url = request.POST.get('next') or reverse('admin_verification_queue')
 
-    if count:
-        messages.success(request, f'{count} propert{"y" if count == 1 else "ies"} marked as verified.')
-    else:
+    if not property_ids:
         messages.info(request, 'No properties needed verification.')
-    return redirect(request.POST.get('next') or 'admin_verification_queue')
+        return redirect(done_url)
+
+    progress_key = uuid.uuid4().hex
+    cache.set(f'verify_all_progress:{progress_key}', {
+        'status': 'running',
+        'message': 'Starting…',
+        'percent': 0,
+        'done': False,
+        'error': '',
+    }, timeout=3600)
+
+    thread = threading.Thread(
+        target=_run_verify_all_in_background,
+        args=(property_ids, request.user.id, progress_key),
+        daemon=True,
+    )
+    thread.start()
+
+    progress_url = reverse('admin_verify_all_properties_progress', args=[progress_key])
+    html = _VERIFY_ALL_PROGRESS_PAGE_TEMPLATE.format(progress_url=progress_url, done_url=done_url)
+    return HttpResponse(html)
+
+
+@admin_or_staff_required
+@require_GET
+def admin_verify_all_properties_progress(request, progress_key):
+    progress_data = cache.get(f'verify_all_progress:{progress_key}', {})
+    payload = {
+        'status': progress_data.get('status', 'idle'),
+        'message': progress_data.get('message', 'Awaiting verification...'),
+        'percent': progress_data.get('percent', 0),
+        'done': progress_data.get('done', False),
+        'error': progress_data.get('error', ''),
+    }
+    return JsonResponse(payload)
 
 
 @admin_or_staff_required
