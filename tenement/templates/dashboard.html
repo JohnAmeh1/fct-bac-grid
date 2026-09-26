@@ -964,6 +964,8 @@
     .lm-kpi.blue .lm-kpi-icon { color: var(--accent); background: var(--accent-dim); }
     .lm-kpi.amber .lm-kpi-icon { color: var(--amber); background: var(--amber-dim); }
     .lm-kpi.red .lm-kpi-icon { color: var(--red); background: var(--red-dim); }
+    .lm-kpi.teal .lm-kpi-icon { color: var(--teal); background: var(--teal-dim); }
+    .lm-kpi.purple .lm-kpi-icon { color: var(--purple); background: var(--purple-dim); }
     .lm-kpi-label { font-size: .68rem; color: var(--ink-3); font-weight: 600; }
     .lm-kpi-value { margin-top: 8px; font-size: 1.15rem; font-family: 'DM Mono', monospace; font-weight: 700; color: var(--ink); line-height: 1; }
     .lm-kpi-link { display: block; margin-top: 8px; color: var(--accent); font-size: .67rem; font-weight: 700; }
@@ -1162,7 +1164,9 @@
       <div class="lm-kpi green"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-house"></i></span><span class="lm-kpi-label">My Properties</span></div><div class="lm-kpi-value">{{ total_properties|default:0|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_properties' %}">View properties <i class="fas fa-arrow-right"></i></a></div>
       <div class="lm-kpi blue"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-wallet"></i></span><span class="lm-kpi-label">Payments Made</span></div><div class="lm-kpi-value">₦{{ total_paid|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_payments' %}">View payments <i class="fas fa-arrow-right"></i></a></div>
       <div class="lm-kpi amber"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-file-invoice"></i></span><span class="lm-kpi-label">Outstanding Bills</span></div><div class="lm-kpi-value">₦{{ outstanding_bills|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_payments' %}">Pay now <i class="fas fa-arrow-right"></i></a></div>
-      <div class="lm-kpi red"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-flag"></i></span><span class="lm-kpi-label">Open Reports</span></div><div class="lm-kpi-value">{{ open_complaints|default:0|money:0 }}</div><a class="lm-kpi-link" href="{% url 'my_complaints' %}">View reports <i class="fas fa-arrow-right"></i></a></div>
+      <div class="lm-kpi teal"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-leaf"></i></span><span class="lm-kpi-label">Sanitation Levy</span></div><div class="lm-kpi-value">₦{{ outstanding_sanitation_bills|default:0|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_payments' %}">Pay now <i class="fas fa-arrow-right"></i></a></div>
+      <div class="lm-kpi blue"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-file-invoice"></i></span><span class="lm-kpi-label">Tenement Rate</span></div><div class="lm-kpi-value">₦{{ outstanding_tenement_bills|default:0|money:0 }}</div><a class="lm-kpi-link" href="{% url 'landlord_payments' %}">Pay now <i class="fas fa-arrow-right"></i></a></div>
+      <div class="lm-kpi purple"><div class="lm-kpi-top"><span class="lm-kpi-icon"><i class="fas fa-briefcase"></i></span><span class="lm-kpi-label">Trade/Business License</span></div><div class="lm-kpi-value">₦10,000</div><span class="lm-kpi-link">Coming soon</span></div>
     </div>
 
     <div class="lm-rate-cta"><h2>Keep Your Property Records Updated</h2><p>Pay your tenement rates and sanitation levies easily and securely.</p><a href="{% url 'landlord_payments' %}">Pay Now <i class="fas fa-arrow-right"></i></a></div>
@@ -2002,7 +2006,7 @@
   ══════════════════════════════════════════════════════ -->
   <div class="landlord-desktop-content">
 
-  <div class="stats-grid cols-4">
+  <div class="stats-grid cols-3">
     <div class="stat-card c-green fade fade-1">
       <div class="stat-top">
         <div>
@@ -2039,15 +2043,35 @@
       </div>
       <div class="stat-foot">Pending tenement rates</div>
     </div>
-    <div class="stat-card c-red fade fade-4">
+    <div class="stat-card c-teal fade fade-4">
       <div class="stat-top">
         <div>
-          <div class="stat-label">Open Reports</div>
-          <div class="stat-value">{{ open_complaints|default:0|money:0 }}</div>
+          <div class="stat-label">Sanitation Levy</div>
+          <div class="stat-value sm">₦{{ outstanding_sanitation_bills|default:0|money:0 }}</div>
         </div>
-        <div class="stat-icon"><i class="fas fa-flag"></i></div>
+        <div class="stat-icon"><i class="fas fa-leaf"></i></div>
       </div>
-      <div class="stat-foot">Reports awaiting response</div>
+      <div class="stat-foot">Outstanding sanitation levy</div>
+    </div>
+    <div class="stat-card c-blue fade fade-5">
+      <div class="stat-top">
+        <div>
+          <div class="stat-label">Tenement Rate</div>
+          <div class="stat-value sm">₦{{ outstanding_tenement_bills|default:0|money:0 }}</div>
+        </div>
+        <div class="stat-icon"><i class="fas fa-file-invoice"></i></div>
+      </div>
+      <div class="stat-foot">Outstanding tenement rate</div>
+    </div>
+    <div class="stat-card c-purple fade fade-6">
+      <div class="stat-top">
+        <div>
+          <div class="stat-label">Trade/Business License</div>
+          <div class="stat-value sm">₦10,000</div>
+        </div>
+        <div class="stat-icon"><i class="fas fa-briefcase"></i></div>
+      </div>
+      <div class="stat-foot">Coming soon</div>
     </div>
   </div>
 

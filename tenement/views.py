@@ -1414,6 +1414,8 @@ def dashboard(request):
         total_paid = Payment.objects.filter(landlord=request.user, status='success').aggregate(total=Sum('amount'))['total'] or 0
 
         outstanding_bills = 0
+        outstanding_tenement_bills = 0
+        outstanding_sanitation_bills = 0
         obligations_list = []
         paid_coverage_list = []
         for prop in properties:
@@ -1427,6 +1429,7 @@ def dashboard(request):
                     else:
                         computed_amount = rate.amount
                     outstanding_bills += computed_amount
+                    outstanding_tenement_bills += computed_amount
                     obligations_list.append({
                         'property': prop,
                         'rate': rate,
@@ -1448,6 +1451,7 @@ def dashboard(request):
                 paid_coverage_list.append({'property': None, 'rate': rate, 'payment': valid_payment})
             else:
                 outstanding_bills += rate.amount
+                outstanding_sanitation_bills += rate.amount
                 obligations_list.append({
                     'property': None,
                     'rate': rate,
@@ -1503,6 +1507,8 @@ def dashboard(request):
             'total_properties': len(properties_with_status),
             'total_paid': total_paid,
             'outstanding_bills': outstanding_bills,
+            'outstanding_tenement_bills': outstanding_tenement_bills,
+            'outstanding_sanitation_bills': outstanding_sanitation_bills,
             'obligations_list': obligations_list,
             'paid_coverage_list': paid_coverage_list,
             'total_complaints': my_complaints.count(),
