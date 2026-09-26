@@ -8,6 +8,9 @@ from django.urls import reverse
 from PIL import Image
 from django.contrib.auth.models import User
 
+import uuid
+from decimal import Decimal
+
 from tenement.models import Property, USER_TYPE_CHOICES, PaymentRate, Payment, UserProfile
 from tenement.views import (
     get_paginator_page_range,
@@ -607,3 +610,127 @@ class LandlordDeleteRestrictionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'body class="app-shell page-view_property is-authenticated theme-dark')
         self.assertContains(response, 'class="theme-toggle"')
+
+
+class MapsGisAccessTests(TestCase):
+    """Access control: only admin/staff/field_staff can reach the Maps & GIS page and its data feed."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(username='gis-admin', password='StrongPass123!')
+        UserProfile.objects.create(user=self.admin, user_type='admin', email_verified=True)
+
+        self.staff = User.objects.create_user(username='gis-staff', password='StrongPass123!')
+        UserProfile.objects.create(user=self.staff, user_type='staff', email_verified=True)
+
+        self.field_staff = User.objects.create_user(username='gis-field-staff', password='StrongPass123!')
+        UserProfile.objects.create(user=self.field_staff, user_type='field_staff', email_verified=True)
+
+        self.landlord = User.objects.create_user(username='gis-landlord', password='StrongPass123!')
+        UserProfile.objects.create(user=self.landlord, user_type='landlord', email_verified=True)
+
+    def test_admin_staff_and_field_staff_can_view_the_page(self):
+        for user in (self.admin, self.staff, self.field_staff):
+            self.client.force_login(user)
+            response = self.client.get(reverse('maps_gis'))
+            self.assertEqual(response.status_code, 200, f'{user.username} should be able to open Maps & GIS')
+            response = self.client.get(reverse('maps_gis_data'))
+            self.assertEqual(response.status_code, 200, f'{user.username} should be able to read Maps & GIS data')
+            self.client.logout()
+
+    def test_landlord_cannot_access_maps_gis(self):
+        self.client.force_login(self.landlord)
+        response = self.client.get(reverse('maps_gis'))
+        self.assertNotEqual(response.status_code, 200)
+        response = self.client.get(reverse('maps_gis_data'))
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_anonymous_user_cannot_access_maps_gis(self):
+        response = self.client.get(reverse('maps_gis'))
+        self.assertNotEqual(response.status_code, 200)
+        response = self.client.get(reverse('maps_gis_data'))
+        self.assertNotEqual(response.status_code, 200)
+
+
+class MapsGisDataStatusTests(TestCase):
+    """Verifies the red/yellow/green classification returned by the Maps & GIS data feed."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(username='gis-status-admin', password='StrongPass123!')
+        UserProfile.objects.create(user=self.admin, user_type='admin', email_verified=True)
+
+        self.landlord = User.objects.create_user(username='gis-status-landlord', password='StrongPass123!')
+        UserProfile.objects.create(user=self.landlord, user_type='landlord', email_verified=True)
+
+        self.tenement_rate = PaymentRate.objects.create(
+            property_type='residential',
+            name='Annual Residential Tenement Rate',
+            amount=Decimal('10000.00'),
+            is_active=True,
+        )
+        self.sanitation_rate = PaymentRate.objects.create(
+            name='Monthly Sanitation Levy',
+            amount=Decimal('1000.00'),
+            is_active=True,
+            is_sanitation=True,
+        )
+
+        # Unpaid both -> red
+        self.prop_unpaid = Property.objects.create(
+            owner=self.landlord, name='Unpaid Property', address='1 Test Rd', district='Bwari',
+            property_type='residential', latitude=Decimal('9.251283'), longitude=Decimal('7.355483'),
+        )
+        # Tenement only -> yellow
+        self.prop_tenement_only = Property.objects.create(
+            owner=self.landlord, name='Tenement Only Property', address='2 Test Rd', district='Bwari',
+            property_type='residential', latitude=Decimal('9.252000'), longitude=Decimal('7.356000'),
+        )
+        # Sanitation only -> yellow
+        self.prop_sanitation_only = Property.objects.create(
+            owner=self.landlord, name='Sanitation Only Property', address='3 Test Rd', district='Bwari',
+            property_type='residential', latitude=Decimal('9.253000'), longitude=Decimal('7.357000'),
+        )
+        # Both paid -> green
+        self.prop_fully_paid = Property.objects.create(
+            owner=self.landlord, name='Fully Paid Property', address='4 Test Rd', district='Bwari',
+            property_type='residential', latitude=Decimal('9.254000'), longitude=Decimal('7.358000'),
+        )
+        # No coordinates -> excluded from the map entirely
+        self.prop_unmapped = Property.objects.create(
+            owner=self.landlord, name='Unmapped Property', address='5 Test Rd', district='Bwari',
+            property_type='residential',
+        )
+
+        def make_payment(prop, rate):
+            Payment.objects.create(
+                landlord=self.landlord,
+                property=prop,
+                payment_rate=rate,
+                amount=rate.amount,
+                reference=f'gis-test-{uuid.uuid4().hex[:10]}',
+                status='success',
+            )
+
+        make_payment(self.prop_tenement_only, self.tenement_rate)
+        make_payment(self.prop_sanitation_only, self.sanitation_rate)
+        make_payment(self.prop_fully_paid, self.tenement_rate)
+        make_payment(self.prop_fully_paid, self.sanitation_rate)
+
+    def test_status_colors_and_summary_counts(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('maps_gis_data'))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        by_id = {row[0]: row for row in data['points']}
+        self.assertEqual(by_id[self.prop_unpaid.id][3], 'red')
+        self.assertEqual(by_id[self.prop_tenement_only.id][3], 'yellow')
+        self.assertEqual(by_id[self.prop_sanitation_only.id][3], 'yellow')
+        self.assertEqual(by_id[self.prop_fully_paid.id][3], 'green')
+        self.assertNotIn(self.prop_unmapped.id, by_id)
+
+        self.assertEqual(data['summary']['total'], 4)
+        self.assertEqual(data['summary']['red'], 1)
+        self.assertEqual(data['summary']['yellow'], 2)
+        self.assertEqual(data['summary']['green'], 1)
+        self.assertEqual(data['summary']['unmapped'], 1)
