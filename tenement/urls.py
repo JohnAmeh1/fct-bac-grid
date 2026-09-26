@@ -47,6 +47,7 @@ urlpatterns = [
     path('management/properties/', views.admin_manage_properties, name='admin_manage_properties'),
     path('management/properties/<int:property_id>/', views.admin_view_property, name='admin_view_property'),
     path('management/properties/<int:property_id>/delete/', views.admin_delete_property, name='admin_delete_property'),
+    path('management/revenue/', views.admin_revenue_list, name='admin_revenue_list'),
 
     # ── Admin: Complaints ──────────────────────────────────────
     path('management/complaints/', views.admin_manage_complaints, name='admin_manage_complaints'),
@@ -62,6 +63,7 @@ urlpatterns = [
     # ── Admin: Payment Rates ──────────────────────────────────
     path('management/payments/rates/', views.admin_payment_rates, name='admin_payment_rates'),
     path('management/payments/rates/create/', views.admin_create_payment_rate, name='admin_create_payment_rate'),
+    path('management/payments/rates/<int:rate_id>/edit/', views.admin_edit_payment_rate, name='admin_edit_payment_rate'),
     path('management/payments/rates/<int:rate_id>/delete/', views.admin_delete_payment_rate, name='admin_delete_payment_rate'),
     path('management/payments/rates/<int:rate_id>/toggle/', views.admin_toggle_payment_rate, name='admin_toggle_payment_rate'),
     path('management/payments/', views.admin_all_payments, name='admin_all_payments'),

@@ -102,7 +102,7 @@ class SiteConfiguration(models.Model):
     """Singleton model — only one row should ever exist (pk=1)."""
     # --- General ---
     site_name          = models.CharField(max_length=100, default='FCT BAC Grid')
-    site_tagline       = models.CharField(max_length=255, blank=True, default='Managing tenement rates efficiently')
+    site_tagline       = models.CharField(max_length=255, blank=True, default='Transparent Property Records, Trusted Revenue Collection')
     welcome_message    = models.TextField(
         blank=True,
         default='',

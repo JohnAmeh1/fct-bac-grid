@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create Payment Rate | FCT BAC Grid{% endblock %}
+{% block title %}{% if rate %}Edit Payment Rate{% else %}Create Payment Rate{% endif %} | FCT BAC Grid{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -44,7 +44,7 @@
 <div class="pg-wrap">
   <div class="pg-header fade">
     <a href="{% url 'admin_payment_rates' %}" class="back-btn"><i class="fas fa-chevron-left"></i> Back to Rates</a>
-    <h1 class="pg-title">Create Payment Rate</h1>
+    <h1 class="pg-title">{% if rate %}Edit Payment Rate{% else %}Create Payment Rate{% endif %}</h1>
   </div>
 
   <div class="form-card fade fade-1">
@@ -63,7 +63,7 @@
         </div>
       {% endfor %}
       <div class="form-actions">
-        <button type="submit" class="btn-primary">Create Rate</button>
+        <button type="submit" class="btn-primary">{% if rate %}Save Changes{% else %}Create Rate{% endif %}</button>
         <a href="{% url 'admin_payment_rates' %}" class="btn-ghost">Cancel</a>
       </div>
     </form>

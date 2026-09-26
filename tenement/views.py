@@ -216,6 +216,24 @@ def send_otp_email(user, otp_code):
         logger.exception("Failed to send OTP email to %s", user.email)
         return False
 
+def _send_complaint_status_email(complaint):
+    """Optional notification, gated by SiteConfiguration.enable_email_notifications."""
+    user = complaint.submitted_by
+    if not user.email:
+        return
+    subject = f'Your complaint "{complaint.subject}" was updated – FCT BAC Grid'
+    message = (
+        f"Hello {user.first_name or user.username},\n\n"
+        f"The status of your complaint \"{complaint.subject}\" has been updated to: "
+        f"{complaint.get_status_display()}.\n\n"
+        f"You can view the full details by logging in to your account."
+    )
+    try:
+        send_mail(subject, message, _configured_sender_email(), [user.email], fail_silently=False)
+    except Exception:
+        logger.exception("Failed to send complaint status email to %s", user.email)
+
+
 def send_email_change_otp(user, new_email, otp_code):
     """
     Returns (success: bool, error_detail: str | None). error_detail is the
@@ -301,6 +319,105 @@ def get_property_payment_status(property_obj):
 def is_property_fully_paid(property_obj):
     return get_property_payment_status(property_obj) == 'paid'
 
+
+def bulk_property_payment_status(properties):
+    """
+    Compute {'property_id': 'paid'|'pending'|'not_paid'} for many properties
+    in a constant number of queries.
+
+    get_property_payment_status() runs 1+ queries PER property; looping it
+    over an unpaginated queryset (e.g. every property in the system, which
+    can be 100k+ rows here) issues hundreds of thousands of queries against
+    the remote database and reliably times out the request (worker
+    timeout -> 500). This mirrors the bulk-query approach used in
+    compute_total_outstanding_payments()/admin_rate_defaulters().
+    """
+    properties = list(properties)
+    if not properties:
+        return {}
+
+    now = timezone.now()
+    active_rates = list(PaymentRate.objects.filter(is_active=True, is_sanitation=False))
+    rates_by_property_type = defaultdict(list)
+    for rate in active_rates:
+        rates_by_property_type[rate.property_type].append(rate)
+
+    property_ids = [prop.id for prop in properties]
+    rate_ids = [rate.id for rate in active_rates]
+    valid_payment_pairs = set()
+    if property_ids and rate_ids:
+        valid_payment_pairs = set(
+            Payment.objects.filter(
+                property_id__in=property_ids,
+                payment_rate_id__in=rate_ids,
+                status='success',
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .values_list('property_id', 'payment_rate_id')
+        )
+
+    statuses = {}
+    for prop in properties:
+        applicable_rates = rates_by_property_type.get(prop.property_type, [])
+        if not applicable_rates:
+            statuses[prop.id] = 'not_paid'
+            continue
+        paid_count = sum(1 for rate in applicable_rates if (prop.id, rate.id) in valid_payment_pairs)
+        if paid_count == len(applicable_rates):
+            statuses[prop.id] = 'paid'
+        elif paid_count > 0:
+            statuses[prop.id] = 'pending'
+        else:
+            statuses[prop.id] = 'not_paid'
+    return statuses
+
+
+def bulk_property_sanitation_status(properties):
+    """Sanitation-levy equivalent of bulk_property_payment_status() (see there for why bulk matters)."""
+    properties = list(properties)
+    if not properties:
+        return {}
+
+    now = timezone.now()
+    sanitation_rates = list(PaymentRate.objects.filter(is_sanitation=True, is_active=True))
+    if not sanitation_rates:
+        return {prop.id: 'not_paid' for prop in properties}
+
+    owner_ids = list({prop.owner_id for prop in properties if prop.owner_id})
+    rate_ids = [rate.id for rate in sanitation_rates]
+
+    universal_paid = set()   # (landlord_id, rate_id) — payment not tied to a specific property
+    specific_paid = set()    # (property_id, rate_id) — payment tied to a specific property
+    if owner_ids and rate_ids:
+        payments = (
+            Payment.objects.filter(
+                landlord_id__in=owner_ids,
+                payment_rate_id__in=rate_ids,
+                status='success',
+            )
+            .filter(django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=now))
+            .values_list('landlord_id', 'property_id', 'payment_rate_id')
+        )
+        for landlord_id, property_id, rate_id in payments:
+            if property_id is None:
+                universal_paid.add((landlord_id, rate_id))
+            else:
+                specific_paid.add((property_id, rate_id))
+
+    statuses = {}
+    for prop in properties:
+        paid_count = sum(
+            1 for rate in sanitation_rates
+            if (prop.owner_id, rate.id) in universal_paid or (prop.id, rate.id) in specific_paid
+        )
+        if paid_count == len(sanitation_rates):
+            statuses[prop.id] = 'paid'
+        elif paid_count > 0:
+            statuses[prop.id] = 'pending'
+        else:
+            statuses[prop.id] = 'not_paid'
+    return statuses
+
 def get_latest_valid_payment(property_obj, rate):
     now = timezone.now()
     return Payment.objects.filter(
@@ -320,6 +437,11 @@ def get_property_rate_amount(property_obj, rate):
     if rate.is_per_unit and property_obj.property_type == 'residential' and property_obj.num_flats > 0:
         return Decimal(str(rate.amount)) * property_obj.num_flats
     return Decimal(str(rate.amount))
+
+
+def get_pagination_size():
+    """Configured list-view page size, guarded against an accidental 0 (which would break Paginator)."""
+    return SiteConfiguration.get_config().default_pagination_size or 10
 
 
 def compute_sanitation_summary():
@@ -1597,7 +1719,7 @@ def landlord_properties(request):
     if district:
         properties = properties.filter(district=district)
 
-    paginator = Paginator(properties, SiteConfiguration.get_config().default_pagination_size)
+    paginator = Paginator(properties, get_pagination_size())
     page_number = request.GET.get('page')
     properties_page = paginator.get_page(page_number)
 
@@ -1674,7 +1796,7 @@ def admin_manage_users(request):
             Q(last_name__icontains=search)
         )
 
-    paginator = Paginator(users, 20)
+    paginator = Paginator(users, get_pagination_size())
     page_number = request.GET.get('page')
     users_page = paginator.get_page(page_number)
     users_page_range = get_paginator_page_range(users_page)
@@ -1929,7 +2051,7 @@ def admin_delete_user(request, user_id):
 @staff_or_admin_required
 def admin_manage_properties(request):
     from .forms import DISTRICT_CHOICES
-    properties = Property.objects.select_related('owner').all()
+    properties = Property.objects.select_related('owner').order_by('-created_at').order_by('-created_at', 'id')
 
     prop_type = request.GET.get('property_type')
     if prop_type in ('residential', 'commercial'):
@@ -1948,11 +2070,18 @@ def admin_manage_properties(request):
         )
 
     paid_status = request.GET.get('paid_status', '')
-    props_list = list(properties)
-    if paid_status == 'paid':
-        props_list = [p for p in props_list if is_property_fully_paid(p)]
-    elif paid_status == 'unpaid':
-        props_list = [p for p in props_list if not is_property_fully_paid(p)]
+    if paid_status in ('paid', 'unpaid'):
+        # Only pull the columns bulk_property_payment_status() actually
+        # needs (id/type/owner) instead of full rows (images, addresses,
+        # joined owner, etc.) for the entire filtered set — this can be
+        # 100k+ rows, so avoiding the extra data transfer matters a lot.
+        lightweight = list(properties.only('id', 'property_type', 'owner_id'))
+        payment_status_map = bulk_property_payment_status(lightweight)
+        if paid_status == 'paid':
+            matching_ids = [p.id for p in lightweight if payment_status_map.get(p.id) == 'paid']
+        else:
+            matching_ids = [p.id for p in lightweight if payment_status_map.get(p.id) != 'paid']
+        properties = properties.filter(id__in=matching_ids)
 
     total_properties  = Property.objects.count()
     residential_count = Property.objects.filter(property_type='residential').count()
@@ -1963,15 +2092,21 @@ def admin_manage_properties(request):
         for val, _ in DISTRICT_CHOICES
     }
 
-    paginator = Paginator(props_list, 12)
+    # Paginate the queryset directly (COUNT + LIMIT/OFFSET) rather than
+    # materializing every matching row into a Python list first.
+    paginator = Paginator(properties, get_pagination_size())
     page_number = request.GET.get('page')
     properties_page = paginator.get_page(page_number)
     properties_page_range = get_paginator_page_range(properties_page)
 
+    # Only the current page (≤12 rows) needs per-property status for
+    # display, so the small per-property N+1 here is fine.
+    payment_status_map = bulk_property_payment_status(list(properties_page))
+    sanitation_status_map = bulk_property_sanitation_status(list(properties_page))
     for prop in properties_page:
-        prop.payment_status = get_property_payment_status(prop)
+        prop.payment_status = payment_status_map.get(prop.id, 'not_paid')
         prop.paid = prop.payment_status == 'paid'
-        prop.sanitation_status = get_property_sanitation_status(prop)
+        prop.sanitation_status = sanitation_status_map.get(prop.id, 'not_paid')
         prop.sanitation_paid = prop.sanitation_status == 'paid'
 
     context = {
@@ -2009,6 +2144,94 @@ def admin_delete_property(request, property_id):
     return redirect('admin_manage_properties')
 
 
+@staff_or_admin_required
+def admin_revenue_list(request):
+    """
+    Every property with its tenement + sanitation payment status, for
+    admin/staff/field_staff. Admins additionally see the system-wide
+    outstanding totals; staff/field_staff only see the paid/unpaid status
+    (no amounts), per the access rules for these roles.
+    """
+    from .forms import DISTRICT_CHOICES
+
+    profile = request.user.userprofile
+    is_admin = profile.user_type == 'admin'
+
+    properties = Property.objects.select_related('owner').order_by('-created_at')
+
+    prop_type = request.GET.get('property_type')
+    if prop_type in ('residential', 'commercial'):
+        properties = properties.filter(property_type=prop_type)
+
+    district = request.GET.get('district')
+    if district:
+        properties = properties.filter(district=district)
+
+    search = request.GET.get('search')
+    if search:
+        properties = properties.filter(
+            Q(name__icontains=search) |
+            Q(address__icontains=search) |
+            Q(owner__username__icontains=search)
+        )
+
+    tenement_status = request.GET.get('tenement_status', '')
+    sanitation_status = request.GET.get('sanitation_status', '')
+    if tenement_status or sanitation_status:
+        # Same reasoning as admin_manage_properties: only pull the columns
+        # needed to compute status, across the (potentially 100k+ row)
+        # filtered set, instead of full rows.
+        lightweight = list(properties.only('id', 'property_type', 'owner_id'))
+        matching_ids = {p.id for p in lightweight}
+        if tenement_status in ('paid', 'unpaid'):
+            payment_status_map = bulk_property_payment_status(lightweight)
+            if tenement_status == 'paid':
+                matching_ids &= {p.id for p in lightweight if payment_status_map.get(p.id) == 'paid'}
+            else:
+                matching_ids &= {p.id for p in lightweight if payment_status_map.get(p.id) != 'paid'}
+        if sanitation_status in ('paid', 'unpaid'):
+            sanitation_status_map = bulk_property_sanitation_status(lightweight)
+            if sanitation_status == 'paid':
+                matching_ids &= {p.id for p in lightweight if sanitation_status_map.get(p.id) == 'paid'}
+            else:
+                matching_ids &= {p.id for p in lightweight if sanitation_status_map.get(p.id) != 'paid'}
+        properties = properties.filter(id__in=matching_ids)
+
+    paginator = Paginator(properties, get_pagination_size())
+    page_number = request.GET.get('page')
+    properties_page = paginator.get_page(page_number)
+    properties_page_range = get_paginator_page_range(properties_page)
+
+    # Only the current page needs per-property status for display.
+    payment_status_map = bulk_property_payment_status(list(properties_page))
+    sanitation_status_map = bulk_property_sanitation_status(list(properties_page))
+    for prop in properties_page:
+        prop.tenement_status = payment_status_map.get(prop.id, 'not_paid')
+        prop.sanitation_status_display = sanitation_status_map.get(prop.id, 'not_paid')
+
+    context = {
+        'properties':              properties_page,
+        'page_range':              properties_page_range,
+        'district_choices':        DISTRICT_CHOICES,
+        'prop_type':               prop_type or '',
+        'district':                district or '',
+        'search':                  search or '',
+        'tenement_status':         tenement_status,
+        'sanitation_status':       sanitation_status,
+        'is_admin':                is_admin,
+    }
+
+    if is_admin:
+        outstanding = compute_total_outstanding_payments()
+        context.update({
+            'tenement_outstanding':   outstanding['tenement_outstanding'],
+            'sanitation_outstanding': outstanding['sanitation_outstanding'],
+            'total_outstanding':      outstanding['total_outstanding'],
+        })
+
+    return render(request, 'admin/revenue_list.html', context)
+
+
 # ── Admin: Complaints ─────────────────────────────────────────────────────────
 @staff_member_required
 def admin_manage_complaints(request):
@@ -2036,7 +2259,7 @@ def admin_manage_complaints(request):
     in_review_count     = Complaint.objects.filter(status='in_review').count()
     resolved_count      = Complaint.objects.filter(status='resolved').count()
 
-    paginator = Paginator(complaints, 15)
+    paginator = Paginator(complaints, get_pagination_size())
     page_number = request.GET.get('page')
     complaints_page = paginator.get_page(page_number)
 
@@ -2062,9 +2285,12 @@ def admin_view_complaint(request, complaint_id):
     complaint = get_object_or_404(Complaint, id=complaint_id)
 
     if request.method == 'POST':
+        previous_status = complaint.status
         form = AdminComplaintUpdateForm(request.POST, instance=complaint)
         if form.is_valid():
             form.save()
+            if form.cleaned_data['status'] != previous_status and SiteConfiguration.get_config().enable_email_notifications:
+                _send_complaint_status_email(complaint)
             messages.success(request, "Complaint updated successfully.")
             return redirect('admin_view_complaint', complaint_id=complaint_id)
     else:
@@ -2717,6 +2943,20 @@ def admin_create_payment_rate(request):
 
 
 @staff_member_required
+def admin_edit_payment_rate(request, rate_id):
+    rate = get_object_or_404(PaymentRate, id=rate_id)
+    if request.method == 'POST':
+        form = PaymentRateForm(request.POST, instance=rate)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Payment rate "{rate.name}" updated successfully.')
+            return redirect('admin_payment_rates')
+    else:
+        form = PaymentRateForm(instance=rate)
+    return render(request, 'admin/create_payment_rate.html', {'form': form, 'rate': rate})
+
+
+@staff_member_required
 def admin_delete_payment_rate(request, rate_id):
     rate = get_object_or_404(PaymentRate, id=rate_id)
     name = rate.name
@@ -2935,12 +3175,14 @@ def initiate_payment(request, property_id, rate_id):
         )
         return redirect('profile')
 
+    charge_amount = get_property_rate_amount(property_obj, rate) if property_obj else rate.amount
+
     reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
     payment = Payment.objects.create(
         landlord=request.user,
         property=property_obj,
         payment_rate=rate,
-        amount=rate.amount,
+        amount=charge_amount,
         reference=reference,
         status='pending'
     )
@@ -2952,7 +3194,7 @@ def initiate_payment(request, property_id, rate_id):
     }
     data = {
         "email": request.user.email,
-        "amount": int(rate.amount * 100),
+        "amount": int(charge_amount * 100),
         "reference": reference,
         "callback_url": request.build_absolute_uri(reverse('verify_payment', args=[reference])),
         "metadata": {
@@ -3188,12 +3430,14 @@ def get_paystack_access_code(request, property_id, rate_id):
             'error': 'Please add a valid email address to your profile before making a payment.'
         }, status=400)
 
+    charge_amount = get_property_rate_amount(property_obj, rate)
+
     reference = f"BTS-{request.user.id}-{property_id}-{rate_id}-{int(timezone.now().timestamp())}"
     payment = Payment.objects.create(
         landlord=request.user,
         property=property_obj,
         payment_rate=rate,
-        amount=rate.amount,
+        amount=charge_amount,
         reference=reference,
         status='pending'
     )
@@ -3205,7 +3449,7 @@ def get_paystack_access_code(request, property_id, rate_id):
     }
     data = {
         "email": request.user.email,
-        "amount": int(rate.amount * 100),
+        "amount": int(charge_amount * 100),
         "reference": reference,
         "callback_url": request.build_absolute_uri(reverse('verify_payment', args=[reference])),
         "metadata": {
@@ -3728,10 +3972,12 @@ def admin_pay_bypass_update(request, property_id, rate_id):
             prop     = get_object_or_404(Property, id=property_id)
             landlord = prop.owner
             validity_days = 30 if rate.is_sanitation else 365
+            charge_amount = get_property_rate_amount(prop, rate)
             existing = Payment.objects.filter(landlord=landlord, property=prop, payment_rate=rate)
             if existing.exists():
                 existing.update(
                     status='success',
+                    amount=charge_amount,
                     paid_at=paid_at,
                     expires_at=paid_at + timezone.timedelta(days=validity_days),
                 )
@@ -3740,7 +3986,7 @@ def admin_pay_bypass_update(request, property_id, rate_id):
                     landlord=landlord,
                     property=prop,
                     payment_rate=rate,
-                    amount=rate.amount,
+                    amount=charge_amount,
                     reference=f'BYPASS-{timezone.now().strftime("%Y%m%d%H%M%S")}-{prop.id}-{rate.id}',
                     status='success',
                     paid_at=paid_at,

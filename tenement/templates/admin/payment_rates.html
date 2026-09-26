@@ -95,6 +95,7 @@
             </td>
             <td>{{ rate.created_at|date:"M d, Y" }}</td>
             <td>
+              <a href="{% url 'admin_edit_payment_rate' rate.id %}" class="action-link"><i class="fas fa-pen-to-square"></i> Edit</a>
               <a href="{% url 'admin_toggle_payment_rate' rate.id %}" class="action-link"><i class="fas fa-toggle-on"></i> Toggle</a>
               <a href="{% url 'admin_delete_payment_rate' rate.id %}" class="action-link danger" onclick="return confirm('Delete this rate?')"><i class="fas fa-trash-alt"></i> Delete</a>
             </td>
