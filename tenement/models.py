@@ -79,6 +79,15 @@ class Property(models.Model):
     def is_verified(self):
         return self.verification_status == 'verified'
 
+    @property
+    def get_primary_image(self):
+        """First available image (main image, falling back to the additional slots)."""
+        for field_name in ['main_image', 'image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'image_6']:
+            image = getattr(self, field_name)
+            if image:
+                return image
+        return None
+
 
 COMPLAINT_CATEGORY_CHOICES = (
     ('billing',   'Billing Issue'),

@@ -384,7 +384,13 @@
   <div class="title-block">
     <h1 class="property-view-title">{{ property.name }}</h1>
     <div class="badge-row">
-      <span class="badge badge-active"><i class="fas fa-check-circle"></i> Active</span>
+      {% if property.verification_status == 'verified' %}
+        <span class="badge badge-active"><i class="fas fa-check-circle"></i> Verified</span>
+      {% elif property.verification_status == 'pending' %}
+        <span class="badge" style="background:var(--amber-dim);color:var(--amber);"><i class="fas fa-clock"></i> Pending Verification</span>
+      {% else %}
+        <span class="badge" style="background:var(--red-dim);color:var(--red);"><i class="fas fa-triangle-exclamation"></i> Verification Required</span>
+      {% endif %}
       <span class="badge badge-type">
         {% if property.property_type == 'residential' %}<i class="fas fa-house"></i> Residential
         {% elif property.property_type == 'commercial' %}<i class="fas fa-store"></i> Commercial
@@ -550,9 +556,21 @@
         <span class="info-label">Units</span>
         <span class="info-value">{{ property.num_units }}</span>
       </div>
+      {% if property.property_type == 'residential' %}
+      <div class="info-row">
+        <span class="info-label">Number of Flats</span>
+        <span class="info-value">{{ property.num_flats }}</span>
+      </div>
+      {% endif %}
       <div class="info-row">
         <span class="info-label">Status</span>
-        <span class="chip green"><i class="fas fa-check-circle"></i> Active</span>
+        {% if property.verification_status == 'verified' %}
+          <span class="chip green"><i class="fas fa-check-circle"></i> Active</span>
+        {% elif property.verification_status == 'pending' %}
+          <span class="chip amber"><i class="fas fa-clock"></i> Pending Verification</span>
+        {% else %}
+          <span class="chip red"><i class="fas fa-triangle-exclamation"></i> Verification Required</span>
+        {% endif %}
       </div>
       <div class="info-row">
         <span class="info-label">Registered</span>
@@ -560,6 +578,10 @@
       </div>
     </div>
 
+  </div>
+  
+  <!-- Payment status + Owner -->
+  <div class="info-grid">
     <div class="info-card">
       <h3><i class="fas fa-id-card"></i> Property Profile</h3>
       <div class="info-row">
@@ -574,16 +596,7 @@
           {% endif %}
         </span>
       </div>
-      <div class="info-row">
-        <span class="info-label">Assessment Status</span>
-        <span class="info-value">
-          {% if is_fully_paid %}
-            <span class="chip green"><i class="fas fa-check-circle"></i> Assessed &amp; Paid</span>
-          {% else %}
-            <span class="chip amber"><i class="fas fa-triangle-exclamation"></i> Assessment Outstanding</span>
-          {% endif %}
-        </span>
-      </div>
+      
       <div class="info-row">
         <span class="info-label">{{ assessment_year }} Tenement Rate</span>
         <span class="info-value mono">&#8358;{{ current_rate_amount|floatformat:2 }}</span>
@@ -613,11 +626,7 @@
         </span>
       </div>
     </div>
-  </div>
-
-  <!-- Payment status + Owner -->
-  <div class="info-grid">
-    <div class="info-card">
+    {% comment %} <div class="info-card">
       <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
       <div class="info-row">
         <span class="info-label">Tenement Rate</span>
@@ -643,7 +652,7 @@
           {% endif %}
         </span>
       </div>
-    </div>
+    </div> {% endcomment %}
 
     <div class="info-card">
       <h3><i class="fas fa-user"></i> Owner</h3>

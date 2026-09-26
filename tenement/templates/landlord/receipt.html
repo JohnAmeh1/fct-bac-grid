@@ -84,9 +84,9 @@
       <span class="detail-value">
         {% if payment.expires_at %}
           <strong style="color:var(--green);">{{ payment.expires_at|date:"F j, Y" }}</strong>
-          <span style="font-size:.75rem;color:var(--ink-3);margin-left:6px;">({% if payment.payment_rate and payment.payment_rate.is_sanitation %}1-month coverage{% else %}1-year coverage{% endif %})</span>
+          <span style="font-size:.75rem;color:var(--ink-3);margin-left:6px;">(1-month coverage)</span>
         {% else %}
-          <span style="color:var(--ink-3);">{% if payment.payment_rate and payment.payment_rate.is_sanitation %}1 month from payment date{% else %}1 year from payment date{% endif %}</span>
+          <span style="color:var(--ink-3);">1 month from payment date</span>
         {% endif %}
       </span>
     </div>

@@ -81,7 +81,7 @@
       <a href="{% url 'dashboard' %}" class="back-btn"><i class="fas fa-chevron-left"></i> Dashboard</a>
       <div>
         <h1 class="pg-title">Payments & Receipts</h1>
-        <p class="pg-sub">Manage your tenement rate payments</p>
+        <p class="pg-sub">Manage your tenement rate and sanitation levy payments</p>
       </div>
     </div>
   </div>
@@ -116,12 +116,14 @@
         <tbody>
           {% for item in obligations %}
           <tr>
-            <td><strong>{{ item.property.name }}</strong></td>
+            <td><strong>{{ item.property.name|default:"Environmental Sanitation Levy" }}</strong></td>
             <td>
               {% if item.property.property_type == 'residential' %}
                 <span class="chip green"><i class="fas fa-house"></i> Residential</span>
               {% elif item.property.property_type == 'commercial' %}
                 <span class="chip blue"><i class="fas fa-store"></i> Commercial</span>
+              {% else %}
+                <span class="chip teal"><i class="fas fa-leaf"></i> Sanitation</span>
               {% endif %}
             </td>
             <td>{{ item.rate.name }}</td>
@@ -131,7 +133,7 @@
               {% endif %}
             </td>
             <td>
-              <a href="{% url 'initiate_payment' item.property.id item.rate.id %}" class="btn-pay"><i class="fas fa-credit-card"></i> Pay Now</a>
+              <a href="{% url 'initiate_payment' item.property.id|default:0 item.rate.id %}" class="btn-pay"><i class="fas fa-credit-card"></i> Pay Now</a>
             </td>
           </tr>
           {% endfor %}
@@ -162,12 +164,14 @@
         <tbody>
           {% for item in paid_coverage %}
           <tr>
-            <td><strong>{{ item.property.name }}</strong></td>
+            <td><strong>{{ item.property.name|default:"Environmental Sanitation Levy" }}</strong></td>
             <td>
               {% if item.property.property_type == 'residential' %}
                 <span class="chip green"><i class="fas fa-house"></i> Residential</span>
               {% elif item.property.property_type == 'commercial' %}
                 <span class="chip blue"><i class="fas fa-store"></i> Commercial</span>
+              {% else %}
+                <span class="chip teal"><i class="fas fa-leaf"></i> Sanitation</span>
               {% endif %}
             </td>
             <td>{{ item.rate.name }}</td>
@@ -216,12 +220,14 @@
           {% for payment in payments %}
           <tr>
             <td>{{ payment.created_at|date:"M d, Y" }}</td>
-            <td>{{ payment.property.name }}</td>
+            <td>{{ payment.property.name|default:"Environmental Sanitation Levy" }}</td>
             <td>
               {% if payment.property.property_type == 'residential' %}
                 <span class="chip green"><i class="fas fa-house"></i> Residential</span>
               {% elif payment.property.property_type == 'commercial' %}
                 <span class="chip blue"><i class="fas fa-store"></i> Commercial</span>
+              {% else %}
+                <span class="chip teal"><i class="fas fa-leaf"></i> Sanitation</span>
               {% endif %}
             </td>
             <td>{{ payment.payment_rate.name|default:"—" }}</td>

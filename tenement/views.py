@@ -3356,6 +3356,22 @@ def landlord_payments(request):
                     computed_amount = rate.amount
                 obligations.append({'property': prop, 'rate': rate, 'computed_amount': computed_amount})
 
+    # Sanitation levy (charged per landlord, not tied to a specific property)
+    sanitation_rates = PaymentRate.objects.filter(is_sanitation=True, is_active=True)
+    for rate in sanitation_rates:
+        valid_payment = Payment.objects.filter(
+            landlord=request.user,
+            payment_rate=rate,
+            property=None,
+            status='success',
+        ).filter(
+            django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=timezone.now())
+        ).first()
+        if valid_payment:
+            paid_coverage.append({'property': None, 'rate': rate, 'payment': valid_payment})
+        else:
+            obligations.append({'property': None, 'rate': rate, 'computed_amount': rate.amount})
+
     payments = Payment.objects.filter(landlord=request.user).select_related('property', 'payment_rate').order_by('-created_at')
     successful_payments_count = payments.filter(status='success').count()
 
@@ -3548,7 +3564,9 @@ def verify_payment(request, reference):
         resp_data = response.json()
         if resp_data['status'] and resp_data['data']['status'] == 'success':
             paid_at = timezone.now()
-            validity_days = 30 if payment.payment_rate and payment.payment_rate.is_sanitation else 365
+            # Both tenement rate and sanitation levy are monthly obligations —
+            # a successful payment covers 30 days before it's due again.
+            validity_days = 30
             payment.status = 'success'
             payment.paid_at = paid_at
             payment.expires_at = paid_at + timezone.timedelta(days=validity_days)
@@ -3682,10 +3700,7 @@ def download_receipt_pdf(request, payment_id):
     if payment.expires_at:
         p.drawString(50, y, f"Valid Until: {payment.expires_at.strftime('%d %B %Y')}")
     else:
-        if payment.payment_rate and payment.payment_rate.is_sanitation:
-            p.drawString(50, y, "Valid Until: 30 days from payment date")
-        else:
-            p.drawString(50, y, "Valid Until: 1 year from payment date")
+        p.drawString(50, y, "Valid Until: 30 days from payment date")
 
     # QR Code
     qr_data = f"Payment Ref: {payment.reference}\nAmount: {naira_symbol}{payment.amount}\nProperty: {payment.property.name if payment.property else 'Environmental Sanitation Levy'}\nPaid by: {payment.landlord.get_full_name()}\nValid Until: {payment.expires_at.strftime('%d %B %Y') if payment.expires_at else 'N/A'}"
@@ -4276,7 +4291,8 @@ def admin_pay_bypass_update(request, property_id, rate_id):
         else:
             prop     = get_object_or_404(Property, id=property_id)
             landlord = prop.owner
-            validity_days = 30 if rate.is_sanitation else 365
+            # Tenement rate and sanitation levy are both monthly obligations.
+            validity_days = 30
             charge_amount = get_property_rate_amount(prop, rate)
             existing = Payment.objects.filter(landlord=landlord, property=prop, payment_rate=rate)
             if existing.exists():
