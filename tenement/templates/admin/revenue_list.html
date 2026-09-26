@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tenement_extras %}
 
 {% block title %}Revenue List | FCT BAC Grid{% endblock %}
 
@@ -75,18 +76,33 @@
     </div>
   </div>
 
+  <div class="stat-strip fade fade-1">
+    <div class="stat-pill sp-blue">
+      <div class="stat-num">{{ total_properties|money:0 }}</div>
+      <div class="stat-lbl">Total Properties</div>
+    </div>
+    <div class="stat-pill sp-green">
+      <div class="stat-num">{{ tenement_paid_count|money:0 }} / {{ tenement_unpaid_count|money:0 }}</div>
+      <div class="stat-lbl">Tenement Rate — Paid / Unpaid</div>
+    </div>
+    <div class="stat-pill sp-purple">
+      <div class="stat-num">{{ sanitation_paid_count|money:0 }} / {{ sanitation_unpaid_count|money:0 }}</div>
+      <div class="stat-lbl">Sanitation Levy — Paid / Unpaid</div>
+    </div>
+  </div>
+
   {% if is_admin %}
   <div class="stat-strip fade fade-1">
     <div class="stat-pill sp-blue">
-      <div class="stat-num">₦{{ tenement_outstanding|floatformat:2 }}</div>
+      <div class="stat-num">₦{{ tenement_outstanding|money:2 }}</div>
       <div class="stat-lbl">Tenement Rate Outstanding</div>
     </div>
     <div class="stat-pill sp-purple">
-      <div class="stat-num">₦{{ sanitation_outstanding|floatformat:2 }}</div>
+      <div class="stat-num">₦{{ sanitation_outstanding|money:2 }}</div>
       <div class="stat-lbl">Sanitation Levy Outstanding</div>
     </div>
     <div class="stat-pill sp-red">
-      <div class="stat-num">₦{{ total_outstanding|floatformat:2 }}</div>
+      <div class="stat-num">₦{{ total_outstanding|money:2 }}</div>
       <div class="stat-lbl">Total Outstanding</div>
     </div>
   </div>

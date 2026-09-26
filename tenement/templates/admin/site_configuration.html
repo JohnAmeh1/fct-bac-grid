@@ -188,6 +188,33 @@
       </div>
     </div>
 
+    <!-- Assessment Year -->
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-head-icon" style="background:var(--red-dim);color:var(--red);"><i class="fas fa-calendar-check"></i></div>
+        <div>
+          <h2>Assessment Year</h2>
+          <p>Single source of truth for the year shown on the homepage, registration, and dashboard notices.</p>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="field-grid">
+          <div class="field">
+            <label for="{{ form.assessment_year.id_for_label }}">Assessment Year</label>
+            {{ form.assessment_year }}
+            <p class="help">{{ form.assessment_year.help_text }}</p>
+            {% for err in form.assessment_year.errors %}<p class="error">{{ err }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.assessment_deadline.id_for_label }}">Late-Payment Deadline</label>
+            {{ form.assessment_deadline }}
+            <p class="help">{{ form.assessment_deadline.help_text }}</p>
+            {% for err in form.assessment_deadline.errors %}<p class="error">{{ err }}</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Contact Details -->
     <div class="section-card">
       <div class="section-head">

@@ -418,6 +418,40 @@ def bulk_property_sanitation_status(properties):
             statuses[prop.id] = 'not_paid'
     return statuses
 
+
+def compute_revenue_summary():
+    """
+    System-wide property counts for the Revenue List page: total properties,
+    and how many have a fully-paid tenement rate / sanitation levy vs not.
+
+    This scans every property once (cheap per-row, since it's bulk queries
+    rather than N+1), so the result is cached for a few minutes — it's the
+    same count regardless of who's viewing the page or which filters/page
+    they're on.
+    """
+    cache_key = 'revenue_summary_v1'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    properties = list(Property.objects.only('id', 'property_type', 'owner_id'))
+    total_properties = len(properties)
+    payment_status_map = bulk_property_payment_status(properties)
+    sanitation_status_map = bulk_property_sanitation_status(properties)
+
+    tenement_paid_count = sum(1 for p in properties if payment_status_map.get(p.id) == 'paid')
+    sanitation_paid_count = sum(1 for p in properties if sanitation_status_map.get(p.id) == 'paid')
+
+    summary = {
+        'total_properties': total_properties,
+        'tenement_paid_count': tenement_paid_count,
+        'tenement_unpaid_count': total_properties - tenement_paid_count,
+        'sanitation_paid_count': sanitation_paid_count,
+        'sanitation_unpaid_count': total_properties - sanitation_paid_count,
+    }
+    cache.set(cache_key, summary, 300)
+    return summary
+
 def get_latest_valid_payment(property_obj, rate):
     now = timezone.now()
     return Payment.objects.filter(
@@ -1028,11 +1062,25 @@ def csrf_failure(request, reason=""):
     return redirect('signup')
 
 # ── Public pages ──────────────────────────────────────────────────────────────
+def get_public_property_stats():
+    """Live residential/commercial property counts shown on the homepage and About page (was previously hardcoded '35,000+' / '19,000+')."""
+    cache_key = 'public_property_stats_v1'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    stats = {
+        'residential_property_count': Property.objects.filter(property_type='residential').count(),
+        'commercial_property_count': Property.objects.filter(property_type='commercial').count(),
+    }
+    cache.set(cache_key, stats, 300)
+    return stats
+
+
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'home.html', get_public_property_stats())
 
 def about(request):
-    return render(request, 'about.html')
+    return render(request, 'about.html', get_public_property_stats())
 
 def sanitation(request):
     return render(request, 'sanitation.html')
@@ -2220,6 +2268,15 @@ def admin_revenue_list(request):
         'sanitation_status':       sanitation_status,
         'is_admin':                is_admin,
     }
+
+    revenue_summary = compute_revenue_summary()
+    context.update({
+        'total_properties':        revenue_summary['total_properties'],
+        'tenement_paid_count':     revenue_summary['tenement_paid_count'],
+        'tenement_unpaid_count':   revenue_summary['tenement_unpaid_count'],
+        'sanitation_paid_count':   revenue_summary['sanitation_paid_count'],
+        'sanitation_unpaid_count': revenue_summary['sanitation_unpaid_count'],
+    })
 
     if is_admin:
         outstanding = compute_total_outstanding_payments()

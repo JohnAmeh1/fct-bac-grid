@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tenement_extras %}
 
 {% block title %}FCT BAC Grid{% endblock %}
 
@@ -1860,11 +1861,11 @@
 
               <div class="bwari-mockup-stats-row">
                 <div class="bwari-mockup-stat">
-                  <div class="bwari-mockup-stat-val bwari-green">35,000+</div>
+                  <div class="bwari-mockup-stat-val bwari-green">{{ residential_property_count|money:0 }}+</div>
                   <div class="bwari-mockup-stat-label">Registered Properties</div>
                 </div>
                 <div class="bwari-mockup-stat">
-                  <div class="bwari-mockup-stat-val bwari-blue">19,000+</div>
+                  <div class="bwari-mockup-stat-val bwari-blue">{{ commercial_property_count|money:0 }}+</div>
                   <div class="bwari-mockup-stat-label">Registered Businesses/Trade</div>
                 </div>
                 {% comment %} <div class="bwari-mockup-stat">
@@ -1916,7 +1917,7 @@
         <div class="bwari-step-num">02</div>
         <div class="bwari-step-icon bwari-blue"><i class="fas fa-file-invoice-dollar"></i></div>
         <h3 class="bwari-step-title">Get Your Bill</h3>
-        <p class="bwari-step-desc">The system automatically calculates your tenement/business rate and generates your unique Paystack RRR payment reference.</p>
+        <p class="bwari-step-desc">The system automatically calculates your tenement/business rate and generates your unique Paystack payment reference.</p>
         <a href="{% url 'login' %}" class="bwari-step-link">Generate bill <i class="fas fa-arrow-right"></i></a>
       </div>
       <div class="bwari-step-card">
@@ -1964,7 +1965,7 @@
       <div class="feat-card">
         <div class="feat-icon"><i class="fas fa-file-invoice"></i></div>
         <h3 class="feat-title">Instant Bills &amp; Receipts</h3>
-        <p class="feat-desc">Generate your RRR reference and download your official receipt immediately after payment — no waiting, no queues.</p>
+        <p class="feat-desc">Generate your Paystack payment reference and download your official receipt immediately after payment — no waiting, no queues.</p>
         <div class="feat-tag">Instant</div>
       </div>
       <div class="feat-card">
@@ -2303,20 +2304,22 @@
       <div class="notice-card urgent">
         <div class="notice-meta">
           <span class="notice-tag red"><i class="fas fa-circle-exclamation"></i> Urgent</span>
-          <span class="notice-date">2025 Assessment Year</span>
+          <span class="notice-date">{{ site_config.assessment_year }} Assessment Year</span>
         </div>
-        <h3 class="notice-title">2025 Tenement, Business &amp; Sanitation Levy Payment Now Open</h3>
-        <p class="notice-body">All property owners and residents in Bwari Area Council are required to complete their 2025 tenement rate, business rate, and sanitation levy assessment and payment. Register or log in to your portal account to generate your bill and pay online. Sanitation levy payers are enrolled in the monthly doorstep refuse collection programme.</p>
+        <h3 class="notice-title">{{ site_config.assessment_year }} Tenement, Business &amp; Sanitation Levy Payment Now Open</h3>
+        <p class="notice-body">All property owners and residents in Bwari Area Council are required to complete their {{ site_config.assessment_year }} tenement rate, business rate, and sanitation levy assessment and payment. Register or log in to your portal account to generate your bill and pay online. Sanitation levy payers are enrolled in the monthly doorstep refuse collection programme.</p>
         <a href="{% url 'signup' %}" class="btn btn-primary" style="margin-top:16px;">Register &amp; Pay Now</a>
       </div>
+      {% if site_config.assessment_deadline %}
       <div class="notice-card">
         <div class="notice-meta">
           <span class="notice-tag amber"><i class="fas fa-triangle-exclamation"></i> Deadline</span>
-          <span class="notice-date">Dec 31, 2025</span>
+          <span class="notice-date">{{ site_config.assessment_deadline|date:"M d, Y" }}</span>
         </div>
         <h3 class="notice-title">Late Payment Penalty After Deadline</h3>
-        <p class="notice-body">Payments received after the December 31, 2025 deadline will attract a 10% surcharge on the outstanding rate. Complete your payment early to avoid additional charges.</p>
+        <p class="notice-body">Payments received after the {{ site_config.assessment_deadline|date:"F j, Y" }} deadline will attract a 10% surcharge on the outstanding rate. Complete your payment early to avoid additional charges.</p>
       </div>
+      {% endif %}
       <div class="notice-card">
         <div class="notice-meta">
           <span class="notice-tag green"><i class="fas fa-circle-check"></i> New</span>

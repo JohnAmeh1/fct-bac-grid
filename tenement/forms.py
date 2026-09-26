@@ -382,6 +382,8 @@ class SiteConfigurationForm(forms.ModelForm):
             'contact_email',
             'contact_phone',
             'contact_address',
+            'assessment_year',
+            'assessment_deadline',
             'allow_registration',
             'maintenance_mode',
             'enable_email_notifications',
@@ -392,8 +394,11 @@ class SiteConfigurationForm(forms.ModelForm):
         widgets = {
             'contact_address': forms.Textarea(attrs={'rows': 2}),
             'welcome_message': forms.Textarea(attrs={'rows': 3}),
+            'assessment_deadline': forms.DateInput(attrs={'type': 'date'}),
         }
         help_texts = {
+            'assessment_year':             'Shown site‑wide (homepage notices, registration, dashboard) as the currently open assessment year.',
+            'assessment_deadline':         'Late-payment surcharge notices use this date. Leave blank to hide the deadline notice.',
             'allow_registration':          'When unchecked, the signup page will be disabled.',
             'maintenance_mode':            'When checked, a maintenance banner is shown site‑wide.',
             'max_properties_per_landlord': 'Set to 0 for no limit.',

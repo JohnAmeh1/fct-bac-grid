@@ -1255,8 +1255,8 @@
   <div class="announce-bar">
     <div class="announce-inner">
       <i class="fas fa-circle-info"></i>
-      <span>2026 Digital rate assessment is now open.</span>
-      {% comment %} <span>2026 tenement and business rate assessment is now open. Pay before the deadline to avoid penalties.</span> {% endcomment %}
+      <span>{{ site_config.assessment_year }} Digital rate assessment is now open.</span>
+      {% comment %} <span>{{ site_config.assessment_year }} tenement and business rate assessment is now open. Pay before the deadline to avoid penalties.</span> {% endcomment %}
       <a href="{% url 'signup' %}" class="announce-link">Register Now &rarr;</a>
     </div>
   </div>

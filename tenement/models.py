@@ -114,6 +114,20 @@ class SiteConfiguration(models.Model):
     contact_phone      = models.CharField(max_length=20, blank=True, default='')
     contact_address    = models.CharField(max_length=500, blank=True, default='')
 
+    # --- Assessment Year ---
+    # Single source of truth for "which year's assessment is currently
+    # open" — every page (homepage notices, registration, dashboard,
+    # footer) should read this instead of a hardcoded year string, so it
+    # can never drift out of sync.
+    assessment_year = models.PositiveIntegerField(
+        default=2026,
+        help_text='The tenement/business/sanitation assessment year currently open for payment.'
+    )
+    assessment_deadline = models.DateField(
+        null=True, blank=True,
+        help_text='Payments received after this date attract the late-payment surcharge.'
+    )
+
     # --- System Toggles ---
     allow_registration = models.BooleanField(
         default=True,
