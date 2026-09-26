@@ -154,9 +154,16 @@
   const colorHex = { green: '#16a34a', yellow: '#d97706', red: '#dc2626' };
 
   const map = L.map('gis-map').setView([9.0765, 7.3986], 11); // Abuja, FCT default
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
+  // tile.openstreetmap.org is only meant for light/testing traffic and
+  // actively blocks production sites ("Access blocked: this app is not
+  // following the OSM tile usage policy" — see
+  // https://operations.osmfoundation.org/policies/tiles/). CARTO's basemap
+  // tiles are free, need no signup/API key, and are explicitly fine for
+  // production use as long as attribution is kept.
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
   }).addTo(map);
 
   const loadingEl = document.getElementById('map-loading');
