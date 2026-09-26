@@ -579,7 +579,10 @@ def compute_total_outstanding_payments(sanitation_summary=None):
     properties_by_owner = defaultdict(list)
     property_ids = []
     if landlord_ids:
-        for prop in Property.objects.filter(owner_id__in=landlord_ids):
+        # Only verified properties count toward the outstanding total — an
+        # unverified one (see Property.verification_status) may still turn
+        # out to be a duplicate/incorrect entry.
+        for prop in Property.objects.filter(owner_id__in=landlord_ids, verification_status='verified'):
             properties_by_owner[prop.owner_id].append(prop)
             property_ids.append(prop.id)
 
@@ -4351,8 +4354,11 @@ def admin_rate_defaulters(request):
     properties_by_owner = defaultdict(list)
     property_ids = []
     if landlord_ids:
+        # Only verified properties count as defaulters/outstanding — an
+        # unverified one (see Property.verification_status) may still turn
+        # out to be a duplicate/incorrect entry.
         all_properties = list(
-            Property.objects.filter(owner_id__in=landlord_ids).select_related('owner')
+            Property.objects.filter(owner_id__in=landlord_ids, verification_status='verified').select_related('owner')
         )
         for prop in all_properties:
             properties_by_owner[prop.owner_id].append(prop)
@@ -4490,7 +4496,7 @@ def _build_rate_defaulters_workbook(export_all):
     properties_by_owner = defaultdict(list)
     property_ids = []
     if landlord_ids:
-        for prop in Property.objects.filter(owner_id__in=landlord_ids):
+        for prop in Property.objects.filter(owner_id__in=landlord_ids, verification_status='verified'):
             properties_by_owner[prop.owner_id].append(prop)
             property_ids.append(prop.id)
 
