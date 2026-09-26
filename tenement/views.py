@@ -622,11 +622,19 @@ def compute_total_outstanding_payments(sanitation_summary=None):
 
 
 MANAGED_PROPERTY_ROLES = ['admin', 'staff', 'field_staff']
+VERIFICATION_QUEUE_ROLES = ['admin', 'staff']
 
 
 def staff_or_admin_required(view_func):
     def check_user(user):
         return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.user_type in MANAGED_PROPERTY_ROLES
+    return user_passes_test(check_user)(view_func)
+
+
+def admin_or_staff_required(view_func):
+    """Like staff_or_admin_required, but excludes field_staff (used for the property verification queue)."""
+    def check_user(user):
+        return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.user_type in VERIFICATION_QUEUE_ROLES
     return user_passes_test(check_user)(view_func)
 
 
@@ -2351,7 +2359,7 @@ def admin_delete_property(request, property_id):
     return redirect('admin_manage_properties')
 
 
-@staff_or_admin_required
+@admin_or_staff_required
 def admin_verification_queue(request):
     """Properties awaiting a staff/admin verification decision (see Property.verification_status)."""
     properties = (
@@ -2382,7 +2390,7 @@ def admin_verification_queue(request):
     return render(request, 'admin/verification_queue.html', context)
 
 
-@staff_or_admin_required
+@admin_or_staff_required
 @require_POST
 def admin_verify_property(request, property_id):
     property_obj = get_object_or_404(Property, id=property_id)
@@ -2399,7 +2407,7 @@ def admin_verify_property(request, property_id):
     return redirect(request.POST.get('next') or 'admin_verification_queue')
 
 
-@staff_or_admin_required
+@admin_or_staff_required
 @require_POST
 def admin_flag_property_verification(request, property_id):
     """Sends a property back to 'Verification Required' (e.g. missing/incorrect info found on review)."""
