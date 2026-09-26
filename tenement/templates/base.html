@@ -1363,6 +1363,9 @@
         <li><a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a></li>
         <li><a href="{% url 'sanitation' %}" class="nav-link {% if request.resolver_match.url_name == 'sanitation' %}active{% endif %}">Sanitation</a></li>
         <li><a href="{% url 'contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'my_support_tickets' %}" class="nav-link {% if request.resolver_match.url_name in 'my_support_tickets,submit_support_ticket,view_support_ticket' %}active{% endif %}">Support</a></li>
+        {% endif %}
         <li class="notification-bell-wrapper">
           <a href="#" class="nav-link js-notif-bell" id="notificationBell">
             <i class="far fa-bell"></i>
@@ -1577,6 +1580,12 @@
       <a href="{% url 'admin_revenue_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_revenue_list' %}active{% endif %}">
         <i class="fas fa-file-invoice-dollar"></i> Revenue List
       </a>
+      <a href="{% url 'admin_verification_queue' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_verification_queue' %}active{% endif %}">
+        <i class="fas fa-shield-halved"></i> Verification Queue
+      </a>
+      <a href="{% url 'admin_manage_support_tickets' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_support_tickets' or request.resolver_match.url_name == 'admin_view_support_ticket' %}active{% endif %}">
+        <i class="fas fa-life-ring"></i> Support Tickets
+      </a>
       <a href="#" class="sidebar-link">
         <i class="fas fa-map-location-dot"></i> Maps &amp; GIS <span class="soon-tag">Soon</span>
       </a>
@@ -1602,6 +1611,9 @@
       <a href="{% url 'admin_revenue_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_revenue_list' %}active{% endif %}">
         <i class="fas fa-file-invoice-dollar"></i> Revenue List
       </a>
+      <a href="{% url 'admin_verification_queue' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_verification_queue' %}active{% endif %}">
+        <i class="fas fa-shield-halved"></i> Verification Queue
+      </a>
       <a href="{% url 'staff_verify_payment' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_verify_payment' %}active{% endif %}">
         <i class="fas fa-receipt"></i> Verify Receipt
       </a>
@@ -1620,6 +1632,9 @@
       </a>
       <a href="{% url 'admin_revenue_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_revenue_list' %}active{% endif %}">
         <i class="fas fa-file-invoice-dollar"></i> Revenue List
+      </a>
+      <a href="{% url 'admin_verification_queue' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_verification_queue' %}active{% endif %}">
+        <i class="fas fa-shield-halved"></i> Verification Queue
       </a>
       <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
         <i class="fas fa-user-gear"></i> My Profile
@@ -1887,7 +1902,7 @@ function toggleAccordion(btn) {
     currentAnchor = anchor;
     positionDropdown(anchor);
     dropdown.classList.add('show');
-    fetchAnnouncements();
+    fetchAllNotifications();
   }
 
   function closeDropdown() {
@@ -1903,6 +1918,17 @@ function toggleAccordion(btn) {
     }
   }
 
+  function fetchAllNotifications() {
+    listContainer.innerHTML = '<div class="empty-notifications">Loading…</div>';
+    Promise.all([
+      fetch('/notifications/api/').then(res => res.ok ? res.json() : { unread_count: 0, notifications: [] }).catch(() => ({ unread_count: 0, notifications: [] })),
+      fetch('/announcements/list/').then(res => res.ok ? res.json() : { unread_count: 0, announcements: [] }).catch(() => ({ unread_count: 0, announcements: [] })),
+    ]).then(([personal, announcementData]) => {
+      renderCombined(personal.notifications, announcementData.announcements);
+      updateBadge((personal.unread_count || 0) + (announcementData.unread_count || 0));
+    });
+  }
+
   function fetchAnnouncements() {
     listContainer.innerHTML = '<div class="empty-notifications">Loading…</div>';
     fetch('/announcements/list/')
@@ -1914,6 +1940,67 @@ function toggleAccordion(btn) {
       .catch(() => {
         listContainer.innerHTML = '<div class="empty-notifications">Could not load notifications</div>';
       });
+  }
+
+  function renderCombined(personalNotifications, announcements) {
+    const hasPersonal = personalNotifications && personalNotifications.length;
+    const hasAnnouncements = announcements && announcements.length;
+    if (!hasPersonal && !hasAnnouncements) {
+      listContainer.innerHTML = '<div class="empty-notifications">No notifications yet</div>';
+      return;
+    }
+    let html = '';
+    if (hasPersonal) {
+      personalNotifications.forEach(n => {
+        const cls = n.is_read ? '' : 'unread';
+        const preview = n.message.length > 100 ? escapeHtml(n.message).substring(0, 100) + '…' : escapeHtml(n.message);
+        html += `
+          <div class="notification-item ${cls}" data-personal-id="${n.id}" data-link="${escapeHtml(n.link || '')}">
+            <div class="notification-content">
+              <div class="notification-message">${preview}</div>
+              <div class="notification-time">${n.created_at}</div>
+            </div>
+          </div>`;
+      });
+    }
+    if (hasAnnouncements) {
+      announcements.forEach(ann => {
+        const cls = ann.read ? '' : 'unread';
+        const preview = ann.message.length > 100 ? escapeHtml(ann.message).substring(0, 100) + '…' : escapeHtml(ann.message);
+        html += `
+          <div class="notification-item ${cls}" data-id="${ann.id}">
+            <div class="notification-content">
+              <div class="notification-title">${escapeHtml(ann.title)}</div>
+              <div class="notification-message">${preview}</div>
+              <div class="notification-time">${ann.created_at}</div>
+            </div>
+          </div>`;
+      });
+    }
+    listContainer.innerHTML = html;
+
+    listContainer.querySelectorAll('.notification-item[data-personal-id]').forEach(item => {
+      item.addEventListener('click', function() {
+        const link = this.dataset.link;
+        if (this.classList.contains('unread')) {
+          fetch(`/notifications/mark-read/${this.dataset.personalId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+          }).finally(() => { if (link) window.location.href = link; });
+        } else if (link) {
+          window.location.href = link;
+        }
+      });
+    });
+
+    listContainer.querySelectorAll('.notification-item[data-id]').forEach(item => {
+      item.addEventListener('click', function() {
+        if (this.classList.contains('unread')) {
+          markAsRead(this.dataset.id);
+          this.classList.remove('unread');
+        }
+      });
+    });
   }
 
   function escapeHtml(text) {
@@ -1960,14 +2047,19 @@ function toggleAccordion(btn) {
   }
 
   function markAllAsRead() {
-    const unread = listContainer.querySelectorAll('.notification-item.unread');
-    if (!unread.length) return;
     const csrf = getCsrfToken();
-    Promise.all(Array.from(unread).map(item =>
-      fetch(`/announcements/${item.dataset.id}/read/`, {
+    const requests = [
+      fetch('/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+      }),
+    ];
+    listContainer.querySelectorAll('.notification-item.unread[data-id]').forEach(item => {
+      requests.push(fetch(`/announcements/${item.dataset.id}/read/`, {
         method: 'POST', headers: { 'X-CSRFToken': csrf },
-      })
-    )).then(() => fetchAnnouncements()).catch(console.warn);
+      }));
+    });
+    Promise.all(requests).then(() => fetchAllNotifications()).catch(console.warn);
   }
 
   bells.forEach(b => {

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--border:#e5e7eb;--accent:#1e6cf0;--accent-dim:#dbeafe;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:720px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .pg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .pg-title{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.4px;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink-2);padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;}
+  .list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .notif-item{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item.unread{background:var(--accent-dim);}
+  .notif-icon{width:34px;height:34px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem;}
+  .notif-msg{font-size:.87rem;color:var(--ink-2);line-height:1.5;}
+  .notif-date{font-size:.72rem;color:var(--ink-4);margin-top:3px;}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--ink-4);}
+</style>
+
+<div class="pg-wrap">
+  <div class="pg-header">
+    <h1 class="pg-title">Notifications</h1>
+    {% if notifications %}
+    <form method="post" action="{% url 'mark_all_notifications_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-ghost"><i class="fas fa-check-double"></i> Mark all as read</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="list-card">
+    {% for n in notifications %}
+    <a href="{% if n.link %}{{ n.link }}{% else %}#{% endif %}" class="notif-item {% if not n.is_read %}unread{% endif %}">
+      <div class="notif-icon"><i class="fas fa-bell"></i></div>
+      <div>
+        <div class="notif-msg">{{ n.message }}</div>
+        <div class="notif-date">{{ n.created_at|date:"j M Y, g:i A" }}</div>
+      </div>
+    </a>
+    {% empty %}
+    <div class="empty-state"><i class="fas fa-bell-slash" style="font-size:1.6rem;display:block;margin-bottom:10px;"></i>No notifications yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

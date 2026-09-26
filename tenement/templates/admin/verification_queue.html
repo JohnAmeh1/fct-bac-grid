@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Property Verification Queue | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;--border:#e5e7eb;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --green:#16a34a;--green-dim:#dcfce7;--amber:#d97706;--amber-dim:#fef3c7;--red:#dc2626;--red-dim:#fee2e2;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:1200px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .pg-header{margin-bottom:24px;}
+  .pg-title{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.4px;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+  .filter-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .filter-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:99px;font-size:.8rem;font-weight:600;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-3);text-decoration:none;}
+  .filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:.845rem;}
+  thead th{background:var(--surface-3);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:12px 18px;text-align:left;}
+  td{padding:14px 18px;border-top:1px solid var(--border);color:var(--ink-2);}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:700;}
+  .chip.pending{background:var(--amber-dim);color:var(--amber);}
+  .chip.required{background:var(--red-dim);color:var(--red);}
+  .btn-view-sm{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);text-decoration:none;background:var(--accent-dim);color:var(--accent);}
+  .btn-verify{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;background:var(--green-dim);color:var(--green);}
+  .btn-flag{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;background:var(--red-dim);color:var(--red);}
+  .empty-row td{text-align:center;padding:60px 24px;color:var(--ink-4);}
+  .pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:20px;}
+  .pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid var(--border);color:var(--ink-2);}
+  .pagination .current{background:var(--accent);color:#fff;border-color:var(--accent);}
+</style>
+
+<div class="pg-wrap">
+  <div class="pg-header">
+    <h1 class="pg-title">Property Verification Queue</h1>
+    <p class="pg-sub">Properties awaiting review before they appear across the platform's shared lists</p>
+  </div>
+
+  <div class="filter-tabs">
+    <a href="?" class="filter-tab {% if not status_filter %}active{% endif %}">All <span>({{ pending_count|add:required_count }})</span></a>
+    <a href="?status=pending" class="filter-tab {% if status_filter == 'pending' %}active{% endif %}">Pending Verification <span>({{ pending_count }})</span></a>
+    <a href="?status=required" class="filter-tab {% if status_filter == 'required' %}active{% endif %}">Verification Required <span>({{ required_count }})</span></a>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr><th>Property</th><th>Owner</th><th>Type</th><th>Status</th><th>Registered</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for prop in properties %}
+        <tr>
+          <td><strong>{{ prop.name }}</strong><br><span style="font-size:.75rem;color:var(--ink-4);">{{ prop.address|truncatechars:40 }}</span></td>
+          <td>{{ prop.owner.get_full_name|default:prop.owner.username }}</td>
+          <td>{{ prop.get_property_type_display }}</td>
+          <td><span class="chip {{ prop.verification_status }}">{{ prop.get_verification_status_display }}</span></td>
+          <td style="font-size:.78rem;color:var(--ink-4);">{{ prop.created_at|date:"d M Y" }}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="{% url 'admin_view_property' prop.id %}" class="btn-view-sm"><i class="fas fa-eye"></i> View</a>
+            <form method="post" action="{% url 'admin_verify_property' prop.id %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn-verify"><i class="fas fa-check"></i> Verify</button>
+            </form>
+            {% if prop.verification_status != 'required' %}
+            <form method="post" action="{% url 'admin_flag_property_verification' prop.id %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn-flag"><i class="fas fa-flag"></i> Flag</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="6"><i class="fas fa-circle-check" style="font-size:1.6rem;display:block;margin-bottom:10px;"></i>No properties awaiting verification.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if page_range %}
+    <div class="pagination">
+      {% if properties.has_previous %}<a href="?page={{ properties.previous_page_number }}&status={{ status_filter }}"><i class="fas fa-chevron-left"></i></a>{% endif %}
+      {% for num in page_range %}
+        {% if num == '…' %}<span>…</span>
+        {% elif num == properties.number %}<span class="current">{{ num }}</span>
+        {% else %}<a href="?page={{ num }}&status={{ status_filter }}">{{ num }}</a>{% endif %}
+      {% endfor %}
+      {% if properties.has_next %}<a href="?page={{ properties.next_page_number }}&status={{ status_filter }}"><i class="fas fa-chevron-right"></i></a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

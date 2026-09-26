@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement
+from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement, SupportTicket
 import re
 
 # ---------------------------------------------------------------------------
@@ -368,6 +368,31 @@ class AdminComplaintUpdateForm(forms.ModelForm):
             'admin_notes': forms.Textarea(attrs={
                 'rows': 4,
                 'placeholder': 'Add internal notes about this complaint (only visible to admins)…'
+            }),
+        }
+
+
+class SupportTicketForm(forms.ModelForm):
+    class Meta:
+        model = SupportTicket
+        fields = ['category', 'description']
+        widgets = {
+            'description': forms.Textarea(attrs={
+                'rows': 5,
+                'placeholder': 'Describe the issue in as much detail as possible…'
+            }),
+        }
+
+
+class AdminSupportTicketUpdateForm(forms.ModelForm):
+    """Staff/admin-only form to update ticket status and add internal notes."""
+    class Meta:
+        model = SupportTicket
+        fields = ['status', 'staff_notes']
+        widgets = {
+            'staff_notes': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Add internal notes about this ticket (only visible to staff/admin)…'
             }),
         }
 

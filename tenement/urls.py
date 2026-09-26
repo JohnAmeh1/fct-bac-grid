@@ -48,6 +48,22 @@ urlpatterns = [
     path('management/properties/<int:property_id>/', views.admin_view_property, name='admin_view_property'),
     path('management/properties/<int:property_id>/delete/', views.admin_delete_property, name='admin_delete_property'),
     path('management/revenue/', views.admin_revenue_list, name='admin_revenue_list'),
+    path('management/verification/', views.admin_verification_queue, name='admin_verification_queue'),
+    path('management/verification/<int:property_id>/verify/', views.admin_verify_property, name='admin_verify_property'),
+    path('management/verification/<int:property_id>/flag/', views.admin_flag_property_verification, name='admin_flag_property_verification'),
+
+    # ── Support Tickets ─────────────────────────────────────────
+    path('support/', views.my_support_tickets, name='my_support_tickets'),
+    path('support/new/', views.submit_support_ticket, name='submit_support_ticket'),
+    path('support/<int:ticket_id>/', views.view_support_ticket, name='view_support_ticket'),
+    path('management/support/', views.admin_manage_support_tickets, name='admin_manage_support_tickets'),
+    path('management/support/<int:ticket_id>/', views.admin_view_support_ticket, name='admin_view_support_ticket'),
+
+    # ── Notifications ───────────────────────────────────────────
+    path('notifications/', views.notifications_list, name='notifications_list'),
+    path('notifications/mark-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/api/', views.get_notifications, name='get_notifications_api'),
 
     # ── Admin: Complaints ──────────────────────────────────────
     path('management/complaints/', views.admin_manage_complaints, name='admin_manage_complaints'),

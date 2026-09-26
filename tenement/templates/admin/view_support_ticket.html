@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ticket {{ ticket.ticket_number }} | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;--border:#e5e7eb;--border-2:#d1d5db;
+    --accent:#1e6cf0;--accent-dk:#1558c8;--green:#16a34a;--green-dim:#dcfce7;
+    --amber:#d97706;--amber-dim:#fef3c7;--red:#dc2626;--red-dim:#fee2e2;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:820px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .breadcrumb{font-size:.8rem;color:var(--ink-4);margin-bottom:20px;}
+  .breadcrumb a{color:var(--accent);text-decoration:none;}
+  h1{font-size:1.4rem;font-weight:700;margin:0 0 4px;}
+  .sub{font-size:.85rem;color:var(--ink-3);margin:0 0 28px;}
+  .detail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:28px;margin-bottom:20px;}
+  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  @media(max-width:500px){.meta-grid{grid-template-columns:1fr;}}
+  .meta-item{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;}
+  .meta-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);margin-bottom:4px;}
+  .meta-val{font-size:.875rem;font-weight:600;color:var(--ink);}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;}
+  .chip.open{background:var(--red-dim);color:var(--red);}
+  .chip.under_review{background:var(--amber-dim);color:var(--amber);}
+  .chip.resolved{background:var(--green-dim);color:var(--green);}
+  .section-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);margin:0 0 10px;}
+  .desc-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;font-size:.875rem;line-height:1.7;color:var(--ink-2);white-space:pre-wrap;}
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:28px;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:.8rem;font-weight:600;color:var(--ink-2);margin-bottom:6px;}
+  .field select,.field textarea{width:100%;font-family:'DM Sans',sans-serif;font-size:.88rem;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:10px 14px;color:var(--ink);}
+  .form-actions{display:flex;gap:10px;justify-content:flex-end;}
+  .btn-primary{background:var(--accent);color:#fff;font-size:.88rem;font-weight:600;padding:11px 28px;border-radius:var(--radius-sm);border:none;cursor:pointer;}
+  .btn-primary:hover{background:var(--accent-dk);}
+  .btn-ghost{background:transparent;border:1px solid var(--border-2);color:var(--ink-2);font-size:.88rem;font-weight:600;padding:11px 22px;border-radius:var(--radius-sm);text-decoration:none;}
+</style>
+
+<div class="pg-wrap">
+  <div class="breadcrumb"><a href="{% url 'dashboard' %}">Dashboard</a> &rsaquo; <a href="{% url 'admin_manage_support_tickets' %}">Support Tickets</a> &rsaquo; {{ ticket.ticket_number }}</div>
+  <h1>{{ ticket.ticket_number }}</h1>
+  <p class="sub">Submitted by <strong>{{ ticket.submitted_by.get_full_name|default:ticket.submitted_by.username }}</strong> on {{ ticket.created_at|date:"j M Y, g:i A" }}</p>
+
+  <div class="detail-card">
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Status</div><div class="meta-val"><span class="chip {{ ticket.status }}">{{ ticket.get_status_display }}</span></div></div>
+      <div class="meta-item"><div class="meta-label">Category</div><div class="meta-val">{{ ticket.get_category_display }}</div></div>
+      <div class="meta-item"><div class="meta-label">Submitted By</div><div class="meta-val">{{ ticket.submitted_by.email }}</div></div>
+      <div class="meta-item"><div class="meta-label">Last Updated</div><div class="meta-val">{{ ticket.updated_at|date:"j M Y, g:i A" }}</div></div>
+    </div>
+    <p class="section-label">Description</p>
+    <div class="desc-box">{{ ticket.description }}</div>
+  </div>
+
+  <p class="section-label">Update Ticket</p>
+  <div class="form-card">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="field"><label for="{{ form.status.id_for_label }}">Update Status</label>{{ form.status }}</div>
+      <div class="field"><label for="{{ form.staff_notes.id_for_label }}">Response / Internal Notes</label>{{ form.staff_notes }}</div>
+      <div class="form-actions">
+        <a href="{% url 'admin_manage_support_tickets' %}" class="btn-ghost"><i class="fas fa-arrow-left"></i> Back to List</a>
+        <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

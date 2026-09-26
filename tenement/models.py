@@ -23,6 +23,12 @@ PROPERTY_TYPE_CHOICES = (
     ('commercial', 'Commercial'),
 )
 
+VERIFICATION_STATUS_CHOICES = (
+    ('verified', 'Verified'),
+    ('pending', 'Pending Verification'),
+    ('required', 'Verification Required'),
+)
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='landlord')
@@ -61,7 +67,17 @@ class Property(models.Model):
     image_5          = models.ImageField(upload_to='properties/additional/', null=True, blank=True)
     image_6          = models.ImageField(upload_to='properties/additional/', null=True, blank=True)
     notes            = models.TextField(blank=True)
+    verification_status = models.CharField(
+        max_length=10, choices=VERIFICATION_STATUS_CHOICES, default='pending',
+        help_text='Unverified properties are hidden from shared/admin lists until a staff or admin user verifies them.'
+    )
+    verified_by      = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_properties')
+    verified_at      = models.DateTimeField(null=True, blank=True)
     created_at       = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_verified(self):
+        return self.verification_status == 'verified'
 
 
 COMPLAINT_CATEGORY_CHOICES = (
@@ -313,3 +329,75 @@ class OTP(models.Model):
             self.delete()
             return True
         return False
+
+
+# ====================================================================
+# Support tickets
+# ====================================================================
+TICKET_CATEGORY_CHOICES = (
+    ('property_registration', 'Property registration'),
+    ('wrong_property_info',   'Wrong property information'),
+    ('payment_issue',         'Payment issue'),
+    ('duplicate_property',    'Duplicate property'),
+    ('incorrect_assessment',  'Incorrect assessment'),
+    ('receipt_problem',       'Receipt problem'),
+    ('change_of_ownership',   'Change of ownership'),
+    ('technical_problem',     'Technical problem'),
+    ('other',                 'Other'),
+)
+
+TICKET_STATUS_CHOICES = (
+    ('open',        'Open'),
+    ('under_review', 'Under Review'),
+    ('resolved',    'Resolved'),
+)
+
+
+class SupportTicket(models.Model):
+    ticket_number = models.CharField(max_length=20, unique=True, editable=False)
+    submitted_by  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='support_tickets')
+    category      = models.CharField(max_length=30, choices=TICKET_CATEGORY_CHOICES, default='other')
+    description   = models.TextField()
+    status        = models.CharField(max_length=20, choices=TICKET_STATUS_CHOICES, default='open')
+    staff_notes   = models.TextField(blank=True, help_text='Internal notes visible only to staff/admin')
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.ticket_number
+
+    def save(self, *args, **kwargs):
+        if not self.ticket_number:
+            year = timezone.now().year
+            # Retry a handful of times in the (very unlikely) event of a
+            # collision on the random suffix, instead of a hard failure.
+            for _ in range(5):
+                candidate = f"BAC-{year}-{''.join(random.choices(string.digits, k=6))}"
+                if not SupportTicket.objects.filter(ticket_number=candidate).exists():
+                    self.ticket_number = candidate
+                    break
+        super().save(*args, **kwargs)
+
+
+# ====================================================================
+# Notifications
+# ====================================================================
+class Notification(models.Model):
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message    = models.CharField(max_length=255)
+    link       = models.CharField(max_length=255, blank=True, default='', help_text='Optional URL name/path to link to when clicked.')
+    is_read    = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username}: {self.message[:40]}"
+
+    @classmethod
+    def notify(cls, user, message, link=''):
+        return cls.objects.create(user=user, message=message, link=link)

@@ -191,7 +191,13 @@
       {% endif %}
     </div>
     <div class="meta-badge status">
-      <i class="fas fa-check-circle"></i> Active
+      {% if property.verification_status == 'verified' %}
+        <i class="fas fa-circle-check"></i> Verified
+      {% elif property.verification_status == 'pending' %}
+        <i class="fas fa-clock"></i> Pending Verification
+      {% else %}
+        <i class="fas fa-triangle-exclamation"></i> Verification Required
+      {% endif %}
     </div>
   </div>
 
@@ -277,6 +283,10 @@
         <div class="detail-section">
           <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
           <div class="detail-item">
+            <span class="detail-label">{{ assessment_year }} Tenement Rate</span>
+            <span class="detail-value">₦{{ current_rate_amount|floatformat:2 }}</span>
+          </div>
+          <div class="detail-item">
             <span class="detail-label">Tenement Rate</span>
             <span class="detail-value">
               {% if property_payment_status == 'paid' %}
@@ -301,6 +311,33 @@
             </span>
           </div>
           <!-- Optionally list individual rates and payment status -->
+        </div>
+
+        <div class="detail-section">
+          <h3><i class="fas fa-shield-halved"></i> Verification</h3>
+          <div class="detail-item">
+            <span class="detail-label">Status</span>
+            <span class="detail-value">
+              {% if property.verification_status == 'verified' %}
+                <span class="gps-ok"><i class="fas fa-circle-check"></i> Verified{% if property.verified_by %} by {{ property.verified_by.username }}{% endif %}</span>
+              {% elif property.verification_status == 'pending' %}
+                <span class="chip amber"><i class="fas fa-clock"></i> Pending Verification</span>
+              {% else %}
+                <span class="chip red"><i class="fas fa-triangle-exclamation"></i> Verification Required</span>
+              {% endif %}
+            </span>
+          </div>
+          {% if property.verification_status != 'verified' %}
+          <form method="post" action="{% url 'admin_verify_property' property.id %}" style="margin-top:10px;">
+            {% csrf_token %}
+            <button type="submit" class="gps-link" style="border:none;cursor:pointer;background:var(--green-dim);color:var(--green-dk);"><i class="fas fa-check"></i> Verify This Property</button>
+          </form>
+          {% else %}
+          <form method="post" action="{% url 'admin_flag_property_verification' property.id %}" style="margin-top:10px;">
+            {% csrf_token %}
+            <button type="submit" class="gps-link" style="border:none;cursor:pointer;background:var(--surface-3);color:var(--ink-3);"><i class="fas fa-flag"></i> Flag for Re-verification</button>
+          </form>
+          {% endif %}
         </div>
 
         <div class="detail-section">

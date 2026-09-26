@@ -38,10 +38,12 @@ from .forms import (
     FixedResidentialRateForm, AnnouncementForm, StaffLandlordCreationForm,
     StaffPropertyRegistrationForm, OTPVerificationForm,
     ForgotPasswordForm, ForgotPasswordOTPForm, ResetPasswordForm,
+    SupportTicketForm, AdminSupportTicketUpdateForm,
 )
 from .models import (
     UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment,
-    Announcement, UserAnnouncementRead, OTP,
+    Announcement, UserAnnouncementRead, OTP, SupportTicket, Notification,
+    TICKET_STATUS_CHOICES, TICKET_CATEGORY_CHOICES,
 )
 from django.contrib.auth.hashers import make_password
 from io import BytesIO
@@ -1069,8 +1071,8 @@ def get_public_property_stats():
     if cached is not None:
         return cached
     stats = {
-        'residential_property_count': Property.objects.filter(property_type='residential').count(),
-        'commercial_property_count': Property.objects.filter(property_type='commercial').count(),
+        'residential_property_count': Property.objects.filter(property_type='residential', verification_status='verified').count(),
+        'commercial_property_count': Property.objects.filter(property_type='commercial', verification_status='verified').count(),
     }
     cache.set(cache_key, stats, 300)
     return stats
@@ -1677,12 +1679,16 @@ def view_property(request, property_id):
     if not user_can_manage_property(request.user, property_obj):
         messages.error(request, 'You do not have permission to view this property.')
         return redirect('dashboard')
+    active_rates = get_active_property_rates(property_obj)
+    current_rate_amount = sum((get_property_rate_amount(property_obj, rate) for rate in active_rates), Decimal('0.00'))
     context = {
         'property': property_obj,
         'property_payment_status': get_property_payment_status(property_obj),
         'is_fully_paid': is_property_fully_paid(property_obj),
         'sanitation_paid': is_property_sanitation_paid(property_obj),
         'sanitation_status': get_property_sanitation_status(property_obj),
+        'current_rate_amount': current_rate_amount,
+        'assessment_year': SiteConfiguration.get_config().assessment_year,
         'owner': property_obj.owner,
         'can_manage': user_can_manage_property(request.user, property_obj),
     }
@@ -1818,6 +1824,152 @@ def my_complaints(request):
 
     complaints = Complaint.objects.filter(submitted_by=request.user)
     return render(request, 'landlord/my_complaints.html', {'complaints': complaints})
+
+
+# ── Support Tickets ────────────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def submit_support_ticket(request):
+    if request.method == 'POST':
+        form = SupportTicketForm(request.POST)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.submitted_by = request.user
+            ticket.save()
+            messages.success(request, f'Ticket {ticket.ticket_number} submitted. Our team will review it shortly.')
+            return redirect('my_support_tickets')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = SupportTicketForm()
+    return render(request, 'support/submit_ticket.html', {'form': form})
+
+
+@login_required
+@verified_email_required
+def my_support_tickets(request):
+    tickets = SupportTicket.objects.filter(submitted_by=request.user)
+    return render(request, 'support/my_tickets.html', {'tickets': tickets})
+
+
+@login_required
+@verified_email_required
+def view_support_ticket(request, ticket_id):
+    ticket = get_object_or_404(SupportTicket, id=ticket_id, submitted_by=request.user)
+    return render(request, 'support/view_ticket.html', {'ticket': ticket})
+
+
+@staff_member_required
+def admin_manage_support_tickets(request):
+    tickets = SupportTicket.objects.select_related('submitted_by').all()
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+
+    category_filter = request.GET.get('category', '')
+    if category_filter:
+        tickets = tickets.filter(category=category_filter)
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        tickets = tickets.filter(
+            Q(ticket_number__icontains=search) |
+            Q(submitted_by__username__icontains=search) |
+            Q(description__icontains=search)
+        )
+
+    total_tickets = SupportTicket.objects.count()
+    open_count = SupportTicket.objects.filter(status='open').count()
+    under_review_count = SupportTicket.objects.filter(status='under_review').count()
+    resolved_count = SupportTicket.objects.filter(status='resolved').count()
+
+    paginator = Paginator(tickets, get_pagination_size())
+    page_number = request.GET.get('page')
+    tickets_page = paginator.get_page(page_number)
+
+    context = {
+        'tickets':             tickets_page,
+        'total_tickets':       total_tickets,
+        'open_count':          open_count,
+        'under_review_count':  under_review_count,
+        'resolved_count':      resolved_count,
+        'status_choices':      TICKET_STATUS_CHOICES,
+        'category_choices':    TICKET_CATEGORY_CHOICES,
+        'status_filter':       status_filter,
+        'category_filter':     category_filter,
+        'search':              search,
+    }
+    return render(request, 'admin/manage_support_tickets.html', context)
+
+
+@staff_member_required
+def admin_view_support_ticket(request, ticket_id):
+    ticket = get_object_or_404(SupportTicket, id=ticket_id)
+
+    if request.method == 'POST':
+        previous_status = ticket.status
+        form = AdminSupportTicketUpdateForm(request.POST, instance=ticket)
+        if form.is_valid():
+            form.save()
+            if form.cleaned_data['status'] != previous_status:
+                Notification.notify(
+                    ticket.submitted_by,
+                    f'Your support ticket {ticket.ticket_number} is now "{ticket.get_status_display()}".',
+                    link=reverse('view_support_ticket', args=[ticket.id]),
+                )
+            messages.success(request, 'Ticket updated successfully.')
+            return redirect('admin_view_support_ticket', ticket_id=ticket_id)
+    else:
+        form = AdminSupportTicketUpdateForm(instance=ticket)
+
+    return render(request, 'admin/view_support_ticket.html', {'ticket': ticket, 'form': form})
+
+
+# ── Notifications ──────────────────────────────────────────────────────────────
+@login_required
+def notifications_list(request):
+    notifications = Notification.objects.filter(user=request.user)[:50]
+    return render(request, 'notifications.html', {'notifications': notifications})
+
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    Notification.objects.filter(id=notification_id, user=request.user).update(is_read=True)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    return redirect('notifications_list')
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    return redirect('notifications_list')
+
+
+@login_required
+@require_GET
+def get_notifications(request):
+    """Polled by the navbar bell for the unread count + recent dropdown list."""
+    notifications = Notification.objects.filter(user=request.user)[:10]
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return JsonResponse({
+        'unread_count': unread_count,
+        'notifications': [
+            {
+                'id': n.id,
+                'message': n.message,
+                'link': n.link,
+                'is_read': n.is_read,
+                'created_at': n.created_at.strftime('%b %d, %Y %I:%M %p'),
+            }
+            for n in notifications
+        ],
+    })
 
 
 # ── Admin: Users ──────────────────────────────────────────────────────────────
@@ -2173,12 +2325,16 @@ def admin_manage_properties(request):
 @staff_or_admin_required
 def admin_view_property(request, property_id):
     property_obj = get_object_or_404(Property, id=property_id)
+    active_rates = get_active_property_rates(property_obj)
+    current_rate_amount = sum((get_property_rate_amount(property_obj, rate) for rate in active_rates), Decimal('0.00'))
     context = {
         'property': property_obj,
         'property_payment_status': get_property_payment_status(property_obj),
         'is_fully_paid': is_property_fully_paid(property_obj),
         'sanitation_paid': is_property_sanitation_paid(property_obj),
         'sanitation_status': get_property_sanitation_status(property_obj),
+        'current_rate_amount': current_rate_amount,
+        'assessment_year': SiteConfiguration.get_config().assessment_year,
     }
     return render(request, 'admin/view_property.html', context)
 
@@ -2190,6 +2346,72 @@ def admin_delete_property(request, property_id):
     property_obj.delete()
     messages.success(request, f'Property "{name}" deleted successfully.')
     return redirect('admin_manage_properties')
+
+
+@staff_or_admin_required
+def admin_verification_queue(request):
+    """Properties awaiting a staff/admin verification decision (see Property.verification_status)."""
+    properties = (
+        Property.objects.select_related('owner')
+        .exclude(verification_status='verified')
+        .order_by('-created_at')
+    )
+
+    status_filter = request.GET.get('status', '')
+    if status_filter in ('pending', 'required'):
+        properties = properties.filter(verification_status=status_filter)
+
+    pending_count = Property.objects.filter(verification_status='pending').count()
+    required_count = Property.objects.filter(verification_status='required').count()
+
+    paginator = Paginator(properties, get_pagination_size())
+    page_number = request.GET.get('page')
+    properties_page = paginator.get_page(page_number)
+    properties_page_range = get_paginator_page_range(properties_page)
+
+    context = {
+        'properties':      properties_page,
+        'page_range':      properties_page_range,
+        'status_filter':   status_filter,
+        'pending_count':   pending_count,
+        'required_count':  required_count,
+    }
+    return render(request, 'admin/verification_queue.html', context)
+
+
+@staff_or_admin_required
+@require_POST
+def admin_verify_property(request, property_id):
+    property_obj = get_object_or_404(Property, id=property_id)
+    property_obj.verification_status = 'verified'
+    property_obj.verified_by = request.user
+    property_obj.verified_at = timezone.now()
+    property_obj.save(update_fields=['verification_status', 'verified_by', 'verified_at'])
+    Notification.notify(
+        property_obj.owner,
+        f'Your property "{property_obj.name}" has been verified.',
+        link=reverse('view_property', args=[property_obj.id]),
+    )
+    messages.success(request, f'Property "{property_obj.name}" marked as verified.')
+    return redirect(request.POST.get('next') or 'admin_verification_queue')
+
+
+@staff_or_admin_required
+@require_POST
+def admin_flag_property_verification(request, property_id):
+    """Sends a property back to 'Verification Required' (e.g. missing/incorrect info found on review)."""
+    property_obj = get_object_or_404(Property, id=property_id)
+    property_obj.verification_status = 'required'
+    property_obj.verified_by = None
+    property_obj.verified_at = None
+    property_obj.save(update_fields=['verification_status', 'verified_by', 'verified_at'])
+    Notification.notify(
+        property_obj.owner,
+        f'Your property "{property_obj.name}" needs attention before it can be verified.',
+        link=reverse('view_property', args=[property_obj.id]),
+    )
+    messages.success(request, f'Property "{property_obj.name}" flagged as requiring attention.')
+    return redirect(request.POST.get('next') or 'admin_verification_queue')
 
 
 @staff_or_admin_required
@@ -2346,6 +2568,11 @@ def admin_view_complaint(request, complaint_id):
         form = AdminComplaintUpdateForm(request.POST, instance=complaint)
         if form.is_valid():
             form.save()
+            Notification.notify(
+                complaint.submitted_by,
+                f'Your complaint "{complaint.subject}" received a response and is now "{complaint.get_status_display()}".',
+                link=reverse('my_complaints'),
+            )
             if form.cleaned_data['status'] != previous_status and SiteConfiguration.get_config().enable_email_notifications:
                 _send_complaint_status_email(complaint)
             messages.success(request, "Complaint updated successfully.")
@@ -2977,14 +3204,28 @@ def admin_fixed_rate(request):
     })
 
 
+def _notify_users_of_new_assessment(rate):
+    """Bulk in-app notification when a new active assessment/rate is published."""
+    link = reverse('landlord_payments')
+    if rate.is_sanitation:
+        user_ids = User.objects.filter(
+            userprofile__user_type__in=['landlord', 'tenant'], userprofile__email_verified=True
+        ).values_list('id', flat=True)
+    else:
+        user_ids = User.objects.filter(
+            properties__property_type=rate.property_type, userprofile__email_verified=True
+        ).distinct().values_list('id', flat=True)
+    Notification.objects.bulk_create([
+        Notification(user_id=uid, message=f'A new assessment "{rate.name}" (\u20a6{rate.amount:,.2f}) is now due.', link=link)
+        for uid in user_ids
+    ], batch_size=500)
+
+
 @staff_member_required
 def admin_payment_rates(request):
     rates = PaymentRate.objects.all().order_by('-created_at')
     context = {'rates': rates}
-    return render(request, 'admin/payment_rates.html', context)
-
-
-@staff_member_required
+    return render(request, 'admin/payment_rates.html', context)@staff_member_required
 def admin_create_payment_rate(request):
     if request.method == 'POST':
         form = PaymentRateForm(request.POST)
@@ -2992,6 +3233,8 @@ def admin_create_payment_rate(request):
             rate = form.save(commit=False)
             rate.created_by = request.user
             rate.save()
+            if rate.is_active:
+                _notify_users_of_new_assessment(rate)
             messages.success(request, f'Payment rate "{rate.name}" created successfully.')
             return redirect('admin_payment_rates')
     else:
@@ -3311,6 +3554,11 @@ def verify_payment(request, reference):
             payment.expires_at = paid_at + timezone.timedelta(days=validity_days)
             payment.paystack_response = resp_data['data']
             payment.save()
+            Notification.notify(
+                payment.landlord,
+                f'Payment of \u20a6{payment.amount:,.2f} for "{payment.payment_rate.name if payment.payment_rate else "Sanitation Levy"}" was successful.',
+                link=reverse('payment_receipt', args=[payment.id]),
+            )
             messages.success(request, "Payment successful! Thank you.")
             return redirect('payment_receipt', payment_id=payment.id)
         else:

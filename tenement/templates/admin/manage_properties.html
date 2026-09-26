@@ -486,6 +486,18 @@
                 </div>
               </div>
               <div>
+                <div class="pmk">Verification</div>
+                <div class="pmv">
+                  {% if prop.verification_status == 'verified' %}
+                    <span class="gps-ok"><i class="fas fa-circle" style="color:#16a34a;"></i> Verified</span>
+                  {% elif prop.verification_status == 'pending' %}
+                    <span class="gps-no"><i class="fas fa-circle" style="color:#d97706;"></i> Pending</span>
+                  {% else %}
+                    <span class="gps-no"><i class="fas fa-circle" style="color:#dc2626;"></i> Required</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div>
                 <div class="pmk">GPS</div>
                 <div class="pmv">
                   {% if prop.latitude and prop.longitude %}

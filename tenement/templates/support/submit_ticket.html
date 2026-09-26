@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submit a Support Ticket | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;--border:#e5e7eb;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;--accent-dk:#1558c8;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;
+    --shadow:0 4px 12px rgba(0,0,0,.07);--transition:160ms cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:720px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .pg-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--ink-3);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);}
+  .back-btn:hover{background:var(--surface-3);color:var(--ink);}
+  .pg-title{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.4px;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:28px;}
+  .form-group{margin-bottom:20px;}
+  label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--ink);}
+  select,textarea{width:100%;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);}
+  select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,108,240,.12);}
+  .form-actions{display:flex;gap:12px;margin-top:24px;}
+  .btn-primary{background:var(--accent);color:#fff;font-weight:600;padding:10px 24px;border:none;border-radius:var(--radius-sm);cursor:pointer;}
+  .btn-primary:hover{background:var(--accent-dk);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink-2);padding:10px 24px;border-radius:var(--radius-sm);text-decoration:none;font-weight:500;}
+  .btn-ghost:hover{background:var(--surface-3);}
+</style>
+
+<div class="pg-wrap">
+  <div class="pg-header">
+    <a href="{% url 'my_support_tickets' %}" class="back-btn"><i class="fas fa-chevron-left"></i> My Tickets</a>
+    <div>
+      <h1 class="pg-title">Submit a Support Ticket</h1>
+      <p class="pg-sub">Tell us what's wrong — we'll generate a tracking number for you</p>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div style="font-size:.75rem;color:var(--ink-4);margin-top:4px;">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div style="color:#dc2626;font-size:.8rem;margin-top:4px;">{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endfor %}
+      <div class="form-actions">
+        <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Ticket</button>
+        <a href="{% url 'my_support_tickets' %}" class="btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
