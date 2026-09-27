@@ -59,6 +59,9 @@
   .map-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(247,248,250,.9);font-size:.85rem;color:var(--ink-3);z-index:500;}
   .map-loading i{font-size:1.4rem;color:var(--accent);}
   .map-error{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:rgba(247,248,250,.95);font-size:.85rem;color:var(--red);z-index:500;text-align:center;padding:24px;}
+  .map-layer-btn{position:absolute;top:12px;right:12px;z-index:600;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);font-size:.78rem;font-weight:700;color:var(--ink-2);cursor:pointer;}
+  .map-layer-btn:hover{background:var(--surface-2);}
+  .map-layer-btn i{color:var(--accent);}
 
   .side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:18px;margin-bottom:16px;}
   .side-card h3{margin:0 0 12px;font-size:.95rem;font-weight:700;}
@@ -121,6 +124,9 @@
   <div class="gis-layout">
     <div class="map-card">
       <div id="gis-map"></div>
+      <button type="button" class="map-layer-btn" id="map-layer-toggle" title="Switch map layer">
+        <i class="fas fa-layer-group"></i> <span id="map-layer-chip">Terrain</span>
+      </button>
       <div class="map-loading" id="map-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading properties…</div>
       <div class="map-error" id="map-error">
         <i class="fas fa-triangle-exclamation" style="font-size:1.3rem;"></i>
@@ -164,92 +170,49 @@
   const viewPropertyUrlTemplate = "{% url 'admin_view_property' 999999999 %}";
   const colorHex = { green: '#16a34a', yellow: '#d97706', red: '#dc2626' };
 
-  const map = L.map('gis-map').setView([9.0765, 7.3986], 11); // Abuja, FCT default
+  const map = L.map('gis-map', { zoomControl: true }).setView([9.0765, 7.3986], 11); // Abuja, FCT default
 
-  // Free, no-signup basemap providers, tried in order — terrain-styled ones
-  // first (per the default view requested), each on completely different
-  // infrastructure so if one is blocked/ad-blocked/unreachable, the others
-  // are unaffected. Every candidate here is picked specifically because it
-  // tolerates real production traffic without an API key.
-  const TILE_PROVIDERS = [
-    {
-      // Terrain-styled (hillshade/contour background) AND genuinely
-      // high-resolution up close — this is the one that actually lets you
-      // zoom in and make out individual properties, unlike a pure
-      // elevation-only terrain layer which goes blurry past city-level
-      // zoom. This is why it's first, ahead of OpenTopoMap.
-      name: 'Esri World Topo',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-      options: { maxZoom: 19, maxNativeZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, FAO, NOAA, USGS' }
-    },
-    {
-      // Genuine terrain/topographic style (shaded relief + contour lines),
-      // kept as the backup terrain option — different infrastructure than
-      // Esri above, but native resolution tops out lower (zoom 17), so
-      // it's less sharp than the primary once you're zoomed in close.
-      name: 'OpenTopoMap',
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      options: { maxZoom: 19, maxNativeZoom: 17, subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap' }
-    },
-    {
-      // Not terrain-styled, but a reliable plain street map so the page
-      // still works even if both terrain options above are unreachable.
-      name: 'Esri World Street',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-      options: { maxZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, USGS, Intermap' }
-    },
-    {
-      name: 'CARTO Positron',
-      url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      options: { maxZoom: 20, subdomains: 'abcd', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }
-    }
-  ];
-
-  let providerIndex = 0;
-  let currentTileLayer = null;
-
-  function activateTileProvider(index) {
-    if (index >= TILE_PROVIDERS.length) {
-      console.warn('Maps & GIS: every basemap provider failed to load tiles.');
-      return; // markers/search still work even with no basemap underneath
-    }
-    if (currentTileLayer) map.removeLayer(currentTileLayer);
-
-    const provider = TILE_PROVIDERS[index];
-    let tileErrorCount = 0;
-    let tileLoadCount = 0;
-    let switched = false;
-
-    function fallBackToNext() {
-      if (switched || providerIndex !== index) return;
-      switched = true;
-      console.warn('Maps & GIS: "' + provider.name + '" basemap failed, trying next provider…');
-      providerIndex++;
-      activateTileProvider(providerIndex);
-    }
-
-    currentTileLayer = L.tileLayer(provider.url, provider.options);
-    currentTileLayer.on('tileload', function () { tileLoadCount++; });
-    currentTileLayer.on('tileerror', function () {
-      tileErrorCount++;
-      // A handful of misses can be normal (edge tiles at the map's border).
-      // A steady stream with nothing loading means this provider is
-      // actually blocked/down — move to the next one.
-      if (tileErrorCount > 4 && tileLoadCount === 0) fallBackToNext();
+  // Same tile source the "View Property" page already uses successfully —
+  // Google's own tile endpoint (the imagery behind Google Maps/Earth).
+  // The Esri/OpenTopoMap/CARTO chain tried earlier kept being slow or
+  // simply had no terrain coverage for this area at close zoom; Google's
+  // coverage doesn't have that gap, and it's a single fast CDN instead of
+  // a multi-provider fallback chain waiting on failures before it works.
+  function googleLayer(lyrs) {
+    return L.tileLayer('https://{s}.google.com/vt/lyrs=' + lyrs + '&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxZoom: 20,
+      attribution: 'Imagery &copy; Google'
     });
-
-    // Safety net: some blocked providers fail silently (serve a blank or
-    // "access blocked" image instead of a real HTTP error), so tileerror
-    // never fires. If nothing has *successfully* rendered within a few
-    // seconds, treat it as failed and move on anyway.
-    setTimeout(function () {
-      if (tileLoadCount === 0) fallBackToNext();
-    }, 4000);
-
-    currentTileLayer.addTo(map);
   }
 
-  activateTileProvider(providerIndex);
+  // Matches the same labels/order as the View Property page's layer
+  // cycler, so "Terrain" means the same thing on both pages.
+  const MAP_LAYERS = [
+    { key: 'terrain',   label: 'Terrain',   lyrs: 'y' },
+    { key: 'satellite', label: 'Satellite', lyrs: 's' },
+    { key: 'hybrid',    label: 'Hybrid',    lyrs: 'p' },
+    { key: 'roadmap',   label: 'Roadmap',   lyrs: 'm' }
+  ];
+  let mapLayerIndex = 0; // Terrain by default
+  let activeBaseLayer = googleLayer(MAP_LAYERS[mapLayerIndex].lyrs).addTo(map);
+
+  function setMapLayer(index) {
+    map.removeLayer(activeBaseLayer);
+    mapLayerIndex = (index + MAP_LAYERS.length) % MAP_LAYERS.length;
+    activeBaseLayer = googleLayer(MAP_LAYERS[mapLayerIndex].lyrs).addTo(map);
+    const chip = document.getElementById('map-layer-chip');
+    if (chip) chip.textContent = MAP_LAYERS[mapLayerIndex].label;
+  }
+
+  document.getElementById('map-layer-toggle').addEventListener('click', function () {
+    setMapLayer(mapLayerIndex + 1);
+  });
+
+  // Re-measure the container once layout settles — fixes grey/blank tiles
+  // that can happen when the map is created inside a card whose own
+  // layout (grid columns, sidebar) hasn't finished settling yet.
+  setTimeout(function () { map.invalidateSize(); }, 200);
 
   // Marker clustering: with more than a couple dozen pins, adding every
   // circle marker straight to the map (and individually toggling them on
