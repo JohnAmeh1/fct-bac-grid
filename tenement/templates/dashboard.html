@@ -1615,11 +1615,11 @@
   <!-- ══════════════════════════════════════════════════════
        GOVT ADMIN DASHBOARD (view-only oversight)
   ══════════════════════════════════════════════════════ -->
-
+{% comment %} 
   <div class="alert-admin fade" style="display:flex;align-items:flex-start;gap:12px;background:var(--purple-dim);border:1px solid var(--purple);border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:.855rem;color:var(--purple);">
     <i class="fas fa-eye" style="margin-top:1px;flex-shrink:0;"></i>
     <span>Govt Admin has <strong>view-only</strong> access to Properties, Users, Revenue, Maps &amp; GIS, and Reports. Editing, deleting, and account creation are reserved for Admin accounts.</span>
-  </div>
+  </div> {% endcomment %}
 
   <div class="stats-grid cols-4">
     <div class="stat-card c-blue fade fade-1">
@@ -1762,14 +1762,14 @@
           <span class="info-key">Role</span>
           <span class="chip purple dot">Govt Admin</span>
         </div>
-        <div class="info-row">
+        {% comment %} <div class="info-row">
           <span class="info-key">Create / Edit / Delete</span>
           <span class="info-val">Not permitted</span>
         </div>
         <div class="info-row">
           <span class="info-key">View Records</span>
           <span class="info-val">Permitted</span>
-        </div>
+        </div> {% endcomment %}
       </div>
     </div>
   </div>
