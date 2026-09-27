@@ -631,6 +631,27 @@ def staff_or_admin_required(view_func):
     return user_passes_test(check_user)(view_func)
 
 
+# Govt Admin gets read-only access to the same operational pages as
+# admin/staff/field_staff (properties, revenue, maps & GIS). It is
+# deliberately NOT part of MANAGED_PROPERTY_ROLES, because that list is
+# also used by user_can_manage_property() to decide who may edit/delete
+# properties via edit_property/delete_property — Govt Admin must never
+# gain that ability, so it only appears in this separate, view-only list.
+PROPERTY_VIEW_ROLES = MANAGED_PROPERTY_ROLES + ['govt_admin']
+
+
+def property_view_required(view_func):
+    """
+    Like staff_or_admin_required, but also grants the Govt Admin role
+    read-only access. Only use this on views that purely read/display
+    data (list pages, detail pages, JSON feeds) — never on a view that
+    creates, updates, or deletes anything.
+    """
+    def check_user(user):
+        return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.user_type in PROPERTY_VIEW_ROLES
+    return user_passes_test(check_user)(view_func)
+
+
 def admin_or_staff_required(view_func):
     """Like staff_or_admin_required, but excludes field_staff (used for the property verification queue)."""
     def check_user(user):
@@ -1289,7 +1310,7 @@ def dashboard(request):
             cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
         return labels, data
 
-    if profile.user_type in ['admin', 'staff', 'field_staff']:
+    if profile.user_type in ['admin', 'staff', 'field_staff', 'govt_admin']:
         residential_count = Property.objects.filter(property_type='residential').count()
         commercial_count = Property.objects.filter(property_type='commercial').count()
 
@@ -1992,6 +2013,9 @@ def get_notifications(request):
 # ── Admin: Users ──────────────────────────────────────────────────────────────
 @staff_member_required
 def admin_manage_users(request):
+    # Govt Admin can browse and open user records but cannot create/delete
+    # users; admin_delete_user already re-checks this server-side.
+    read_only = request.user.userprofile.user_type == 'govt_admin'
     users = User.objects.select_related('userprofile').filter(userprofile__email_verified=True).order_by('id')
 
     user_type = request.GET.get('user_type')
@@ -2026,6 +2050,8 @@ def admin_manage_users(request):
         'total_admins':     UserProfile.objects.filter(user_type='admin', email_verified=True).count(),
         'total_staff':      UserProfile.objects.filter(user_type='staff', email_verified=True).count(),
         'total_field_staff': UserProfile.objects.filter(user_type='field_staff', email_verified=True).count(),
+        'total_govt_admins': UserProfile.objects.filter(user_type='govt_admin', email_verified=True).count(),
+        'read_only':        read_only,
     }
     return render(request, 'admin/manage_users.html', context)
 
@@ -2265,7 +2291,7 @@ def admin_delete_user(request, user_id):
 
 
 # ── Admin: Properties ─────────────────────────────────────────────────────────
-@staff_or_admin_required
+@property_view_required
 def admin_manage_properties(request):
     from .forms import DISTRICT_CHOICES
     properties = Property.objects.select_related('owner').order_by('-created_at').order_by('-created_at', 'id')
@@ -2335,11 +2361,14 @@ def admin_manage_properties(request):
         'district_choices':  DISTRICT_CHOICES,
         'district_counts':   district_counts,
         'paid_status':       paid_status,
+        # Govt Admin can browse this page but has no edit/delete rights —
+        # templates can use this to hide those controls for that role.
+        'read_only':         request.user.userprofile.user_type == 'govt_admin',
     }
     return render(request, 'admin/manage_properties.html', context)
 
 
-@staff_or_admin_required
+@property_view_required
 def admin_view_property(request, property_id):
     property_obj = get_object_or_404(Property, id=property_id)
     active_rates = get_active_property_rates(property_obj)
@@ -2352,6 +2381,7 @@ def admin_view_property(request, property_id):
         'sanitation_status': get_property_sanitation_status(property_obj),
         'current_rate_amount': current_rate_amount,
         'assessment_year': SiteConfiguration.get_config().assessment_year,
+        'read_only': request.user.userprofile.user_type == 'govt_admin',
     }
     return render(request, 'admin/view_property.html', context)
 
@@ -2611,7 +2641,7 @@ def admin_flag_property_verification(request, property_id):
     return redirect(request.POST.get('next') or 'admin_verification_queue')
 
 
-@staff_or_admin_required
+@property_view_required
 def maps_gis(request):
     """
     Maps & GIS page for admin/staff/field_staff. Renders the shell only —
@@ -2623,7 +2653,7 @@ def maps_gis(request):
     return render(request, 'staff/maps_gis.html', {})
 
 
-@staff_or_admin_required
+@property_view_required
 @require_GET
 def maps_gis_data(request):
     """
@@ -2699,7 +2729,7 @@ def maps_gis_data(request):
     return JsonResponse({'points': points, 'summary': summary})
 
 
-@staff_or_admin_required
+@property_view_required
 def admin_revenue_list(request):
     """
     Every property with its tenement + sanitation payment status, for
@@ -2774,6 +2804,7 @@ def admin_revenue_list(request):
         'tenement_status':         tenement_status,
         'sanitation_status':       sanitation_status,
         'is_admin':                is_admin,
+        'read_only':               profile.user_type == 'govt_admin',
     }
 
     revenue_summary = compute_revenue_summary()
@@ -2840,6 +2871,7 @@ def admin_manage_complaints(request):
         'status_filter':     status_filter,
         'category_filter':   category_filter,
         'search':            search,
+        'read_only':         getattr(getattr(request.user, 'userprofile', None), 'user_type', None) == 'govt_admin',
     }
     return render(request, 'admin/manage_complaints.html', context)
 
@@ -2848,7 +2880,15 @@ def admin_manage_complaints(request):
 def admin_view_complaint(request, complaint_id):
     complaint = get_object_or_404(Complaint, id=complaint_id)
 
+    # Govt Admin has view-only access to Reports: it can open and read a
+    # complaint, but cannot change its status or add admin notes.
+    profile = getattr(request.user, 'userprofile', None)
+    read_only = bool(profile and profile.user_type == 'govt_admin')
+
     if request.method == 'POST':
+        if read_only:
+            messages.error(request, "Govt Admin accounts have view-only access and cannot update reports.")
+            return redirect('admin_view_complaint', complaint_id=complaint_id)
         previous_status = complaint.status
         form = AdminComplaintUpdateForm(request.POST, instance=complaint)
         if form.is_valid():
@@ -2868,6 +2908,7 @@ def admin_view_complaint(request, complaint_id):
     return render(request, 'admin/view_complaint.html', {
         'complaint': complaint,
         'form':      form,
+        'read_only': read_only,
     })
 
 
@@ -4441,12 +4482,12 @@ def admin_create_user(request):
     if request.method == 'POST':
         form = StaffLandlordCreationForm(request.POST)
         user_type = request.POST.get('user_type', 'staff')
-        if user_type not in ['landlord', 'staff', 'field_staff', 'admin']:
+        if user_type not in ['landlord', 'staff', 'field_staff', 'admin', 'govt_admin']:
             user_type = 'staff'
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = True
-            user.is_staff = user_type in ['staff', 'field_staff', 'admin']
+            user.is_staff = user_type in ['staff', 'field_staff', 'admin', 'govt_admin']
             user.save()
             UserProfile.objects.create(
                 user=user,

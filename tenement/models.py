@@ -15,6 +15,7 @@ USER_TYPE_CHOICES = (
     ('staff', 'Staff'),
     ('field_staff', 'Field Staff'),
     ('admin', 'Admin'),
+    ('govt_admin', 'Govt Admin'),
 )
 
 # Add this block
