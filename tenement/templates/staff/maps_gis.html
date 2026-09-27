@@ -355,4 +355,395 @@
   loadData();
 })();
 </script>
+{% endblock %}{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maps &amp; GIS | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;--border:#e5e7eb;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --green:#16a34a;--green-dim:#dcfce7;--amber:#d97706;--amber-dim:#fef3c7;--red:#dc2626;--red-dim:#fee2e2;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:1400px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .pg-header{margin-bottom:20px;}
+  .pg-title{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.4px;}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+  @media(max-width:900px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .stat-pill .num{font-size:1.35rem;font-weight:800;line-height:1;}
+  .stat-pill .lbl{font-size:.72rem;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:4px;}
+  .stat-pill.total .num{color:var(--ink);}
+  .stat-pill.green .num{color:var(--green);}
+  .stat-pill.yellow .num{color:var(--amber);}
+  .stat-pill.red .num{color:var(--red);}
+  .stat-pill.muted .num{color:var(--ink-4);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .search-box{position:relative;flex:1;min-width:240px;}
+  .search-box i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-4);font-size:.85rem;}
+  .search-box input{width:100%;padding:11px 14px 11px 38px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface);font-size:.86rem;color:var(--ink);}
+  .search-box input:focus{outline:none;border-color:var(--accent);}
+  .status-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;font-size:.78rem;font-weight:700;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-3);cursor:pointer;white-space:nowrap;user-select:none;}
+  .status-chip .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .status-chip.active{border-color:transparent;color:#fff;}
+  .status-chip[data-filter="all"].active{background:var(--ink);}
+  .status-chip[data-filter="green"].active{background:var(--green);}
+  .status-chip[data-filter="yellow"].active{background:var(--amber);}
+  .status-chip[data-filter="red"].active{background:var(--red);}
+  .status-chip .dot.green{background:var(--green);}
+  .status-chip .dot.yellow{background:var(--amber);}
+  .status-chip .dot.red{background:var(--red);}
+  .status-chip .dot.all{background:var(--ink-3);}
+
+  .gis-layout{display:grid;grid-template-columns:2.4fr 1fr;gap:18px;align-items:start;}
+  @media(max-width:980px){.gis-layout{grid-template-columns:1fr;}}
+
+  .map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:relative;}
+  #gis-map{height:640px;width:100%;background:var(--surface-3);}
+  @media(max-width:640px){#gis-map{height:420px;}}
+  .map-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(247,248,250,.9);font-size:.85rem;color:var(--ink-3);z-index:500;}
+  .map-loading i{font-size:1.4rem;color:var(--accent);}
+  .map-error{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:rgba(247,248,250,.95);font-size:.85rem;color:var(--red);z-index:500;text-align:center;padding:24px;}
+
+  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:18px;margin-bottom:16px;}
+  .side-card h3{margin:0 0 12px;font-size:.95rem;font-weight:700;}
+  .legend-row{display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--ink-2);padding:6px 0;}
+  .legend-swatch{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);flex-shrink:0;}
+  .legend-swatch.green{background:var(--green);}
+  .legend-swatch.yellow{background:var(--amber);}
+  .legend-swatch.red{background:var(--red);}
+
+  .result-list{list-style:none;margin:0;padding:0;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+  .result-item{display:flex;align-items:flex-start;gap:10px;padding:10px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;background:var(--surface-2);}
+  .result-item:hover{border-color:var(--accent);background:var(--accent-dim);}
+  .result-item .dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+  .result-item .dot.green{background:var(--green);} .result-item .dot.yellow{background:var(--amber);} .result-item .dot.red{background:var(--red);}
+  .result-item .ri-name{font-weight:700;font-size:.82rem;color:var(--ink);display:block;}
+  .result-item .ri-sub{font-size:.72rem;color:var(--ink-3);display:block;margin-top:2px;}
+  .empty-note{text-align:center;padding:24px 12px;color:var(--ink-4);font-size:.82rem;}
+
+  .popup-title{font-weight:700;font-size:.9rem;margin-bottom:4px;}
+  .popup-row{font-size:.78rem;color:var(--ink-2);margin:2px 0;}
+  .popup-badges{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;}
+  .popup-badge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+  .popup-badge.paid{background:var(--green-dim);color:var(--green);}
+  .popup-badge.unpaid{background:var(--red-dim);color:var(--red);}
+  .popup-link{display:inline-block;margin-top:6px;font-size:.78rem;font-weight:700;color:var(--accent);text-decoration:none;}
+
+  .unmapped-note{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-3);background:var(--surface-3);border-radius:var(--radius-sm);padding:10px 12px;}
+</style>
+
+<div class="pg-wrap">
+  <div class="pg-header">
+    <h1 class="pg-title">Maps &amp; GIS</h1>
+    <p class="pg-sub">Every geo-tagged property, plotted and colour-coded by payment status</p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-pill total"><div class="num" id="stat-total">–</div><div class="lbl">Properties mapped</div></div>
+    <div class="stat-pill green"><div class="num" id="stat-green">–</div><div class="lbl">Fully paid</div></div>
+    <div class="stat-pill yellow"><div class="num" id="stat-yellow">–</div><div class="lbl">Partially paid</div></div>
+    <div class="stat-pill red"><div class="num" id="stat-red">–</div><div class="lbl">Unpaid (both)</div></div>
+    <div class="stat-pill muted"><div class="num" id="stat-unmapped">–</div><div class="lbl">No coordinates yet</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="fas fa-magnifying-glass"></i>
+      <input type="text" id="gis-search" placeholder="Search by property name, address, owner or district…" autocomplete="off">
+    </div>
+    <span class="status-chip active" data-filter="all"><span class="dot all"></span> All</span>
+    <span class="status-chip" data-filter="green"><span class="dot green"></span> Fully paid</span>
+    <span class="status-chip" data-filter="yellow"><span class="dot yellow"></span> Partially paid</span>
+    <span class="status-chip" data-filter="red"><span class="dot red"></span> Unpaid</span>
+  </div>
+
+  <div class="gis-layout">
+    <div class="map-card">
+      <div id="gis-map"></div>
+      <div class="map-loading" id="map-loading"><i class="fas fa-circle-notch fa-spin"></i> Loading properties…</div>
+      <div class="map-error" id="map-error">
+        <i class="fas fa-triangle-exclamation" style="font-size:1.3rem;"></i>
+        <span>Couldn't load property locations. <a href="#" id="retry-load">Retry</a></span>
+      </div>
+    </div>
+
+    <div class="gis-sidebar">
+      <div class="side-card">
+        <h3>Legend</h3>
+        <div class="legend-row"><span class="legend-swatch green"></span> Paid tenement rate &amp; sanitation levy</div>
+        <div class="legend-row"><span class="legend-swatch yellow"></span> Paid only one of the two</div>
+        <div class="legend-row"><span class="legend-swatch red"></span> Paid neither</div>
+        <div class="unmapped-note" id="unmapped-note" style="margin-top:12px;display:none;">
+          <i class="fas fa-circle-info"></i>
+          <span id="unmapped-note-text"></span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <h3>Properties (<span id="results-count">0</span>)</h3>
+        <ul class="result-list" id="results-list">
+          <li class="empty-note">Loading…</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  const dataUrl = "{% url 'maps_gis_data' %}";
+  // Placeholder-id trick: ask Django to reverse the URL once with a dummy
+  // pk, then swap the dummy back out for each property's real id in JS.
+  // Keeps this in sync with urls.py without hardcoding the path.
+  const viewPropertyUrlTemplate = "{% url 'admin_view_property' 999999999 %}";
+  const colorHex = { green: '#16a34a', yellow: '#d97706', red: '#dc2626' };
+
+  const map = L.map('gis-map').setView([9.0765, 7.3986], 11); // Abuja, FCT default
+
+  // Free, no-signup basemap providers, tried in order — terrain-styled ones
+  // first (per the default view requested), each on completely different
+  // infrastructure so if one is blocked/ad-blocked/unreachable, the others
+  // are unaffected. Every candidate here is picked specifically because it
+  // tolerates real production traffic without an API key.
+  const TILE_PROVIDERS = [
+    {
+      // Genuine terrain/topographic style (shaded relief + contour lines).
+      name: 'OpenTopoMap',
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      // OpenTopoMap only renders real tiles up to zoom 17 — maxNativeZoom
+      // keeps it from going blank when a user zooms in past that; Leaflet
+      // just upscales the last real tile instead.
+      options: { maxZoom: 19, maxNativeZoom: 17, subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap' }
+    },
+    {
+      // Esri's shaded-relief terrain basemap — different infrastructure
+      // entirely from OpenTopoMap, still a terrain look. Its native
+      // resolution tops out around zoom 13, so same upscaling trick.
+      name: 'Esri World Terrain',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
+      options: { maxZoom: 19, maxNativeZoom: 13, attribution: 'Tiles &copy; Esri &mdash; Source: USGS, Esri, TANA, DeLorme, and NPS' }
+    },
+    {
+      // Not terrain-styled, but a reliable plain street map so the page
+      // still works even if both terrain options above are unreachable.
+      name: 'Esri World Street',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      options: { maxZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, USGS, Intermap' }
+    },
+    {
+      name: 'CARTO Positron',
+      url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      options: { maxZoom: 20, subdomains: 'abcd', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }
+    }
+  ];
+
+  let providerIndex = 0;
+  let currentTileLayer = null;
+
+  function activateTileProvider(index) {
+    if (index >= TILE_PROVIDERS.length) {
+      console.warn('Maps & GIS: every basemap provider failed to load tiles.');
+      return; // markers/search still work even with no basemap underneath
+    }
+    if (currentTileLayer) map.removeLayer(currentTileLayer);
+
+    const provider = TILE_PROVIDERS[index];
+    let tileErrorCount = 0;
+    let tileLoadCount = 0;
+    let switched = false;
+
+    function fallBackToNext() {
+      if (switched || providerIndex !== index) return;
+      switched = true;
+      console.warn('Maps & GIS: "' + provider.name + '" basemap failed, trying next provider…');
+      providerIndex++;
+      activateTileProvider(providerIndex);
+    }
+
+    currentTileLayer = L.tileLayer(provider.url, provider.options);
+    currentTileLayer.on('tileload', function () { tileLoadCount++; });
+    currentTileLayer.on('tileerror', function () {
+      tileErrorCount++;
+      // A handful of misses can be normal (edge tiles at the map's border).
+      // A steady stream with nothing loading means this provider is
+      // actually blocked/down — move to the next one.
+      if (tileErrorCount > 4 && tileLoadCount === 0) fallBackToNext();
+    });
+
+    // Safety net: some blocked providers fail silently (serve a blank or
+    // "access blocked" image instead of a real HTTP error), so tileerror
+    // never fires. If nothing has *successfully* rendered within a few
+    // seconds, treat it as failed and move on anyway.
+    setTimeout(function () {
+      if (tileLoadCount === 0) fallBackToNext();
+    }, 4000);
+
+    currentTileLayer.addTo(map);
+  }
+
+  activateTileProvider(providerIndex);
+
+  const loadingEl = document.getElementById('map-loading');
+  const errorEl = document.getElementById('map-error');
+  const searchInput = document.getElementById('gis-search');
+  const resultsList = document.getElementById('results-list');
+  const resultsCount = document.getElementById('results-count');
+  const chips = document.querySelectorAll('.status-chip');
+  let activeColorFilter = 'all';
+  let markerEntries = [];
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
+  }
+
+  function setStat(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function buildMarkers(points) {
+    return points.map(function (row) {
+      const [id, lat, lng, status, name, address, district, propertyType, owner, tenementPaid, sanitationPaid] = row;
+
+      const marker = L.circleMarker([lat, lng], {
+        radius: 9,
+        color: '#fff',
+        weight: 2,
+        fillColor: colorHex[status] || '#6b7280',
+        fillOpacity: 0.95,
+      });
+
+      const tenementBadge = '<span class="popup-badge ' + (tenementPaid ? 'paid' : 'unpaid') + '">Tenement: ' + (tenementPaid ? 'Paid' : 'Unpaid') + '</span>';
+      const sanitationBadge = '<span class="popup-badge ' + (sanitationPaid ? 'paid' : 'unpaid') + '">Sanitation: ' + (sanitationPaid ? 'Paid' : 'Unpaid') + '</span>';
+      const viewUrl = viewPropertyUrlTemplate.replace('999999999', id);
+
+      marker.bindPopup(
+        '<div class="popup-title">' + escapeHtml(name) + '</div>' +
+        '<div class="popup-row">' + escapeHtml(address) + '</div>' +
+        '<div class="popup-row">' + escapeHtml(district) + ' &middot; ' + escapeHtml(propertyType) + '</div>' +
+        '<div class="popup-row">Owner: ' + escapeHtml(owner) + '</div>' +
+        '<div class="popup-badges">' + tenementBadge + sanitationBadge + '</div>' +
+        '<a class="popup-link" href="' + viewUrl + '">View property <i class="fas fa-arrow-right"></i></a>'
+      );
+
+      return {
+        id: id, name: name, address: address, district: district,
+        owner: owner, color: status, marker: marker,
+      };
+    });
+  }
+
+  function applyFilters() {
+    const term = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+    resultsList.innerHTML = '';
+
+    markerEntries.forEach(function (entry) {
+      const colorOk = activeColorFilter === 'all' || entry.color === activeColorFilter;
+      const haystack = (entry.name + ' ' + entry.address + ' ' + entry.district + ' ' + entry.owner).toLowerCase();
+      const searchOk = !term || haystack.indexOf(term) !== -1;
+      const visible = colorOk && searchOk;
+
+      if (visible) {
+        if (!map.hasLayer(entry.marker)) entry.marker.addTo(map);
+        visibleCount++;
+
+        const li = document.createElement('li');
+        li.className = 'result-item';
+        li.innerHTML =
+          '<span class="dot ' + entry.color + '"></span>' +
+          '<span>' +
+            '<span class="ri-name">' + escapeHtml(entry.name) + '</span>' +
+            '<span class="ri-sub">' + escapeHtml(entry.district) + ' &middot; ' + escapeHtml(entry.owner) + '</span>' +
+          '</span>';
+        li.addEventListener('click', function () {
+          map.setView(entry.marker.getLatLng(), 16, { animate: true });
+          entry.marker.openPopup();
+        });
+        resultsList.appendChild(li);
+      } else if (map.hasLayer(entry.marker)) {
+        map.removeLayer(entry.marker);
+      }
+    });
+
+    resultsCount.textContent = visibleCount;
+    if (visibleCount === 0) {
+      resultsList.innerHTML = '<li class="empty-note">No properties match this search/filter.</li>';
+    }
+  }
+
+  function loadData() {
+    loadingEl.style.display = 'flex';
+    errorEl.style.display = 'none';
+
+    fetch(dataUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Request failed: ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        markerEntries.forEach(function (entry) { map.removeLayer(entry.marker); });
+        markerEntries = buildMarkers(data.points || []);
+
+        const s = data.summary || {};
+        setStat('stat-total', s.total || 0);
+        setStat('stat-green', s.green || 0);
+        setStat('stat-yellow', s.yellow || 0);
+        setStat('stat-red', s.red || 0);
+        setStat('stat-unmapped', s.unmapped || 0);
+
+        const noteEl = document.getElementById('unmapped-note');
+        if (s.unmapped) {
+          document.getElementById('unmapped-note-text').textContent =
+            s.unmapped + ' propert' + (s.unmapped === 1 ? 'y' : 'ies') + " without coordinates aren't shown here.";
+          noteEl.style.display = 'flex';
+        } else {
+          noteEl.style.display = 'none';
+        }
+
+        if (markerEntries.length) {
+          const bounds = L.latLngBounds(markerEntries.map(function (e) { return e.marker.getLatLng(); }));
+          map.fitBounds(bounds.pad(0.15));
+        }
+
+        applyFilters();
+        loadingEl.style.display = 'none';
+      })
+      .catch(function () {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'flex';
+      });
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeColorFilter = chip.getAttribute('data-filter');
+      applyFilters();
+    });
+  });
+  document.getElementById('retry-load').addEventListener('click', function (e) {
+    e.preventDefault();
+    loadData();
+  });
+
+  loadData();
+})();
+</script>
 {% endblock %}
