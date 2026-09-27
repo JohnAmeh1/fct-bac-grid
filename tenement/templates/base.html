@@ -1586,8 +1586,9 @@
       <a href="{% url 'admin_manage_support_tickets' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_manage_support_tickets' or request.resolver_match.url_name == 'admin_view_support_ticket' %}active{% endif %}">
         <i class="fas fa-life-ring"></i> Support Tickets
       </a>
-      <a href="#" class="sidebar-link">
-        <i class="fas fa-map-location-dot"></i> Maps &amp; GIS <span class="soon-tag">Soon</span>
+      <a href="{% url 'maps_gis' %}" class="sidebar-link">
+        <i class="fas fa-map-location-dot"></i> Maps &amp; GIS 
+        {% comment %} <span class="soon-tag">Soon</span> {% endcomment %}
       </a>
       <a href="{% url 'admin_site_configuration' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_site_configuration' %}active{% endif %}">
         <i class="fas fa-gear"></i> Settings
