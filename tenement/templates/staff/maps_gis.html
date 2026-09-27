@@ -154,17 +154,55 @@
   const colorHex = { green: '#16a34a', yellow: '#d97706', red: '#dc2626' };
 
   const map = L.map('gis-map').setView([9.0765, 7.3986], 11); // Abuja, FCT default
-  // tile.openstreetmap.org is only meant for light/testing traffic and
-  // actively blocks production sites ("Access blocked: this app is not
-  // following the OSM tile usage policy" — see
-  // https://operations.osmfoundation.org/policies/tiles/). CARTO's basemap
-  // tiles are free, need no signup/API key, and are explicitly fine for
-  // production use as long as attribution is kept.
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-  }).addTo(map);
+
+  // Free, no-signup basemap providers, tried in order. If one is blocked,
+  // rate-limited, or unreachable from this server's network, this quietly
+  // falls back to the next one instead of leaving the map blank — the goal
+  // is a working map regardless of which single provider is having a bad day.
+  const TILE_PROVIDERS = [
+    {
+      // Esri's public basemap CDN — the one most web maps use precisely
+      // because it tolerates production traffic without an API key.
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      options: { maxZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, USGS, Intermap' }
+    },
+    {
+      url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      options: { maxZoom: 20, subdomains: 'abcd', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }
+    },
+    {
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      options: { maxZoom: 17, subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap' }
+    }
+  ];
+
+  let providerIndex = 0;
+  let currentTileLayer = null;
+  let tileErrorCount = 0;
+
+  function activateTileProvider(index) {
+    if (index >= TILE_PROVIDERS.length) return; // out of options — map stays as-is
+    if (currentTileLayer) map.removeLayer(currentTileLayer);
+
+    const provider = TILE_PROVIDERS[index];
+    tileErrorCount = 0;
+    currentTileLayer = L.tileLayer(provider.url, provider.options);
+
+    currentTileLayer.on('tileerror', function () {
+      tileErrorCount++;
+      // A handful of misses can be normal (edge tiles, brief network blip).
+      // A steady stream means this provider is actually blocked/down —
+      // switch to the next one in the list.
+      if (tileErrorCount > 6 && providerIndex === index) {
+        providerIndex++;
+        activateTileProvider(providerIndex);
+      }
+    });
+
+    currentTileLayer.addTo(map);
+  }
+
+  activateTileProvider(providerIndex);
 
   const loadingEl = document.getElementById('map-loading');
   const errorEl = document.getElementById('map-error');
