@@ -5,6 +5,8 @@
 
 {% block content %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <style>
   :root {
     --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
@@ -144,6 +146,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 (function () {
   const dataUrl = "{% url 'maps_gis_data' %}";
@@ -238,6 +241,22 @@
 
   activateTileProvider(providerIndex);
 
+  // Marker clustering: with more than a couple dozen pins, adding every
+  // circle marker straight to the map (and individually toggling them on
+  // every keystroke, as this page used to) is what was making it feel
+  // slow — each one is a DOM node Leaflet has to track and reflow.
+  // MarkerClusterGroup batches all of that into groups that only expand
+  // once you zoom in close enough to tell them apart, and its addLayers()/
+  // clearLayers() are built for swapping the whole visible set in one shot
+  // instead of hundreds of individual add/remove calls.
+  const clusterGroup = L.markerClusterGroup({
+    chunkedLoading: true,      // builds large marker sets in background chunks instead of freezing the tab
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    maxClusterRadius: 50,
+  });
+  map.addLayer(clusterGroup);
+
   const loadingEl = document.getElementById('map-loading');
   const errorEl = document.getElementById('map-error');
   const searchInput = document.getElementById('gis-search');
@@ -246,6 +265,7 @@
   const chips = document.querySelectorAll('.status-chip');
   let activeColorFilter = 'all';
   let markerEntries = [];
+  const RESULT_LIST_CAP = 250; // keep the sidebar list snappy even with a huge dataset; the map itself still shows everything
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -256,6 +276,15 @@
   function setStat(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
+  }
+
+  function debounce(fn, wait) {
+    let t;
+    return function () {
+      clearTimeout(t);
+      const args = arguments;
+      t = setTimeout(function () { fn.apply(null, args); }, wait);
+    };
   }
 
   function buildMarkers(points) {
@@ -270,18 +299,23 @@
         fillOpacity: 0.95,
       });
 
-      const tenementBadge = '<span class="popup-badge ' + (tenementPaid ? 'paid' : 'unpaid') + '">Tenement: ' + (tenementPaid ? 'Paid' : 'Unpaid') + '</span>';
-      const sanitationBadge = '<span class="popup-badge ' + (sanitationPaid ? 'paid' : 'unpaid') + '">Sanitation: ' + (sanitationPaid ? 'Paid' : 'Unpaid') + '</span>';
-      const viewUrl = viewPropertyUrlTemplate.replace('999999999', id);
-
-      marker.bindPopup(
-        '<div class="popup-title">' + escapeHtml(name) + '</div>' +
-        '<div class="popup-row">' + escapeHtml(address) + '</div>' +
-        '<div class="popup-row">' + escapeHtml(district) + ' &middot; ' + escapeHtml(propertyType) + '</div>' +
-        '<div class="popup-row">Owner: ' + escapeHtml(owner) + '</div>' +
-        '<div class="popup-badges">' + tenementBadge + sanitationBadge + '</div>' +
-        '<a class="popup-link" href="' + viewUrl + '">View property <i class="fas fa-arrow-right"></i></a>'
-      );
+      // Popup content is built lazily (on open) rather than up front for
+      // every single marker — with a large property list, pre-building
+      // every popup's HTML at load time was pure wasted work for popups
+      // most people never open.
+      marker.bindPopup(function () {
+        const tenementBadge = '<span class="popup-badge ' + (tenementPaid ? 'paid' : 'unpaid') + '">Tenement: ' + (tenementPaid ? 'Paid' : 'Unpaid') + '</span>';
+        const sanitationBadge = '<span class="popup-badge ' + (sanitationPaid ? 'paid' : 'unpaid') + '">Sanitation: ' + (sanitationPaid ? 'Paid' : 'Unpaid') + '</span>';
+        const viewUrl = viewPropertyUrlTemplate.replace('999999999', id);
+        return (
+          '<div class="popup-title">' + escapeHtml(name) + '</div>' +
+          '<div class="popup-row">' + escapeHtml(address) + '</div>' +
+          '<div class="popup-row">' + escapeHtml(district) + ' &middot; ' + escapeHtml(propertyType) + '</div>' +
+          '<div class="popup-row">Owner: ' + escapeHtml(owner) + '</div>' +
+          '<div class="popup-badges">' + tenementBadge + sanitationBadge + '</div>' +
+          '<a class="popup-link" href="' + viewUrl + '">View property <i class="fas fa-arrow-right"></i></a>'
+        );
+      });
 
       return {
         id: id, name: name, address: address, district: district,
@@ -292,19 +326,34 @@
 
   function applyFilters() {
     const term = searchInput.value.trim().toLowerCase();
-    let visibleCount = 0;
-    resultsList.innerHTML = '';
+    const visibleEntries = [];
 
-    markerEntries.forEach(function (entry) {
+    for (let i = 0; i < markerEntries.length; i++) {
+      const entry = markerEntries[i];
       const colorOk = activeColorFilter === 'all' || entry.color === activeColorFilter;
-      const haystack = (entry.name + ' ' + entry.address + ' ' + entry.district + ' ' + entry.owner).toLowerCase();
-      const searchOk = !term || haystack.indexOf(term) !== -1;
-      const visible = colorOk && searchOk;
+      if (!colorOk) continue;
+      if (term) {
+        const haystack = (entry.name + ' ' + entry.address + ' ' + entry.district + ' ' + entry.owner).toLowerCase();
+        if (haystack.indexOf(term) === -1) continue;
+      }
+      visibleEntries.push(entry);
+    }
 
-      if (visible) {
-        if (!map.hasLayer(entry.marker)) entry.marker.addTo(map);
-        visibleCount++;
+    // One bulk swap instead of per-marker add/remove calls.
+    clusterGroup.clearLayers();
+    clusterGroup.addLayers(visibleEntries.map(function (e) { return e.marker; }));
 
+    resultsCount.textContent = visibleEntries.length;
+
+    const frag = document.createDocumentFragment();
+    if (visibleEntries.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'empty-note';
+      li.textContent = 'No properties match this search/filter.';
+      frag.appendChild(li);
+    } else {
+      const shown = visibleEntries.slice(0, RESULT_LIST_CAP);
+      shown.forEach(function (entry) {
         const li = document.createElement('li');
         li.className = 'result-item';
         li.innerHTML =
@@ -314,20 +363,28 @@
             '<span class="ri-sub">' + escapeHtml(entry.district) + ' &middot; ' + escapeHtml(entry.owner) + '</span>' +
           '</span>';
         li.addEventListener('click', function () {
-          map.setView(entry.marker.getLatLng(), 16, { animate: true });
-          entry.marker.openPopup();
+          // zoomToShowLayer (not a plain setView) because the marker may
+          // currently be tucked inside a cluster bubble — this zooms/
+          // spiderfies as needed so the individual pin actually exists on
+          // the map before we try to open its popup.
+          clusterGroup.zoomToShowLayer(entry.marker, function () {
+            entry.marker.openPopup();
+          });
         });
-        resultsList.appendChild(li);
-      } else if (map.hasLayer(entry.marker)) {
-        map.removeLayer(entry.marker);
+        frag.appendChild(li);
+      });
+      if (visibleEntries.length > RESULT_LIST_CAP) {
+        const more = document.createElement('li');
+        more.className = 'empty-note';
+        more.textContent = '+' + (visibleEntries.length - RESULT_LIST_CAP) + ' more match this filter (all shown on the map).';
+        frag.appendChild(more);
       }
-    });
-
-    resultsCount.textContent = visibleCount;
-    if (visibleCount === 0) {
-      resultsList.innerHTML = '<li class="empty-note">No properties match this search/filter.</li>';
     }
+    resultsList.innerHTML = '';
+    resultsList.appendChild(frag);
   }
+
+  const applyFiltersDebounced = debounce(applyFilters, 180);
 
   function loadData() {
     loadingEl.style.display = 'flex';
@@ -339,7 +396,7 @@
         return res.json();
       })
       .then(function (data) {
-        markerEntries.forEach(function (entry) { map.removeLayer(entry.marker); });
+        clusterGroup.clearLayers(); // in case this is a retry reload, not the first load
         markerEntries = buildMarkers(data.points || []);
 
         const s = data.summary || {};
@@ -372,7 +429,7 @@
       });
   }
 
-  searchInput.addEventListener('input', applyFilters);
+  searchInput.addEventListener('input', applyFiltersDebounced);
   chips.forEach(function (chip) {
     chip.addEventListener('click', function () {
       chips.forEach(function (c) { c.classList.remove('active'); });
