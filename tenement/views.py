@@ -58,7 +58,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
-from django.http import JsonResponse, HttpResponse, FileResponse
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.validators import validate_email
@@ -2018,9 +2018,22 @@ def admin_manage_users(request):
     read_only = request.user.userprofile.user_type == 'govt_admin'
     users = User.objects.select_related('userprofile').filter(userprofile__email_verified=True).order_by('id')
 
+    # Admin sees every account type, including other Admins and Govt Admins.
+    # Govt Admin sees everyone (landlord, staff, field_staff, govt_admin)
+    # EXCEPT Admin accounts — those stay invisible to Govt Admin entirely,
+    # not just non-editable, so the list, counts and filter below all
+    # exclude them rather than showing an empty/blocked result.
+    if read_only:
+        users = users.exclude(userprofile__user_type='admin')
+
     user_type = request.GET.get('user_type')
     if user_type:
-        users = users.filter(userprofile__user_type=user_type)
+        if read_only and user_type == 'admin':
+            # Don't let a crafted ?user_type=admin querystring reveal
+            # that admin accounts exist — just ignore the filter.
+            pass
+        else:
+            users = users.filter(userprofile__user_type=user_type)
 
     status = request.GET.get('status')
     if status == 'active':
@@ -2042,17 +2055,26 @@ def admin_manage_users(request):
     users_page = paginator.get_page(page_number)
     users_page_range = get_paginator_page_range(users_page)
 
+    total_users_qs = UserProfile.objects.filter(email_verified=True)
+    if read_only:
+        # Keep the "Admin" count out of Govt Admin's view entirely, and
+        # drop admins from the overall total so it matches what they can
+        # actually see in the list below.
+        total_users_qs = total_users_qs.exclude(user_type='admin')
+
     context = {
         'users':            users_page,
         'page_range':       users_page_range,
-        'total_users':      UserProfile.objects.filter(email_verified=True).count(),
+        'total_users':      total_users_qs.count(),
         'total_landlords':  UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
-        'total_admins':     UserProfile.objects.filter(user_type='admin', email_verified=True).count(),
         'total_staff':      UserProfile.objects.filter(user_type='staff', email_verified=True).count(),
         'total_field_staff': UserProfile.objects.filter(user_type='field_staff', email_verified=True).count(),
         'total_govt_admins': UserProfile.objects.filter(user_type='govt_admin', email_verified=True).count(),
         'read_only':        read_only,
     }
+    if not read_only:
+        context['total_admins'] = UserProfile.objects.filter(user_type='admin', email_verified=True).count()
+
     return render(request, 'admin/manage_users.html', context)
 
 
@@ -2261,6 +2283,14 @@ def admin_reset_demo_data_progress(request, progress_key):
 @staff_member_required
 def admin_view_user(request, user_id):
     user_obj = get_object_or_404(User.objects.select_related('userprofile'), id=user_id)
+
+    # Govt Admin must not be able to see Admin accounts at all — not even
+    # by navigating straight to the URL — so treat it as if the record
+    # doesn't exist rather than showing a permission-denied message.
+    viewer_profile = request.user.userprofile
+    if viewer_profile.user_type == 'govt_admin' and user_obj.userprofile.user_type == 'admin':
+        raise Http404("User does not exist")
+
     properties = Property.objects.filter(owner=user_obj)
     complaints = Complaint.objects.filter(submitted_by=user_obj)
     context = {
