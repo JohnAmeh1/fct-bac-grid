@@ -86,6 +86,11 @@
   .popup-link{display:inline-block;margin-top:6px;font-size:.78rem;font-weight:700;color:var(--accent);text-decoration:none;}
 
   .unmapped-note{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-3);background:var(--surface-3);border-radius:var(--radius-sm);padding:10px 12px;}
+
+  /* Reset Leaflet's default div-icon box (white square + border) so our
+     custom circular cluster bubble is the only thing drawn — otherwise
+     the two visually stack. */
+  .gis-cluster-icon{background:transparent;border:none;}
 </style>
 
 <div class="pg-wrap">
@@ -129,6 +134,9 @@
         <div class="legend-row"><span class="legend-swatch green"></span> Paid tenement rate &amp; sanitation levy</div>
         <div class="legend-row"><span class="legend-swatch yellow"></span> Paid only one of the two</div>
         <div class="legend-row"><span class="legend-swatch red"></span> Paid neither</div>
+        <div class="legend-row" style="color:var(--ink-3);font-size:.74rem;padding-top:8px;border-top:1px solid var(--border);margin-top:6px;">
+          Grouped numbers zoom out to a slice-coloured circle — the slices show the same red/yellow/green mix as the pins inside, so a cluster's colour always matches its properties' payment status.
+        </div>
         <div class="unmapped-note" id="unmapped-note" style="margin-top:12px;display:none;">
           <i class="fas fa-circle-info"></i>
           <span id="unmapped-note-text"></span>
@@ -165,21 +173,23 @@
   // tolerates real production traffic without an API key.
   const TILE_PROVIDERS = [
     {
-      // Genuine terrain/topographic style (shaded relief + contour lines).
-      name: 'OpenTopoMap',
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      // OpenTopoMap only renders real tiles up to zoom 17 — maxNativeZoom
-      // keeps it from going blank when a user zooms in past that; Leaflet
-      // just upscales the last real tile instead.
-      options: { maxZoom: 19, maxNativeZoom: 17, subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap' }
+      // Terrain-styled (hillshade/contour background) AND genuinely
+      // high-resolution up close — this is the one that actually lets you
+      // zoom in and make out individual properties, unlike a pure
+      // elevation-only terrain layer which goes blurry past city-level
+      // zoom. This is why it's first, ahead of OpenTopoMap.
+      name: 'Esri World Topo',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      options: { maxZoom: 19, maxNativeZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, FAO, NOAA, USGS' }
     },
     {
-      // Esri's shaded-relief terrain basemap — different infrastructure
-      // entirely from OpenTopoMap, still a terrain look. Its native
-      // resolution tops out around zoom 13, so same upscaling trick.
-      name: 'Esri World Terrain',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
-      options: { maxZoom: 19, maxNativeZoom: 13, attribution: 'Tiles &copy; Esri &mdash; Source: USGS, Esri, TANA, DeLorme, and NPS' }
+      // Genuine terrain/topographic style (shaded relief + contour lines),
+      // kept as the backup terrain option — different infrastructure than
+      // Esri above, but native resolution tops out lower (zoom 17), so
+      // it's less sharp than the primary once you're zoomed in close.
+      name: 'OpenTopoMap',
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      options: { maxZoom: 19, maxNativeZoom: 17, subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap' }
     },
     {
       // Not terrain-styled, but a reliable plain street map so the page
@@ -249,11 +259,47 @@
   // once you zoom in close enough to tell them apart, and its addLayers()/
   // clearLayers() are built for swapping the whole visible set in one shot
   // instead of hundreds of individual add/remove calls.
+  // Leaflet.markercluster's default cluster bubbles are colored by CLUSTER
+  // SIZE (small=green, medium=yellow, large=orange) — a completely
+  // different scale from our red/yellow/green PAYMENT-STATUS legend, which
+  // is exactly what was reading as a "mix up." This iconCreateFunction
+  // replaces that with a pie-style bubble built from the actual paid/
+  // partial/unpaid composition of the properties inside each cluster, so
+  // cluster colors mean the same thing pin colors do.
+  function createStatusClusterIcon(cluster) {
+    const children = cluster.getAllChildMarkers();
+    const counts = { green: 0, yellow: 0, red: 0 };
+    children.forEach(function (m) {
+      const s = m.options.status;
+      if (counts.hasOwnProperty(s)) counts[s]++;
+    });
+    const total = children.length || 1;
+    const greenDeg = (counts.green / total) * 360;
+    const yellowDeg = (counts.yellow / total) * 360;
+    // red fills the remainder, so rounding never leaves a gap
+    const background = 'conic-gradient(' +
+      colorHex.green + ' 0deg ' + greenDeg + 'deg, ' +
+      colorHex.yellow + ' ' + greenDeg + 'deg ' + (greenDeg + yellowDeg) + 'deg, ' +
+      colorHex.red + ' ' + (greenDeg + yellowDeg) + 'deg 360deg)';
+    const size = total < 10 ? 34 : total < 50 ? 42 : 50;
+
+    const html =
+      '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + background + ';' +
+      'display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">' +
+        '<span style="background:#fff;border-radius:50%;width:' + (size - 16) + 'px;height:' + (size - 16) + 'px;' +
+        'display:flex;align-items:center;justify-content:center;font-family:\'DM Sans\',sans-serif;font-weight:800;' +
+        'font-size:' + (size < 40 ? 11 : 12) + 'px;color:#0f1117;">' + total + '</span>' +
+      '</div>';
+
+    return L.divIcon({ html: html, className: 'gis-cluster-icon', iconSize: L.point(size, size) });
+  }
+
   const clusterGroup = L.markerClusterGroup({
     chunkedLoading: true,      // builds large marker sets in background chunks instead of freezing the tab
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: false,
     maxClusterRadius: 50,
+    iconCreateFunction: createStatusClusterIcon,
   });
   map.addLayer(clusterGroup);
 
@@ -297,6 +343,7 @@
         weight: 2,
         fillColor: colorHex[status] || '#6b7280',
         fillOpacity: 0.95,
+        status: status, // read by createStatusClusterIcon() to color cluster bubbles to match
       });
 
       // Popup content is built lazily (on open) rather than up front for
