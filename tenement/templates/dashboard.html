@@ -1179,7 +1179,7 @@
     </div>
     <a class="emg-sos-btn" href="{% url 'report_emergency' %}"><i class="fas fa-triangle-exclamation"></i> Emergency</a>
   </div>
-  {% elif open_emergency_count %}
+  {% elif open_emergency_count and user_type != 'govt_admin' %}
   <a class="emg-alert-banner fade" href="{% url 'manage_emergencies' %}">
     <i class="fas fa-triangle-exclamation"></i>
     <span>{{ open_emergency_count }} open emergency alert{{ open_emergency_count|pluralize }} need{{ open_emergency_count|pluralize:"s," }} attention</span>
@@ -1750,10 +1750,6 @@
     <a href="{% url 'admin_manage_complaints' %}" class="qa-tile amber">
       <span class="qa-icon"><i class="fas fa-flag"></i></span>Reports
       {% if open_complaints %}<span class="chip red" style="position:absolute;margin-top:-44px;margin-left:44px;">{{ open_complaints }}</span>{% endif %}
-    </a>
-    <a href="{% url 'manage_emergencies' %}" class="qa-tile red">
-      <span class="qa-icon"><i class="fas fa-triangle-exclamation"></i></span>Emergencies
-      {% if open_emergency_count %}<span class="chip red" style="position:absolute;margin-top:-44px;margin-left:44px;">{{ open_emergency_count }}</span>{% endif %}
     </a>
   </div>
 

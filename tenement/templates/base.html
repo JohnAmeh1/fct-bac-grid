@@ -1705,6 +1705,19 @@
     <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
       <i class="fas fa-user-circle"></i><span>Profile</span>
     </a>
+    {% elif user.userprofile.user_type == 'govt_admin' %}
+    <a href="{% url 'admin_manage_users' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'admin_manage_users' %}active{% endif %}">
+      <i class="fas fa-users"></i><span>Users</span>
+    </a>
+    <a href="{% url 'admin_revenue_list' %}" class="mobile-bottom-link mobile-bottom-action {% if request.resolver_match.url_name == 'admin_revenue_list' %}active{% endif %}">
+      <span class="mobile-bottom-action-icon"><i class="fas fa-sack-dollar"></i></span><span>Revenue</span>
+    </a>
+    <a href="{% url 'admin_manage_complaints' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'admin_manage_complaints' %}active{% endif %}">
+      <i class="fas fa-flag"></i><span>Reports</span>
+    </a>
+    <a href="{% url 'profile' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-user-circle"></i><span>Profile</span>
+    </a>
     {% else %}
     <a href="{% url 'landlord_properties' %}" class="mobile-bottom-link {% if request.resolver_match.url_name == 'landlord_properties' %}active{% endif %}">
       <i class="fas fa-building"></i><span>Properties</span>
@@ -1735,7 +1748,7 @@
           <div class="topbar-avatar-circle">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</div>
           <div class="topbar-name">
             <strong>{{ user.get_full_name|default:user.username }}</strong>
-            <span>{% if user.userprofile.user_type == 'admin' %}System Administrator{% elif user.userprofile.user_type == 'field_staff' %}Field Staff{% else %}Staff{% endif %}</span>
+            <span>{% if user.userprofile.user_type == 'admin' %}System Administrator{% elif user.userprofile.user_type == 'field_staff' %}Field Staff{% elif user.userprofile.user_type == 'govt_admin' %}Govt Admin{% else %}Staff{% endif %}</span>
           </div>
         </a>
       </div>
