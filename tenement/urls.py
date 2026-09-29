@@ -69,6 +69,15 @@ urlpatterns = [
     path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
     path('notifications/api/', views.get_notifications, name='get_notifications_api'),
 
+    # ── Emergency Alerts ────────────────────────────────────────
+    path('emergency/report/', views.report_emergency, name='report_emergency'),
+    path('emergency/', views.my_emergencies, name='my_emergencies'),
+    path('emergency/<int:emergency_id>/', views.view_emergency, name='view_emergency'),
+    path('emergency/<int:emergency_id>/close/', views.close_emergency, name='close_emergency'),
+    path('management/emergencies/', views.manage_emergencies, name='manage_emergencies'),
+    path('management/emergencies/<int:emergency_id>/', views.admin_view_emergency, name='admin_view_emergency'),
+    path('management/emergencies/<int:emergency_id>/in-progress/', views.mark_emergency_in_progress, name='mark_emergency_in_progress'),
+
     # ── Admin: Complaints ──────────────────────────────────────
     path('management/complaints/', views.admin_manage_complaints, name='admin_manage_complaints'),
     path('management/complaints/<int:complaint_id>/', views.admin_view_complaint, name='admin_view_complaint'),

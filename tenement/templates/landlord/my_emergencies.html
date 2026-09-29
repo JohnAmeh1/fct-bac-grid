@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Emergencies | FCT BAC Grid{% endblock %}
+
+{% block content %}
+{% include 'emergency/_styles.html' %}
+
+<div class="pg-wrap">
+  <div class="pg-header">
+    <div>
+      <h1 class="pg-title"><i class="fas fa-triangle-exclamation"></i> My Emergencies</h1>
+      <p class="pg-sub">Emergency alerts you have sent to BAC GRID staff.</p>
+    </div>
+    <a href="{% url 'report_emergency' %}" class="btn btn-sos"><i class="fas fa-triangle-exclamation"></i> Report an Emergency</a>
+  </div>
+
+  <div class="stat-row three" style="grid-template-columns:repeat(2,1fr);">
+    <div class="stat-pill red"><div class="num">{{ active_count }}</div><div class="lbl">Active</div></div>
+    <div class="stat-pill"><div class="num">{{ total_count }}</div><div class="lbl">Total sent</div></div>
+  </div>
+
+  {% if emergencies %}
+    {% for em in emergencies %}
+    <div class="emg-card is-{{ em.status }}">
+      <div class="emg-top">
+        <div>
+          <p class="emg-prop-name">{{ em.property.name }}</p>
+          <div class="emg-prop-sub">{{ em.property.address }} &middot; {{ em.property.district }}</div>
+        </div>
+        <span class="emg-status {{ em.status }}">
+          {% if em.status == 'open' %}<i class="fas fa-circle" style="font-size:.5rem;"></i> Open
+          {% elif em.status == 'in_progress' %}<i class="fas fa-spinner"></i> In Progress
+          {% else %}<i class="fas fa-check"></i> Closed{% endif %}
+        </span>
+      </div>
+
+      <div class="emg-meta">
+        <strong>Sent:</strong> {{ em.created_at|date:"M d, Y \a\t g:i A" }} ({{ em.created_at|timesince }} ago)
+      </div>
+
+      {% if em.message %}
+      <div class="emg-message">{{ em.message|linebreaksbr }}</div>
+      {% else %}
+      <div class="emg-message none">No details provided.</div>
+      {% endif %}
+
+      <div class="emg-foot">
+        <div class="emg-links">
+          <a href="{% url 'view_emergency' em.id %}" class="emg-link"><i class="fas fa-eye"></i> View details</a>
+        </div>
+        {% if em.status != 'closed' %}
+        <div class="emg-actions">
+          <form method="POST" action="{% url 'close_emergency' em.id %}" onsubmit="return confirm('Close this emergency? Only do this if the situation has been resolved.');">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="list">
+            <button type="submit" class="btn emg-close-btn"><i class="fas fa-check"></i> Close Emergency</button>
+          </form>
+        </div>
+        {% else %}
+        <span class="emg-closed-note">
+          Closed{% if em.closed_by_id == em.reported_by_id %} by you{% elif em.closed_by %} by BAC GRID staff{% endif %}
+          {% if em.closed_at %} on {{ em.closed_at|date:"M d, Y \a\t g:i A" }}{% endif %}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if emergencies.has_other_pages %}
+    <div class="pager">
+      {% if emergencies.has_previous %}<a href="?page={{ emergencies.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>{% endif %}
+      {% for p in page_range %}
+        {% if p == emergencies.number %}<span class="current">{{ p }}</span>{% else %}<a href="?page={{ p }}">{{ p }}</a>{% endif %}
+      {% endfor %}
+      {% if emergencies.has_next %}<a href="?page={{ emergencies.next_page_number }}"><i class="fas fa-chevron-right"></i></a>{% endif %}
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <i class="fas fa-shield-heart"></i>
+      You haven't sent any emergency alerts.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

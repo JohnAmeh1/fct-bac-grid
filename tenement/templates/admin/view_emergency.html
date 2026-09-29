@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Emergency #{{ emergency.id }} | FCT BAC Grid{% endblock %}
+
+{% block content %}
+{% include 'emergency/_styles.html' %}
+
+<div class="pg-wrap">
+  <a href="{% url 'manage_emergencies' %}" class="back-link"><i class="fas fa-arrow-left"></i> All emergency alerts</a>
+
+  <div class="pg-header">
+    <div>
+      <h1 class="pg-title"><i class="fas fa-triangle-exclamation"></i> Emergency at {{ emergency.property.name }}</h1>
+      <p class="pg-sub">Alert #{{ emergency.id }} &middot; reported {{ emergency.created_at|timesince }} ago</p>
+    </div>
+    <span class="emg-status {{ emergency.status }}">
+      {% if emergency.status == 'open' %}<i class="fas fa-circle" style="font-size:.5rem;"></i> Open
+      {% elif emergency.status == 'in_progress' %}<i class="fas fa-spinner"></i> In Progress
+      {% else %}<i class="fas fa-check"></i> Closed{% endif %}
+    </span>
+  </div>
+
+  <div class="detail-card" style="margin-bottom:14px;">
+    <h2>Details from the landlord</h2>
+    {% if emergency.message %}
+    <div class="emg-message" style="margin-bottom:0;">{{ emergency.message|linebreaksbr }}</div>
+    {% else %}
+    <div class="emg-message none" style="margin-bottom:0;">No details provided.</div>
+    {% endif %}
+  </div>
+
+  <div class="detail-grid">
+    <div class="detail-card">
+      <h2>Landlord</h2>
+      <div class="kv"><span class="k">Name</span><span class="v">{{ emergency.reported_by.get_full_name|default:emergency.reported_by.username }}</span></div>
+      <div class="kv"><span class="k">Username</span><span class="v">{{ emergency.reported_by.username }}</span></div>
+      <div class="kv"><span class="k">Phone</span><span class="v">{% if emergency.reported_by.userprofile.phone_number %}<a href="tel:{{ emergency.reported_by.userprofile.phone_number }}">{{ emergency.reported_by.userprofile.phone_number }}</a>{% else %}Not provided{% endif %}</span></div>
+      <div class="kv"><span class="k">Email</span><span class="v">{% if emergency.contact_email %}<a href="mailto:{{ emergency.contact_email }}">{{ emergency.contact_email }}</a>{% else %}Not provided{% endif %}</span></div>
+    </div>
+
+    <div class="detail-card">
+      <h2>Property</h2>
+      <div class="kv"><span class="k">Name</span><span class="v">{{ emergency.property.name }}</span></div>
+      <div class="kv"><span class="k">Address</span><span class="v">{{ emergency.property.address }}</span></div>
+      <div class="kv"><span class="k">District</span><span class="v">{{ emergency.property.district }}</span></div>
+      <div class="kv"><span class="k">Type</span><span class="v">{{ emergency.property.get_property_type_display }}</span></div>
+      {% if emergency.property.nearest_community %}<div class="kv"><span class="k">Nearest community</span><span class="v">{{ emergency.property.nearest_community }}</span></div>{% endif %}
+      <div class="kv"><span class="k">Record</span><span class="v"><a href="{% url 'admin_view_property' emergency.property.id %}">View property <i class="fas fa-arrow-right"></i></a></span></div>
+    </div>
+
+    <div class="detail-card">
+      <h2>Location</h2>
+      {% if emergency.google_maps_url %}
+      <div class="kv"><span class="k">GPS</span><span class="v">{{ emergency.property.latitude|stringformat:"s" }}, {{ emergency.property.longitude|stringformat:"s" }}</span></div>
+      <div style="margin-top:12px;">
+        <a href="{{ emergency.google_maps_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-map" style="width:100%;"><i class="fas fa-location-dot"></i> Open in Google Maps</a>
+      </div>
+      {% else %}
+      <div class="loc-unavailable" style="font-size:.9rem;"><i class="fas fa-location-crosshairs"></i> Location unavailable</div>
+      <p class="pg-sub" style="margin-top:8px;">This property has no GPS coordinates on record. Use the address above.</p>
+      {% endif %}
+    </div>
+
+    <div class="detail-card">
+      <h2>Status history</h2>
+      <ul class="timeline">
+        <li class="done-red"><strong>Reported</strong> by {{ emergency.reported_by.get_full_name|default:emergency.reported_by.username }}
+          <small>{{ emergency.created_at|date:"M d, Y \a\t g:i A" }}</small></li>
+        {% if emergency.in_progress_at %}
+        <li class="done-amber"><strong>In Progress</strong>{% if emergency.in_progress_by %} — {{ emergency.in_progress_by.get_full_name|default:emergency.in_progress_by.username }}{% endif %}
+          <small>{{ emergency.in_progress_at|date:"M d, Y \a\t g:i A" }}</small></li>
+        {% endif %}
+        {% if emergency.status == 'closed' %}
+        <li class="done-green"><strong>Closed</strong>{% if emergency.closed_by %} — {{ emergency.closed_by.get_full_name|default:emergency.closed_by.username }}{% if emergency.closed_by_id == emergency.reported_by_id %} (landlord){% endif %}{% endif %}
+          {% if emergency.closed_at %}<small>{{ emergency.closed_at|date:"M d, Y \a\t g:i A" }}</small>{% endif %}</li>
+        {% endif %}
+        <li><small>Staff email notification: {% if emergency.email_notified %}delivered{% else %}not delivered — check the in-app notification and contact the landlord directly{% endif %}</small></li>
+      </ul>
+    </div>
+  </div>
+
+  {% if emergency.status != 'closed' and not read_only %}
+  <div class="emg-actions">
+    {% if emergency.status == 'open' %}
+    <form method="POST" action="{% url 'mark_emergency_in_progress' emergency.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="detail">
+      <button type="submit" class="btn btn-progress"><i class="fas fa-spinner"></i> Mark In Progress</button>
+    </form>
+    {% endif %}
+    <form method="POST" action="{% url 'close_emergency' emergency.id %}" onsubmit="return confirm('Close this emergency report? Only do this once the situation has been resolved.');">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="detail">
+      <button type="submit" class="btn emg-close-btn"><i class="fas fa-check"></i> Close Emergency</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

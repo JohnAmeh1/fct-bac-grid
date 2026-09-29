@@ -38,12 +38,12 @@ from .forms import (
     FixedResidentialRateForm, AnnouncementForm, StaffLandlordCreationForm,
     StaffPropertyRegistrationForm, OTPVerificationForm,
     ForgotPasswordForm, ForgotPasswordOTPForm, ResetPasswordForm,
-    SupportTicketForm, AdminSupportTicketUpdateForm,
+    SupportTicketForm, AdminSupportTicketUpdateForm, EmergencyReportForm,
 )
 from .models import (
     UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment,
     Announcement, UserAnnouncementRead, OTP, SupportTicket, Notification,
-    TICKET_STATUS_CHOICES, TICKET_CATEGORY_CHOICES,
+    TICKET_STATUS_CHOICES, TICKET_CATEGORY_CHOICES, Emergency,
 )
 from django.contrib.auth.hashers import make_password
 from io import BytesIO
@@ -1409,6 +1409,7 @@ def dashboard(request):
             'total_landlords':           UserProfile.objects.filter(user_type='landlord', email_verified=True).count(),
             'total_properties':          Property.objects.count(),
             'open_complaints':           Complaint.objects.filter(status='open').count(),
+            'open_emergency_count':      Emergency.objects.filter(status='open').count(),
             'total_outstanding_payments': outstanding_totals['total_outstanding'],
             'outstanding_tenement_total': outstanding_totals['tenement_outstanding'],
             'outstanding_sanitation_total': outstanding_totals['sanitation_outstanding'],
@@ -1533,6 +1534,7 @@ def dashboard(request):
             'obligations_list': obligations_list,
             'paid_coverage_list': paid_coverage_list,
             'total_complaints': my_complaints.count(),
+            'active_emergency_count': Emergency.objects.filter(reported_by=request.user).exclude(status='closed').count(),
             'open_complaints': my_complaints.filter(status='open').count(),
             'paid_obligations_count': len(paid_coverage_list),
             'outstanding_obligations_count': len(obligations_list),
@@ -2008,6 +2010,382 @@ def get_notifications(request):
             for n in notifications
         ],
     })
+
+
+# ── Emergency alerts ──────────────────────────────────────────────────────────
+# Landlords raise an alert for one of their own properties; admin/staff/
+# field_staff acknowledge (In Progress) and close alerts; Govt Admin can read
+# them but never change them (same rule as the other operational pages).
+EMERGENCY_MANAGE_ROLES = MANAGED_PROPERTY_ROLES   # may acknowledge / close any alert
+EMERGENCY_EMAIL_ROLES = ['admin', 'staff']        # default email recipients
+EMERGENCY_STATUS_FILTERS = ('open', 'in_progress', 'closed', 'all')
+EMERGENCY_RATE_LIMIT = 3            # alerts per user ...
+EMERGENCY_RATE_WINDOW = 10 * 60     # ... per 10 minutes
+EMERGENCY_DUPLICATE_WINDOW = 60     # seconds — swallows accidental double-taps
+
+
+def _user_role(user):
+    return getattr(getattr(user, 'userprofile', None), 'user_type', None)
+
+
+def _display_name(user):
+    return (user.get_full_name() or '').strip() or user.username
+
+
+def _emergency_contact_email(user):
+    """The landlord's email, unless it's one of our auto-generated placeholder addresses."""
+    email = (user.email or '').strip()
+    return '' if email.lower().endswith(PLACEHOLDER_EMAIL_DOMAIN) else email
+
+
+def _annotate_emergencies(emergencies):
+    for em in emergencies:
+        em.contact_email = _emergency_contact_email(em.reported_by)
+    return emergencies
+
+
+def _notify_emergency_managers(message, link):
+    users = User.objects.filter(is_active=True, userprofile__user_type__in=EMERGENCY_MANAGE_ROLES)
+    Notification.objects.bulk_create(
+        [Notification(user=u, message=message[:255], link=link) for u in users]
+    )
+
+
+def _emergency_alert_recipients():
+    """
+    Who gets the alert email. Precedence:
+      1. settings.EMERGENCY_ALERT_RECIPIENTS (list, or comma-separated string)
+         when set — an explicit list always wins.
+      2. Otherwise: the Site Configuration contact email plus every active,
+         email-verified admin and staff user.
+    Blank, duplicate, malformed and placeholder addresses are dropped.
+    """
+    configured = getattr(settings, 'EMERGENCY_ALERT_RECIPIENTS', None)
+    if configured:
+        raw = configured.split(',') if isinstance(configured, str) else list(configured)
+    else:
+        raw = [SiteConfiguration.get_config().contact_email]
+        raw += list(
+            User.objects.filter(
+                is_active=True,
+                userprofile__user_type__in=EMERGENCY_EMAIL_ROLES,
+                userprofile__email_verified=True,
+            ).exclude(email='').values_list('email', flat=True)
+        )
+
+    seen, recipients = set(), []
+    for address in raw:
+        address = (address or '').strip()
+        key = address.lower()
+        if not address or key in seen or key.endswith(PLACEHOLDER_EMAIL_DOMAIN):
+            continue
+        try:
+            validate_email(address)
+        except ValidationError:
+            continue
+        seen.add(key)
+        recipients.append(address)
+    return recipients
+
+
+def _send_emergency_alert_email(emergency, dashboard_url):
+    """Email every configured recipient. Returns how many sends succeeded; never raises for a bad recipient."""
+    recipients = _emergency_alert_recipients()
+    if not recipients:
+        logger.warning("Emergency %s saved but no valid alert recipients are configured.", emergency.pk)
+        return 0
+
+    prop = emergency.property
+    landlord = emergency.reported_by
+    reported_at = timezone.localtime(emergency.created_at).strftime('%d %b %Y, %I:%M %p')
+    if emergency.google_maps_url:
+        location = f"{prop.latitude}, {prop.longitude}\n    Google Maps: {emergency.google_maps_url}"
+    else:
+        location = "Location unavailable (no GPS coordinates on this property)"
+
+    subject = f"EMERGENCY ALERT – {prop.name} – FCT BAC Grid"
+    message = (
+        "An emergency alert has been raised on FCT BAC Grid.\n\n"
+        "LANDLORD\n"
+        f"    Name:  {_display_name(landlord)}\n"
+        f"    Phone: {landlord.userprofile.phone_number or 'Not provided'}\n"
+        f"    Email: {_emergency_contact_email(landlord) or 'Not provided'}\n\n"
+        "PROPERTY\n"
+        f"    Name:     {prop.name}\n"
+        f"    Address:  {prop.address}\n"
+        f"    District: {prop.district}\n"
+        f"    Type:     {prop.get_property_type_display()}\n"
+        f"    Location: {location}\n\n"
+        f"REPORTED AT\n    {reported_at}\n\n"
+        f"DETAILS\n    {emergency.message or 'No details provided.'}\n\n"
+        f"View and manage this alert:\n    {dashboard_url}\n"
+    )
+
+    sender = _configured_sender_email()
+    sent = 0
+    for address in recipients:
+        try:
+            send_mail(subject, message, sender, [address], fail_silently=False)
+            sent += 1
+        except Exception:
+            logger.exception("Failed to send emergency alert %s to %s", emergency.pk, address)
+    return sent
+
+
+def _dispatch_emergency_alert(request, emergency):
+    """
+    Best-effort fan-out (in-app notifications + email) for a NEW alert. The
+    emergency row is already saved before this runs, and nothing in here is
+    allowed to raise — a broken mail server must never lose an alert.
+    Returns the number of emails delivered.
+    """
+    detail_path = reverse('admin_view_emergency', args=[emergency.id])
+    try:
+        _notify_emergency_managers(
+            f'EMERGENCY: {_display_name(emergency.reported_by)} reported an emergency at "{emergency.property.name}".',
+            link=detail_path,
+        )
+    except Exception:
+        logger.exception("Failed to create in-app notifications for emergency %s", emergency.pk)
+
+    try:
+        sent = _send_emergency_alert_email(emergency, request.build_absolute_uri(detail_path))
+    except Exception:
+        logger.exception("Failed to send emergency alert email for emergency %s", emergency.pk)
+        sent = 0
+
+    if sent:
+        Emergency.objects.filter(pk=emergency.pk).update(email_notified=True)
+        emergency.email_notified = True
+    return sent
+
+
+def _emergency_redirect(request, emergency, is_manager):
+    """
+    Where to go after an action. `next` is matched against a fixed set of
+    keywords (never used as a URL), so it can't be abused as an open redirect.
+    """
+    if request.POST.get('next') == 'detail':
+        return redirect('admin_view_emergency' if is_manager else 'view_emergency', emergency_id=emergency.id)
+    if is_manager:
+        status = request.POST.get('status')
+        if status in EMERGENCY_STATUS_FILTERS:
+            return redirect(f"{reverse('manage_emergencies')}?status={status}")
+        return redirect('manage_emergencies')
+    return redirect('my_emergencies')
+
+
+# ── Emergency alerts: landlord ────────────────────────────────────────────────
+@login_required
+@verified_email_required
+def report_emergency(request):
+    if _user_role(request.user) != 'landlord':
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    if not Property.objects.filter(owner=request.user).exists():
+        messages.error(request, "Register a property first — an emergency alert must be linked to one of your properties.")
+        return redirect('register_property')
+
+    if request.method == 'POST':
+        form = EmergencyReportForm(request.POST, user=request.user)
+        if form.is_valid():
+            prop = form.cleaned_data['property']  # already guaranteed to be owned by this user
+
+            just_now = timezone.now() - timedelta(seconds=EMERGENCY_DUPLICATE_WINDOW)
+            if Emergency.objects.filter(
+                reported_by=request.user, property=prop, created_at__gte=just_now
+            ).exclude(status='closed').exists():
+                messages.info(request, "Your alert for this property was sent moments ago — BAC GRID staff have it.")
+                return redirect('my_emergencies')
+
+            if _is_rate_limited(f'emergency_report:{request.user.pk}', EMERGENCY_RATE_LIMIT, EMERGENCY_RATE_WINDOW):
+                messages.error(
+                    request,
+                    "You have sent several alerts in a short time. If this is urgent, please call BAC GRID support directly.",
+                )
+                return redirect('my_emergencies')
+
+            emergency = form.save(commit=False)
+            emergency.reported_by = request.user
+            emergency.status = 'open'
+            emergency.save()
+
+            sent = _dispatch_emergency_alert(request, emergency)
+            if sent:
+                messages.success(request, "Emergency alert sent. BAC GRID staff have been notified.")
+            else:
+                messages.warning(
+                    request,
+                    "Your emergency alert is saved and visible to BAC GRID staff, but the email notification "
+                    "could not be delivered. If this is urgent, please also call BAC GRID support.",
+                )
+            return redirect('my_emergencies')
+        messages.error(request, "Please select one of your properties and try again.")
+    else:
+        form = EmergencyReportForm(user=request.user)
+
+    return render(request, 'landlord/report_emergency.html', {'form': form})
+
+
+@login_required
+@verified_email_required
+def my_emergencies(request):
+    if _user_role(request.user) != 'landlord':
+        return redirect('dashboard')
+
+    mine = Emergency.objects.filter(reported_by=request.user)
+    paginator = Paginator(
+        mine.select_related('property', 'closed_by', 'in_progress_by'), get_pagination_size()
+    )
+    emergencies = paginator.get_page(request.GET.get('page'))
+    return render(request, 'landlord/my_emergencies.html', {
+        'emergencies': emergencies,
+        'page_range': get_paginator_page_range(emergencies),
+        'active_count': mine.exclude(status='closed').count(),
+        'total_count': mine.count(),
+    })
+
+
+@login_required
+@verified_email_required
+def view_emergency(request, emergency_id):
+    if _user_role(request.user) != 'landlord':
+        return redirect('dashboard')
+    # Filtering on reported_by means another landlord's alert is a plain 404.
+    emergency = get_object_or_404(
+        Emergency.objects.select_related('property', 'closed_by', 'in_progress_by'),
+        pk=emergency_id, reported_by=request.user,
+    )
+    return render(request, 'landlord/view_emergency.html', {'emergency': emergency})
+
+
+# ── Emergency alerts: close (landlord — own only — and staff/admin) ───────────
+@login_required
+@verified_email_required
+@require_POST
+def close_emergency(request, emergency_id):
+    role = _user_role(request.user)
+    queryset = Emergency.objects.select_related('property', 'reported_by')
+
+    if role in EMERGENCY_MANAGE_ROLES:
+        is_manager = True
+        emergency = get_object_or_404(queryset, pk=emergency_id)
+    elif role == 'landlord':
+        is_manager = False
+        emergency = get_object_or_404(queryset, pk=emergency_id, reported_by=request.user)
+    else:
+        messages.error(request, "You do not have permission to close emergency alerts.")
+        return redirect('dashboard')
+
+    now = timezone.now()
+    # Conditional UPDATE: only one of two racing requests can flip it to closed,
+    # so closed_by/closed_at always describe the request that actually closed it.
+    updated = Emergency.objects.filter(pk=emergency.pk).exclude(status='closed').update(
+        status='closed', closed_by=request.user, closed_at=now, updated_at=now,
+    )
+    if not updated:
+        messages.info(request, "This emergency was already closed.")
+        return _emergency_redirect(request, emergency, is_manager)
+
+    try:
+        if is_manager:
+            if emergency.reported_by_id != request.user.id:
+                Notification.notify(
+                    emergency.reported_by,
+                    f'Your emergency alert for "{emergency.property.name}" was closed by BAC GRID staff.'[:255],
+                    link=reverse('view_emergency', args=[emergency.id]),
+                )
+        else:
+            _notify_emergency_managers(
+                f'{_display_name(request.user)} closed their emergency alert for "{emergency.property.name}".',
+                link=reverse('admin_view_emergency', args=[emergency.id]),
+            )
+    except Exception:
+        logger.exception("Failed to create notifications when closing emergency %s", emergency.pk)
+
+    messages.success(request, "Emergency closed.")
+    return _emergency_redirect(request, emergency, is_manager)
+
+
+# ── Emergency alerts: staff / admin ───────────────────────────────────────────
+@property_view_required
+def manage_emergencies(request):
+    status_filter = request.GET.get('status', 'open')
+    if status_filter not in EMERGENCY_STATUS_FILTERS:
+        status_filter = 'open'
+
+    emergencies = Emergency.objects.select_related(
+        'property', 'reported_by', 'reported_by__userprofile', 'in_progress_by', 'closed_by'
+    )
+    if status_filter != 'all':
+        emergencies = emergencies.filter(status=status_filter)
+
+    counts = Emergency.objects.aggregate(
+        open=Count('id', filter=Q(status='open')),
+        in_progress=Count('id', filter=Q(status='in_progress')),
+        closed=Count('id', filter=Q(status='closed')),
+        total=Count('id'),
+    )
+
+    paginator = Paginator(emergencies, get_pagination_size())
+    page = paginator.get_page(request.GET.get('page'))
+    _annotate_emergencies(page.object_list)
+
+    return render(request, 'admin/manage_emergencies.html', {
+        'emergencies':        page,
+        'page_range':         get_paginator_page_range(page),
+        'status_filter':      status_filter,
+        'open_count':         counts['open'],
+        'in_progress_count':  counts['in_progress'],
+        'closed_count':       counts['closed'],
+        'total_count':        counts['total'],
+        'read_only':          _user_role(request.user) == 'govt_admin',
+    })
+
+
+@property_view_required
+def admin_view_emergency(request, emergency_id):
+    emergency = get_object_or_404(
+        Emergency.objects.select_related(
+            'property', 'property__owner', 'reported_by', 'reported_by__userprofile',
+            'in_progress_by', 'closed_by',
+        ),
+        pk=emergency_id,
+    )
+    _annotate_emergencies([emergency])
+    return render(request, 'admin/view_emergency.html', {
+        'emergency': emergency,
+        'read_only': _user_role(request.user) == 'govt_admin',
+    })
+
+
+@login_required
+@verified_email_required
+@require_POST
+def mark_emergency_in_progress(request, emergency_id):
+    if _user_role(request.user) not in EMERGENCY_MANAGE_ROLES:
+        messages.error(request, "You do not have permission to update emergency alerts.")
+        return redirect('dashboard')
+
+    emergency = get_object_or_404(Emergency.objects.select_related('property', 'reported_by'), pk=emergency_id)
+    now = timezone.now()
+    updated = Emergency.objects.filter(pk=emergency.pk, status='open').update(
+        status='in_progress', in_progress_by=request.user, in_progress_at=now, updated_at=now,
+    )
+    if updated:
+        try:
+            Notification.notify(
+                emergency.reported_by,
+                f'Your emergency alert for "{emergency.property.name}" has been acknowledged and is now In Progress.'[:255],
+                link=reverse('view_emergency', args=[emergency.id]),
+            )
+        except Exception:
+            logger.exception("Failed to notify landlord for emergency %s", emergency.pk)
+        messages.success(request, "Emergency marked as In Progress.")
+    else:
+        messages.info(request, "Only an Open emergency can be marked In Progress.")
+    return _emergency_redirect(request, emergency, True)
 
 
 # ── Admin: Users ──────────────────────────────────────────────────────────────

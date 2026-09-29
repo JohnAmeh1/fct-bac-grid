@@ -14,6 +14,7 @@ from .models import (
     Announcement,
     UserAnnouncementRead,
     OTP,
+    Emergency,
 )
 
 
@@ -325,3 +326,29 @@ class OTPAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+# ---------------------------------------------------------------------------
+# Emergency alerts
+# ---------------------------------------------------------------------------
+@admin.register(Emergency)
+class EmergencyAdmin(admin.ModelAdmin):
+    list_display = ("property", "reported_by", "status", "created_at", "in_progress_by", "closed_by", "closed_at", "email_notified")
+    list_filter = ("status", "email_notified")
+    search_fields = ("property__name", "property__address", "reported_by__username", "reported_by__email", "message")
+    readonly_fields = (
+        "property", "reported_by", "message", "created_at", "updated_at",
+        "in_progress_by", "in_progress_at", "closed_by", "closed_at", "email_notified",
+    )
+    ordering = ("-created_at",)
+    fieldsets = (
+        ("Alert", {"fields": ("property", "reported_by", "message", "status")}),
+        ("Handling", {"fields": ("in_progress_by", "in_progress_at", "closed_by", "closed_at")}),
+        ("Metadata", {"fields": ("email_notified", "created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+    def has_add_permission(self, request):
+        # Alerts come from landlords through the site, never hand-created here.
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("property", "reported_by", "in_progress_by", "closed_by")

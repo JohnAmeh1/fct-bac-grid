@@ -734,3 +734,495 @@ class MapsGisDataStatusTests(TestCase):
         self.assertEqual(data['summary']['yellow'], 2)
         self.assertEqual(data['summary']['green'], 1)
         self.assertEqual(data['summary']['unmapped'], 1)
+
+# ====================================================================
+# Emergency Alert System
+# ====================================================================
+from unittest import mock
+
+from django.core import mail
+from django.core.cache import cache
+from django.test import Client, override_settings
+from django.utils.html import escape
+
+from tenement.models import Emergency, Notification
+
+
+class EmergencyTestBase(TestCase):
+    """Shared fixtures: one user per role, two landlords, properties with and without GPS."""
+
+    def make_user(self, username, user_type, email=None, **profile_kwargs):
+        user = User.objects.create_user(
+            username=username,
+            email=email if email is not None else f'{username}@example.com',
+            password='StrongPass123!',
+            first_name=username.split('-')[0].title(),
+            last_name='Tester',
+        )
+        UserProfile.objects.create(user=user, user_type=user_type, email_verified=True, **profile_kwargs)
+        return user
+
+    def setUp(self):
+        cache.clear()  # the report view is rate limited through the cache
+        self.admin = self.make_user('admin-em', 'admin', email='admin-em@bacgrid.com')
+        self.staff = self.make_user('staff-em', 'staff', email='staff-em@bacgrid.com')
+        self.field_staff = self.make_user('field-em', 'field_staff', email='field-em@bacgrid.com')
+        self.govt = self.make_user('govt-em', 'govt_admin', email='govt-em@bacgrid.com')
+        self.landlord = self.make_user('ada-em', 'landlord', email='ada@example.com', phone_number='08030001111')
+        self.other_landlord = self.make_user('bola-em', 'landlord', email='bola@example.com')
+
+        self.prop = Property.objects.create(
+            owner=self.landlord, name='Ada Court', address='12 Market Road', district='Bwari',
+            property_type='residential', latitude=Decimal('9.288472'), longitude=Decimal('7.390101'),
+        )
+        self.prop_no_gps = Property.objects.create(
+            owner=self.landlord, name='Ada Annex', address='14 Market Road', district='Bwari',
+            property_type='commercial',
+        )
+        self.other_prop = Property.objects.create(
+            owner=self.other_landlord, name='Bola Towers', address='3 Hill Street', district='Ushafa',
+            property_type='residential', latitude=Decimal('9.1'), longitude=Decimal('7.2'),
+        )
+
+    def make_emergency(self, prop=None, reporter=None, message='Fire in the kitchen', **kwargs):
+        prop = prop or self.prop
+        return Emergency.objects.create(property=prop, reported_by=reporter or prop.owner, message=message, **kwargs)
+
+    def report(self, user, prop, message='Fire in the kitchen'):
+        self.client.force_login(user)
+        return self.client.post(reverse('report_emergency'), {'property': prop.pk, 'message': message})
+
+
+class EmergencySubmissionTests(EmergencyTestBase):
+    def test_landlord_can_submit_alert_for_own_property(self):
+        response = self.report(self.landlord, self.prop)
+        self.assertRedirects(response, reverse('my_emergencies'))
+        alert = Emergency.objects.get()
+        self.assertEqual(alert.property, self.prop)
+        self.assertEqual(alert.reported_by, self.landlord)
+        self.assertEqual(alert.status, 'open')
+        self.assertEqual(alert.message, 'Fire in the kitchen')
+        self.assertIsNone(alert.closed_by)
+        self.assertIsNone(alert.closed_at)
+
+    def test_message_is_optional(self):
+        self.report(self.landlord, self.prop, message='')
+        self.assertEqual(Emergency.objects.get().message, '')
+
+    def test_report_page_only_offers_the_landlords_own_properties(self):
+        self.client.force_login(self.landlord)
+        response = self.client.get(reverse('report_emergency'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ada Court')
+        self.assertContains(response, 'Ada Annex')
+        self.assertNotContains(response, 'Bola Towers')
+
+    def test_cannot_submit_for_another_landlords_property(self):
+        response = self.report(self.landlord, self.other_prop)
+        self.assertEqual(response.status_code, 200)  # form re-rendered with an error, not a redirect
+        self.assertFalse(response.context['form'].is_valid())
+        self.assertIn('property', response.context['form'].errors)
+        self.assertEqual(Emergency.objects.count(), 0)
+
+    def test_cannot_submit_without_a_property(self):
+        self.client.force_login(self.landlord)
+        response = self.client.post(reverse('report_emergency'), {'message': 'help'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Emergency.objects.count(), 0)
+
+    def test_non_landlord_roles_cannot_report(self):
+        for user in (self.admin, self.staff, self.field_staff, self.govt):
+            self.client.force_login(user)
+            response = self.client.post(reverse('report_emergency'), {'property': self.prop.pk, 'message': 'x'})
+            self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
+        self.assertEqual(Emergency.objects.count(), 0)
+
+    def test_anonymous_user_cannot_report(self):
+        response = self.client.post(reverse('report_emergency'), {'property': self.prop.pk})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('login', response['Location'])
+        self.assertEqual(Emergency.objects.count(), 0)
+
+    def test_landlord_without_properties_is_sent_to_register_one(self):
+        newcomer = self.make_user('new-em', 'landlord')
+        self.client.force_login(newcomer)
+        response = self.client.get(reverse('report_emergency'))
+        self.assertRedirects(response, reverse('register_property'), fetch_redirect_response=False)
+
+    def test_double_tap_creates_only_one_alert(self):
+        self.report(self.landlord, self.prop)
+        self.report(self.landlord, self.prop)
+        self.assertEqual(Emergency.objects.count(), 1)
+
+    def test_rate_limit_stops_alert_flooding(self):
+        props = [self.prop, self.prop_no_gps] + [
+            Property.objects.create(owner=self.landlord, name=f'Extra {i}', address='x', district='Bwari', property_type='residential')
+            for i in range(3)
+        ]
+        for prop in props:
+            self.report(self.landlord, prop)
+        self.assertEqual(Emergency.objects.count(), 3)  # EMERGENCY_RATE_LIMIT
+
+
+class EmergencyNotificationTests(EmergencyTestBase):
+    def test_email_goes_to_admin_and_staff_with_landlord_property_and_dashboard_link(self):
+        self.report(self.landlord, self.prop, message='Roof is on fire')
+        alert = Emergency.objects.get()
+
+        recipients = {addr for m in mail.outbox for addr in m.to}
+        self.assertEqual(recipients, {'admin-em@bacgrid.com', 'staff-em@bacgrid.com'})
+
+        body = mail.outbox[0].body
+        self.assertIn('EMERGENCY ALERT', mail.outbox[0].subject)
+        self.assertIn('Ada Court', mail.outbox[0].subject)
+        self.assertIn('Ada Tester', body)            # landlord name
+        self.assertIn('08030001111', body)           # landlord phone
+        self.assertIn('ada@example.com', body)
+        self.assertIn('12 Market Road', body)        # property details
+        self.assertIn('Bwari', body)
+        self.assertIn('Roof is on fire', body)
+        self.assertIn('https://www.google.com/maps/search/?api=1&query=9.288472,7.390101', body)
+        self.assertIn(f'http://testserver/management/emergencies/{alert.pk}/', body)  # dashboard link
+        alert.refresh_from_db()
+        self.assertTrue(alert.email_notified)
+
+    def test_email_says_location_unavailable_without_gps(self):
+        self.report(self.landlord, self.prop_no_gps)
+        self.assertIn('Location unavailable', mail.outbox[0].body)
+        self.assertNotIn('google.com/maps', mail.outbox[0].body)
+
+    @override_settings(EMERGENCY_ALERT_RECIPIENTS=['duty-officer@bacgrid.com'])
+    def test_configured_recipient_list_overrides_the_default(self):
+        self.report(self.landlord, self.prop)
+        self.assertEqual([m.to for m in mail.outbox], [['duty-officer@bacgrid.com']])
+
+    def test_placeholder_and_blank_addresses_are_skipped(self):
+        self.make_user('ghost-em', 'staff', email='ghost@bwariproperty.local')
+        self.make_user('blank-em', 'staff', email='')
+        self.report(self.landlord, self.prop)
+        recipients = {addr for m in mail.outbox for addr in m.to}
+        self.assertEqual(recipients, {'admin-em@bacgrid.com', 'staff-em@bacgrid.com'})
+
+    def test_alert_is_saved_even_if_email_delivery_fails(self):
+        with mock.patch('tenement.views.send_mail', side_effect=Exception('SMTP down')):
+            response = self.report(self.landlord, self.prop)
+        self.assertRedirects(response, reverse('my_emergencies'), fetch_redirect_response=False)
+        alert = Emergency.objects.get()
+        self.assertEqual(alert.status, 'open')
+        self.assertFalse(alert.email_notified)
+        # Staff still learn about it in-app, and the landlord is told the truth.
+        self.assertTrue(Notification.objects.filter(user=self.staff).exists())
+        follow = self.client.get(reverse('my_emergencies'))
+        self.assertEqual(follow.status_code, 200)
+
+    def test_landlord_is_warned_when_email_could_not_be_delivered(self):
+        self.client.force_login(self.landlord)
+        with mock.patch('tenement.views.send_mail', side_effect=Exception('SMTP down')):
+            response = self.client.post(
+                reverse('report_emergency'), {'property': self.prop.pk, 'message': 'x'}, follow=True
+            )
+        self.assertContains(response, 'could not be delivered')
+
+    @override_settings(EMERGENCY_ALERT_RECIPIENTS=['not-an-email'])
+    def test_alert_is_saved_when_no_valid_recipient_exists(self):
+        self.report(self.landlord, self.prop)
+        self.assertEqual(Emergency.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_in_app_notifications_reach_responders_only(self):
+        self.report(self.landlord, self.prop)
+        alert = Emergency.objects.get()
+        for user in (self.admin, self.staff, self.field_staff):
+            note = Notification.objects.get(user=user)
+            self.assertIn('Ada Court', note.message)
+            self.assertEqual(note.link, reverse('admin_view_emergency', args=[alert.pk]))
+        self.assertFalse(Notification.objects.filter(user=self.govt).exists())
+        self.assertFalse(Notification.objects.filter(user=self.landlord).exists())
+
+
+class EmergencyPermissionTests(EmergencyTestBase):
+    def test_staff_roles_can_open_the_alert_list_and_detail(self):
+        alert = self.make_emergency()
+        for user in (self.admin, self.staff, self.field_staff, self.govt):
+            self.client.force_login(user)
+            self.assertEqual(self.client.get(reverse('manage_emergencies')).status_code, 200, user.username)
+            self.assertEqual(
+                self.client.get(reverse('admin_view_emergency', args=[alert.pk])).status_code, 200, user.username
+            )
+
+    def test_landlord_and_anonymous_cannot_open_staff_pages(self):
+        alert = self.make_emergency()
+        urls = [reverse('manage_emergencies'), reverse('admin_view_emergency', args=[alert.pk])]
+        for url in urls:
+            self.assertNotEqual(self.client.get(url).status_code, 200)  # anonymous
+        self.client.force_login(self.landlord)
+        for url in urls:
+            self.assertNotEqual(self.client.get(url).status_code, 200)
+
+    def test_landlord_sees_only_their_own_alerts(self):
+        self.make_emergency(self.prop, message='mine-marker')
+        self.make_emergency(self.other_prop, message='theirs-marker')
+        self.client.force_login(self.landlord)
+        response = self.client.get(reverse('my_emergencies'))
+        self.assertContains(response, 'mine-marker')
+        self.assertNotContains(response, 'theirs-marker')
+
+    def test_landlord_can_view_own_alert_but_not_anothers(self):
+        mine = self.make_emergency(self.prop)
+        theirs = self.make_emergency(self.other_prop)
+        self.client.force_login(self.landlord)
+        self.assertEqual(self.client.get(reverse('view_emergency', args=[mine.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('view_emergency', args=[theirs.pk])).status_code, 404)
+
+    def test_landlord_cannot_close_another_landlords_alert(self):
+        theirs = self.make_emergency(self.other_prop)
+        self.client.force_login(self.landlord)
+        response = self.client.post(reverse('close_emergency', args=[theirs.pk]))
+        self.assertEqual(response.status_code, 404)
+        theirs.refresh_from_db()
+        self.assertEqual(theirs.status, 'open')
+
+    def test_govt_admin_is_read_only(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.govt)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        self.client.post(reverse('mark_emergency_in_progress', args=[alert.pk]))
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'open')
+        page = self.client.get(reverse('manage_emergencies'))
+        self.assertNotContains(page, 'Close Emergency')
+
+    def test_landlord_cannot_mark_in_progress(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.landlord)
+        self.client.post(reverse('mark_emergency_in_progress', args=[alert.pk]))
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'open')
+
+    def test_updates_reject_get_requests(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(reverse('close_emergency', args=[alert.pk])).status_code, 405)
+        self.assertEqual(self.client.get(reverse('mark_emergency_in_progress', args=[alert.pk])).status_code, 405)
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'open')
+
+    def test_updates_are_csrf_protected(self):
+        alert = self.make_emergency()
+        strict = Client(enforce_csrf_checks=True)
+        strict.force_login(self.admin)
+        self.assertEqual(strict.post(reverse('close_emergency', args=[alert.pk])).status_code, 403)
+        strict.force_login(self.landlord)
+        self.assertEqual(strict.post(reverse('close_emergency', args=[alert.pk])).status_code, 403)
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'open')
+
+    def test_next_parameter_cannot_cause_an_open_redirect(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse('close_emergency', args=[alert.pk]), {'next': 'https://evil.example/phish'}
+        )
+        self.assertRedirects(response, reverse('manage_emergencies'), fetch_redirect_response=False)
+
+
+class EmergencyStatusTests(EmergencyTestBase):
+    def test_landlord_close_records_who_and_when(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.landlord)
+        response = self.client.post(reverse('close_emergency', args=[alert.pk]), {'next': 'list'})
+        self.assertRedirects(response, reverse('my_emergencies'), fetch_redirect_response=False)
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'closed')
+        self.assertEqual(alert.closed_by, self.landlord)
+        self.assertIsNotNone(alert.closed_at)
+        # Responders are told the landlord closed it.
+        self.assertTrue(Notification.objects.filter(user=self.staff, message__contains='closed').exists())
+
+    def test_staff_roles_can_close_any_alert_and_the_closer_is_recorded(self):
+        for user in (self.admin, self.staff, self.field_staff):
+            alert = self.make_emergency()
+            self.client.force_login(user)
+            self.client.post(reverse('close_emergency', args=[alert.pk]), {'next': 'list', 'status': 'open'})
+            alert.refresh_from_db()
+            self.assertEqual(alert.status, 'closed', user.username)
+            self.assertEqual(alert.closed_by, user)
+            self.assertIsNotNone(alert.closed_at)
+
+    def test_landlord_is_notified_when_staff_close_their_alert(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.staff)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        note = Notification.objects.get(user=self.landlord)
+        self.assertIn('closed', note.message)
+        self.assertEqual(note.link, reverse('view_emergency', args=[alert.pk]))
+
+    def test_staff_can_mark_in_progress_then_close(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.staff)
+        self.client.post(reverse('mark_emergency_in_progress', args=[alert.pk]))
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'in_progress')
+        self.assertEqual(alert.in_progress_by, self.staff)
+        self.assertIsNotNone(alert.in_progress_at)
+        self.assertTrue(Notification.objects.filter(user=self.landlord, message__contains='In Progress').exists())
+
+        self.client.force_login(self.admin)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'closed')
+        self.assertEqual(alert.closed_by, self.admin)
+        self.assertEqual(alert.in_progress_by, self.staff)  # acknowledgement history is kept
+
+    def test_landlord_can_close_an_in_progress_alert(self):
+        alert = self.make_emergency(status='in_progress')
+        self.client.force_login(self.landlord)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'closed')
+
+    def test_closed_alert_cannot_be_reopened_or_reclosed(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.staff)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        alert.refresh_from_db()
+        first_closer, first_time = alert.closed_by, alert.closed_at
+
+        self.client.force_login(self.admin)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        self.client.post(reverse('mark_emergency_in_progress', args=[alert.pk]))
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, 'closed')
+        self.assertEqual(alert.closed_by, first_closer)
+        self.assertEqual(alert.closed_at, first_time)
+
+    def test_list_filters_by_status(self):
+        self.make_emergency(message='open-marker')
+        self.make_emergency(message='progress-marker', status='in_progress')
+        self.make_emergency(message='closed-marker', status='closed')
+        self.client.force_login(self.admin)
+
+        def page(status):
+            return self.client.get(reverse('manage_emergencies'), {'status': status})
+
+        self.assertContains(page('open'), 'open-marker')
+        self.assertNotContains(page('open'), 'closed-marker')
+        self.assertContains(page('in_progress'), 'progress-marker')
+        self.assertContains(page('closed'), 'closed-marker')
+        for marker in ('open-marker', 'progress-marker', 'closed-marker'):
+            self.assertContains(page('all'), marker)
+        self.assertContains(page('bogus'), 'open-marker')  # unknown filter falls back to Open
+
+    def test_status_counts_on_list_page(self):
+        self.make_emergency()
+        self.make_emergency(status='in_progress')
+        self.make_emergency(status='closed')
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('manage_emergencies'))
+        self.assertEqual(
+            (response.context['open_count'], response.context['in_progress_count'],
+             response.context['closed_count'], response.context['total_count']),
+            (1, 1, 1, 3),
+        )
+
+
+class EmergencyMapLinkTests(EmergencyTestBase):
+    EXPECTED = 'https://www.google.com/maps/search/?api=1&query=9.288472,7.390101'
+
+    def test_map_url_uses_the_properties_actual_coordinates(self):
+        self.assertEqual(self.make_emergency(self.prop).google_maps_url, self.EXPECTED)
+
+    def test_map_url_handles_negative_coordinates(self):
+        prop = Property.objects.create(
+            owner=self.landlord, name='South', address='x', district='Bwari', property_type='residential',
+            latitude=Decimal('-1.500000'), longitude=Decimal('-70.250000'),
+        )
+        self.assertIn('query=-1.500000,-70.250000', self.make_emergency(prop).google_maps_url)
+
+    def test_map_url_is_none_when_coordinates_are_missing(self):
+        self.assertIsNone(self.make_emergency(self.prop_no_gps).google_maps_url)
+        half = Property.objects.create(
+            owner=self.landlord, name='Half', address='x', district='Bwari', property_type='residential',
+            latitude=Decimal('9.1'),
+        )
+        self.assertIsNone(self.make_emergency(half).google_maps_url)
+
+    def test_list_and_detail_link_to_google_maps(self):
+        alert = self.make_emergency(self.prop)
+        self.client.force_login(self.staff)
+        for url in (reverse('manage_emergencies'), reverse('admin_view_emergency', args=[alert.pk])):
+            response = self.client.get(url)
+            self.assertContains(response, f'href="{escape(self.EXPECTED)}"')
+            self.assertNotContains(response, 'Location unavailable')
+
+    def test_list_and_detail_show_location_unavailable_without_coordinates(self):
+        alert = self.make_emergency(self.prop_no_gps)
+        self.client.force_login(self.staff)
+        for url in (reverse('manage_emergencies'), reverse('admin_view_emergency', args=[alert.pk])):
+            response = self.client.get(url)
+            self.assertContains(response, 'Location unavailable')
+            self.assertNotContains(response, 'google.com/maps')
+
+
+class EmergencyStaffPageContentTests(EmergencyTestBase):
+    def test_list_shows_landlord_property_date_and_status(self):
+        self.make_emergency(self.prop, message='Gas smell in the hallway')
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('manage_emergencies'))
+        self.assertContains(response, 'Ada Tester')
+        self.assertContains(response, '08030001111')
+        self.assertContains(response, 'ada@example.com')
+        self.assertContains(response, 'Ada Court')
+        self.assertContains(response, '12 Market Road')
+        self.assertContains(response, 'Gas smell in the hallway')
+        self.assertContains(response, 'Open')
+        self.assertContains(response, 'View details')
+        self.assertContains(response, 'Close Emergency')
+
+    def test_message_is_html_escaped(self):
+        self.make_emergency(message='<script>alert(1)</script>')
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('manage_emergencies'))
+        self.assertNotContains(response, '<script>alert(1)</script>')
+        self.assertContains(response, '&lt;script&gt;')
+
+    def test_closed_alert_shows_who_closed_it(self):
+        alert = self.make_emergency()
+        self.client.force_login(self.staff)
+        self.client.post(reverse('close_emergency', args=[alert.pk]))
+        response = self.client.get(reverse('manage_emergencies'), {'status': 'closed'})
+        self.assertContains(response, 'Closed by Staff Tester')
+
+    def test_placeholder_landlord_email_is_not_displayed(self):
+        bulk = self.make_user('bulk-em', 'landlord', email='bulk123@bwariproperty.local')
+        prop = Property.objects.create(owner=bulk, name='Bulk House', address='x', district='Bwari', property_type='residential')
+        self.make_emergency(prop)
+        self.client.force_login(self.admin)
+        self.assertNotContains(self.client.get(reverse('manage_emergencies')), 'bwariproperty.local')
+
+
+class EmergencyDashboardTests(EmergencyTestBase):
+    def test_landlord_dashboard_has_a_prominent_emergency_button(self):
+        self.client.force_login(self.landlord)
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('report_emergency'))
+        self.assertContains(response, 'Emergency at your property?')
+
+    def test_landlord_dashboard_shows_active_alert_count(self):
+        self.make_emergency()
+        self.make_emergency(status='closed')
+        self.client.force_login(self.landlord)
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['active_emergency_count'], 1)
+
+    def test_staff_dashboard_links_to_alerts_and_flags_open_ones(self):
+        self.make_emergency()
+        self.make_emergency(status='closed')
+        for user in (self.admin, self.staff, self.field_staff, self.govt):
+            self.client.force_login(user)
+            response = self.client.get(reverse('dashboard'))
+            self.assertEqual(response.status_code, 200, user.username)
+            self.assertContains(response, reverse('manage_emergencies'))
+            self.assertEqual(response.context['open_emergency_count'], 1)
+            self.assertContains(response, '1 open emergency alert needs attention')

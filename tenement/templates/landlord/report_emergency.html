@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report an Emergency | FCT BAC Grid{% endblock %}
+
+{% block content %}
+{% include 'emergency/_styles.html' %}
+
+<div class="pg-wrap narrow">
+  <a href="{% url 'dashboard' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back to dashboard</a>
+
+  <div class="pg-header">
+    <div>
+      <h1 class="pg-title"><i class="fas fa-triangle-exclamation"></i> Report an Emergency</h1>
+      <p class="pg-sub">Alert BAC GRID staff about an emergency at one of your properties.</p>
+    </div>
+  </div>
+
+  <div class="warn-banner">
+    <i class="fas fa-circle-exclamation"></i>
+    <div>Use this only for a genuine emergency. Staff and administrators are notified immediately by email and on their dashboard.
+    For anything else, please use <a href="{% url 'submit_complaint' %}" style="color:inherit;font-weight:700;">Submit Report</a>.</div>
+  </div>
+
+  <form method="POST" class="form-card" id="emergency-form" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}<div class="field-error" style="margin-bottom:12px;">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form-row">
+      <label for="{{ form.property.id_for_label }}">{{ form.property.label }}</label>
+      {{ form.property }}
+      {% for error in form.property.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      {{ form.message }}
+      {% for error in form.message.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-sos" id="emergency-submit"><i class="fas fa-triangle-exclamation"></i> Send Emergency Alert</button>
+      <a href="{% url 'dashboard' %}" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    var form = document.getElementById('emergency-form');
+    var btn = document.getElementById('emergency-submit');
+    var select = form.querySelector('select');
+    form.addEventListener('submit', function (e) {
+      var label = select && select.selectedIndex > 0 ? select.options[select.selectedIndex].text : '';
+      if (!label) {
+        e.preventDefault();
+        alert('Please select the affected property first.');
+        return;
+      }
+      if (!confirm('Send an EMERGENCY ALERT for:\n\n' + label + '\n\nBAC GRID staff will be notified immediately. Only continue if this is a real emergency.')) {
+        e.preventDefault();
+        return;
+      }
+      btn.disabled = true;               // blocks accidental double-taps
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Emergency #{{ emergency.id }} | FCT BAC Grid{% endblock %}
+
+{% block content %}
+{% include 'emergency/_styles.html' %}
+
+<div class="pg-wrap narrow">
+  <a href="{% url 'my_emergencies' %}" class="back-link"><i class="fas fa-arrow-left"></i> My emergencies</a>
+
+  <div class="pg-header">
+    <div>
+      <h1 class="pg-title"><i class="fas fa-triangle-exclamation"></i> Emergency at {{ emergency.property.name }}</h1>
+      <p class="pg-sub">{{ emergency.property.address }} &middot; {{ emergency.property.district }}</p>
+    </div>
+    <span class="emg-status {{ emergency.status }}">
+      {% if emergency.status == 'open' %}<i class="fas fa-circle" style="font-size:.5rem;"></i> Open
+      {% elif emergency.status == 'in_progress' %}<i class="fas fa-spinner"></i> In Progress
+      {% else %}<i class="fas fa-check"></i> Closed{% endif %}
+    </span>
+  </div>
+
+  <div class="detail-card" style="margin-bottom:14px;">
+    <h2>What you reported</h2>
+    {% if emergency.message %}
+    <div class="emg-message" style="margin-bottom:0;">{{ emergency.message|linebreaksbr }}</div>
+    {% else %}
+    <div class="emg-message none" style="margin-bottom:0;">No details provided.</div>
+    {% endif %}
+  </div>
+
+  <div class="detail-card" style="margin-bottom:14px;">
+    <h2>Status history</h2>
+    <ul class="timeline">
+      <li class="done-red"><strong>Alert sent</strong><small>{{ emergency.created_at|date:"M d, Y \a\t g:i A" }}</small></li>
+      {% if emergency.in_progress_at %}
+      <li class="done-amber"><strong>Acknowledged — In Progress</strong><small>{{ emergency.in_progress_at|date:"M d, Y \a\t g:i A" }}</small></li>
+      {% endif %}
+      {% if emergency.status == 'closed' %}
+      <li class="done-green"><strong>Closed{% if emergency.closed_by_id == emergency.reported_by_id %} by you{% elif emergency.closed_by %} by BAC GRID staff{% endif %}</strong>
+        {% if emergency.closed_at %}<small>{{ emergency.closed_at|date:"M d, Y \a\t g:i A" }}</small>{% endif %}</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  {% if emergency.status != 'closed' %}
+  <div class="emg-actions">
+    <form method="POST" action="{% url 'close_emergency' emergency.id %}" onsubmit="return confirm('Close this emergency? Only do this if the situation has been resolved.');">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="detail">
+      <button type="submit" class="btn emg-close-btn"><i class="fas fa-check"></i> Close Emergency</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

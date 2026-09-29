@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement, SupportTicket
+from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement, SupportTicket, Emergency
 import re
 
 # ---------------------------------------------------------------------------
@@ -395,6 +395,47 @@ class AdminSupportTicketUpdateForm(forms.ModelForm):
                 'placeholder': 'Add internal notes about this ticket (only visible to staff/admin)…'
             }),
         }
+
+
+class EmergencyReportForm(forms.ModelForm):
+    """
+    Landlord form for raising an emergency alert.
+
+    The `property` choices are limited to properties the given landlord
+    owns. Because ModelChoiceField validates the submitted id against that
+    queryset, posting someone else's property id fails validation with
+    "Select a valid choice" — ownership is enforced here, server-side, not
+    just by what the <select> happens to display.
+    """
+    message = forms.CharField(
+        required=False,
+        max_length=1000,
+        label='What is happening? (optional)',
+        widget=forms.Textarea(attrs={
+            'rows': 4,
+            'maxlength': 1000,
+            'placeholder': 'e.g. Fire in the building, flooding, break-in, gas leak… Add anything responders should know.',
+        }),
+    )
+
+    class Meta:
+        model = Emergency
+        fields = ['property', 'message']
+        labels = {'property': 'Affected property'}
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        owned = Property.objects.filter(owner=user) if user is not None else Property.objects.none()
+        field = self.fields['property']
+        field.queryset = owned.order_by('name', 'id')
+        field.empty_label = 'Select the affected property'
+        field.label_from_instance = lambda prop: f"{prop.name} — {prop.address}"
+        # Pre-select when there is only one choice so a stressed user has one less thing to do.
+        if not self.is_bound and owned.count() == 1:
+            field.initial = owned.first().pk
+
+    def clean_message(self):
+        return (self.cleaned_data.get('message') or '').strip()
 
 
 class SiteConfigurationForm(forms.ModelForm):

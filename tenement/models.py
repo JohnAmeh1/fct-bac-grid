@@ -411,3 +411,76 @@ class Notification(models.Model):
     @classmethod
     def notify(cls, user, message, link=''):
         return cls.objects.create(user=user, message=message, link=link)
+
+# ====================================================================
+# Emergency alerts
+# ====================================================================
+EMERGENCY_STATUS_CHOICES = (
+    ('open',        'Open'),
+    ('in_progress', 'In Progress'),
+    ('closed',      'Closed'),
+)
+
+
+class Emergency(models.Model):
+    """
+    An emergency alert raised by a landlord for one of their own properties.
+
+    Lifecycle: open -> in_progress (staff acknowledged) -> closed. An alert
+    may also go straight from open to closed. Who moved it and when is
+    recorded on the row itself (in_progress_by/at, closed_by/at).
+    """
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='emergencies')
+    reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emergencies_reported')
+    message = models.TextField(blank=True, help_text='Optional details typed by the landlord when raising the alert.')
+    status = models.CharField(max_length=20, choices=EMERGENCY_STATUS_CHOICES, default='open', db_index=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    in_progress_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies_acknowledged'
+    )
+    in_progress_at = models.DateTimeField(null=True, blank=True)
+
+    closed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies_closed'
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    email_notified = models.BooleanField(
+        default=False,
+        help_text='True if at least one staff/admin notification email was delivered for this alert.'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['status', '-created_at'])]
+
+    def __str__(self):
+        return f"[{self.get_status_display()}] {self.property.name} — {self.reported_by.username}"
+
+    # NOTE: this model has a field called `property`, so the built-in
+    # `property` decorator is shadowed inside the class body — use the
+    # module-level `_property` alias instead (same trick as Payment above).
+    @_property
+    def is_active(self):
+        return self.status != 'closed'
+
+    @_property
+    def has_coordinates(self):
+        return self.property.latitude is not None and self.property.longitude is not None
+
+    @_property
+    def google_maps_url(self):
+        """
+        Google Maps link built from the property's real GPS coordinates, or
+        None when the property has no coordinates (templates then show
+        "Location unavailable"). Decimals are formatted with format(..., 'f')
+        so the URL never contains localised separators or exponents.
+        """
+        if not self.has_coordinates:
+            return None
+        lat = format(self.property.latitude, 'f')
+        lng = format(self.property.longitude, 'f')
+        return f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
