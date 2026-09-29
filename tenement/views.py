@@ -44,6 +44,7 @@ from .models import (
     UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment,
     Announcement, UserAnnouncementRead, OTP, SupportTicket, Notification,
     TICKET_STATUS_CHOICES, TICKET_CATEGORY_CHOICES,
+    PropertyEmergency,
 )
 from django.contrib.auth.hashers import make_password
 from io import BytesIO
@@ -234,6 +235,45 @@ def _send_complaint_status_email(complaint):
         send_mail(subject, message, _configured_sender_email(), [user.email], fail_silently=False)
     except Exception:
         logger.exception("Failed to send complaint status email to %s", user.email)
+
+
+def _send_emergency_email(emergency):
+    """
+    Notify every Admin/Staff account by email the moment a landlord reports
+    an emergency. Unlike _send_complaint_status_email, this is NOT gated by
+    SiteConfiguration.enable_email_notifications — an emergency report is
+    safety-critical and should always go out regardless of that toggle.
+    """
+    recipients = list(
+        User.objects.filter(
+            userprofile__user_type__in=EMERGENCY_STAFF_ROLES,
+            userprofile__email_verified=True,
+        ).exclude(email='').values_list('email', flat=True)
+    )
+    if not recipients:
+        logger.warning("Emergency #%s reported but no Admin/Staff recipients have a verified email.", emergency.id)
+        return
+
+    prop = emergency.property
+    landlord = emergency.reported_by
+    landlord_profile = getattr(landlord, 'userprofile', None)
+    subject = f'\U0001F6A8 Emergency reported — {prop.name}'
+    message = (
+        f"An emergency has just been reported on FCT BAC Grid.\n\n"
+        f"Landlord: {landlord.get_full_name() or landlord.username}\n"
+        f"Phone: {landlord_profile.phone_number if landlord_profile and landlord_profile.phone_number else 'Not provided'}\n"
+        f"Email: {landlord.email or 'Not provided'}\n\n"
+        f"Property: {prop.name}\n"
+        f"Address: {prop.address}\n"
+        f"District: {prop.district}\n\n"
+        f"Details reported by the landlord:\n{emergency.message}\n\n"
+        f"Reported at: {emergency.created_at.strftime('%b %d, %Y %I:%M %p')}\n\n"
+        f"Log in to FCT BAC Grid to view this on your dashboard and on the GIS map."
+    )
+    try:
+        send_mail(subject, message, _configured_sender_email(), recipients, fail_silently=False)
+    except Exception:
+        logger.exception("Failed to send emergency email for emergency #%s", emergency.id)
 
 
 def send_email_change_otp(user, new_email, otp_code):
@@ -656,6 +696,19 @@ def admin_or_staff_required(view_func):
     """Like staff_or_admin_required, but excludes field_staff (used for the property verification queue)."""
     def check_user(user):
         return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.user_type in VERIFICATION_QUEUE_ROLES
+    return user_passes_test(check_user)(view_func)
+
+
+# Emergencies are deliberately narrower than MANAGED_PROPERTY_ROLES: only
+# Admin and Staff get emailed, see the dashboard panel, see emergency
+# markers on the GIS map, and can close a report on a landlord's behalf.
+# Field Staff and Govt Admin are excluded on purpose.
+EMERGENCY_STAFF_ROLES = ['admin', 'staff']
+
+
+def emergency_staff_required(view_func):
+    def check_user(user):
+        return user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.user_type in EMERGENCY_STAFF_ROLES
     return user_passes_test(check_user)(view_func)
 
 
@@ -1424,6 +1477,24 @@ def dashboard(request):
             'complaints_by_category_data':   json.dumps(complaints_by_category_data),
             'has_complaints_data':       bool(complaints_by_category_data),
         })
+
+        # Active emergencies — Admin/Staff only (never Field Staff or Govt
+        # Admin), per EMERGENCY_STAFF_ROLES. Kept out of the query entirely
+        # for the other two roles rather than just hidden in the template.
+        if profile.user_type in EMERGENCY_STAFF_ROLES:
+            recent_emergencies = (
+                PropertyEmergency.objects.filter(status='open')
+                .select_related('property', 'reported_by', 'reported_by__userprofile')
+                .order_by('-created_at')[:5]
+            )
+            open_emergency_count = PropertyEmergency.objects.filter(status='open').count()
+        else:
+            recent_emergencies = PropertyEmergency.objects.none()
+            open_emergency_count = 0
+        context.update({
+            'recent_emergencies': recent_emergencies,
+            'open_emergency_count': open_emergency_count,
+        })
     elif profile.user_type == 'landlord':
         properties = Property.objects.filter(owner=request.user).order_by('-created_at')
         my_complaints = Complaint.objects.filter(submitted_by=request.user)
@@ -1520,11 +1591,24 @@ def dashboard(request):
             landlord=request.user, status='success', paid_at__gte=month_start
         ).aggregate(total=Sum('amount'))['total'] or 0
 
+        # Emergencies this landlord has reported that are still open, so the
+        # dashboard can show a "close" action instead of "report" for those
+        # properties, and any property WITHOUT an open emergency can still
+        # be reported via the button.
+        active_emergencies = (
+            PropertyEmergency.objects.filter(property__owner=request.user, status='open')
+            .select_related('property')
+            .order_by('-created_at')
+        )
+        properties_with_emergency_ids = set(active_emergencies.values_list('property_id', flat=True))
+
         context.update({
             'recent_activity': landlord_recent_activity,
             'new_properties_this_month': new_properties_this_month,
             'paid_this_month': paid_this_month,
             'properties': properties_with_status,
+            'active_emergencies': active_emergencies,
+            'properties_with_emergency_ids': properties_with_emergency_ids,
             'total_properties': len(properties_with_status),
             'total_paid': total_paid,
             'outstanding_bills': outstanding_bills,
@@ -1542,6 +1626,132 @@ def dashboard(request):
         })
 
     return render(request, 'dashboard.html', context)
+
+
+# ── Emergencies ─────────────────────────────────────────────────────────────────
+@login_required
+@verified_email_required
+@require_POST
+def report_emergency(request):
+    """
+    Landlord-only: report an emergency at one of their own properties.
+    Emails every Admin/Staff account immediately, creates an in-app
+    Notification for each of them, and the property shows up flagged on
+    their dashboard panel and on the GIS map until someone closes it.
+    """
+    profile = request.user.userprofile
+    if profile.user_type != 'landlord':
+        messages.error(request, 'Only landlords can report an emergency.')
+        return redirect('dashboard')
+
+    property_id = request.POST.get('property_id')
+    message_text = (request.POST.get('message') or '').strip()
+
+    property_obj = get_object_or_404(Property, id=property_id, owner=request.user)
+
+    if not message_text:
+        messages.error(request, 'Please describe the emergency before submitting.')
+        return redirect('dashboard')
+
+    # Don't stack duplicate open reports for the same property.
+    if PropertyEmergency.objects.filter(property=property_obj, status='open').exists():
+        messages.warning(
+            request,
+            f'"{property_obj.name}" already has an active emergency report — BAC Grid staff have already been notified.',
+        )
+        return redirect('dashboard')
+
+    emergency = PropertyEmergency.objects.create(
+        property=property_obj,
+        reported_by=request.user,
+        message=message_text,
+    )
+
+    _send_emergency_email(emergency)
+
+    reporter_name = request.user.get_full_name() or request.user.username
+    for staff_user in User.objects.filter(userprofile__user_type__in=EMERGENCY_STAFF_ROLES):
+        Notification.notify(
+            staff_user,
+            f'\U0001F6A8 Emergency reported at "{property_obj.name}" by {reporter_name}.',
+            link=reverse('admin_manage_emergencies'),
+        )
+
+    messages.success(request, 'Emergency reported. BAC Grid staff and admin have been notified immediately.')
+    return redirect('dashboard')
+
+
+@login_required
+@verified_email_required
+@require_POST
+def close_emergency(request, emergency_id):
+    """
+    Closes an emergency report. Allowed for Admin, Staff, or the landlord
+    who originally opened it — nobody else.
+    """
+    emergency = get_object_or_404(
+        PropertyEmergency.objects.select_related('property', 'reported_by'),
+        id=emergency_id,
+    )
+
+    profile = request.user.userprofile
+    can_close = profile.user_type in EMERGENCY_STAFF_ROLES or emergency.reported_by_id == request.user.id
+    if not can_close:
+        messages.error(request, 'You do not have permission to close this emergency.')
+        return redirect('dashboard')
+
+    if emergency.status == 'open':
+        emergency.status = 'closed'
+        emergency.closed_at = timezone.now()
+        emergency.closed_by = request.user
+        emergency.save(update_fields=['status', 'closed_at', 'closed_by'])
+
+        # Let the landlord know if someone else closed it on their behalf.
+        if request.user.id != emergency.reported_by_id:
+            Notification.notify(
+                emergency.reported_by,
+                f'Your emergency report for "{emergency.property.name}" has been closed by '
+                f'{request.user.get_full_name() or request.user.username}.',
+                link=reverse('dashboard'),
+            )
+        messages.success(request, f'Emergency for "{emergency.property.name}" marked as closed.')
+    else:
+        messages.info(request, 'This emergency was already closed.')
+
+    if request.POST.get('next') == 'list':
+        return redirect('admin_manage_emergencies')
+    return redirect('dashboard')
+
+
+@emergency_staff_required
+def admin_manage_emergencies(request):
+    """Full emergency history for Admin/Staff — open by default, with a toggle to view closed reports."""
+    emergencies = (
+        PropertyEmergency.objects.select_related('property', 'reported_by', 'reported_by__userprofile', 'closed_by')
+        .order_by('-created_at')
+    )
+
+    status_filter = request.GET.get('status', 'open')
+    if status_filter in ('open', 'closed'):
+        emergencies = emergencies.filter(status=status_filter)
+
+    open_count = PropertyEmergency.objects.filter(status='open').count()
+    closed_count = PropertyEmergency.objects.filter(status='closed').count()
+
+    paginator = Paginator(emergencies, get_pagination_size())
+    page_number = request.GET.get('page')
+    emergencies_page = paginator.get_page(page_number)
+    page_range = get_paginator_page_range(emergencies_page)
+
+    context = {
+        'emergencies':    emergencies_page,
+        'page_range':     page_range,
+        'status_filter':  status_filter,
+        'open_count':     open_count,
+        'closed_count':   closed_count,
+        'total_count':    open_count + closed_count,
+    }
+    return render(request, 'admin/manage_emergencies.html', context)
 
 
 # ── Profile ───────────────────────────────────────────────────────────────────
@@ -2715,6 +2925,18 @@ def maps_gis_data(request):
     payment_status_map = bulk_property_payment_status(properties)
     sanitation_status_map = bulk_property_sanitation_status(properties)
 
+    # Emergency markers are Admin/Staff-only (see EMERGENCY_STAFF_ROLES) —
+    # Govt Admin and Field Staff get the same map with the same payment-
+    # status pins, but with zero indication an emergency exists anywhere.
+    show_emergency_info = request.user.userprofile.user_type in EMERGENCY_STAFF_ROLES
+    emergency_by_property_id = {}
+    if show_emergency_info:
+        active_emergencies = (
+            PropertyEmergency.objects.filter(status='open', property_id__in=[p.id for p in properties])
+            .select_related('reported_by', 'reported_by__userprofile')
+        )
+        emergency_by_property_id = {em.property_id: em for em in active_emergencies}
+
     counts = {'red': 0, 'yellow': 0, 'green': 0}
     points = []
     for prop in properties:
@@ -2732,6 +2954,20 @@ def maps_gis_data(request):
         if prop.owner_id:
             owner_name = prop.owner.get_full_name().strip() or prop.owner.username
 
+        emergency = emergency_by_property_id.get(prop.id)
+        is_emergency = bool(emergency)
+        emergency_message = ''
+        emergency_landlord = ''
+        emergency_landlord_phone = ''
+        emergency_reported_at = ''
+        if emergency:
+            reporter = emergency.reported_by
+            reporter_profile = getattr(reporter, 'userprofile', None)
+            emergency_message = emergency.message
+            emergency_landlord = reporter.get_full_name().strip() or reporter.username
+            emergency_landlord_phone = reporter_profile.phone_number if reporter_profile else ''
+            emergency_reported_at = emergency.created_at.strftime('%b %d, %Y %I:%M %p')
+
         points.append([
             prop.id,
             float(prop.latitude),
@@ -2744,6 +2980,11 @@ def maps_gis_data(request):
             owner_name,
             tenement_paid,
             sanitation_paid,
+            is_emergency,
+            emergency_message,
+            emergency_landlord,
+            emergency_landlord_phone,
+            emergency_reported_at,
         ])
 
     summary = {
@@ -2751,6 +2992,7 @@ def maps_gis_data(request):
         'red': counts['red'],
         'yellow': counts['yellow'],
         'green': counts['green'],
+        'emergency_active': len(emergency_by_property_id) if show_emergency_info else 0,
         'unmapped': Property.objects.filter(
             Q(latitude__isnull=True) | Q(longitude__isnull=True)
         ).count(),

@@ -94,6 +94,28 @@
      custom circular cluster bubble is the only thing drawn — otherwise
      the two visually stack. */
   .gis-cluster-icon{background:transparent;border:none;}
+
+  /* Emergency pulse ring — drawn as a separate, always-visible overlay
+     marker on top of a property's normal status pin. Admin/Staff only:
+     the backend simply never sends emergency data to anyone else, so this
+     CSS is harmless even if present for other roles. */
+  .emergency-pulse-icon{background:transparent;border:none;}
+  .emergency-pulse{
+    width:30px;height:30px;border-radius:50%;
+    background:rgba(220,38,38,.28);
+    display:flex;align-items:center;justify-content:center;
+    color:#b91c1c;font-size:.8rem;
+    animation:emergency-pulse-anim 1.4s infinite;
+  }
+  @keyframes emergency-pulse-anim{
+    0%{box-shadow:0 0 0 0 rgba(220,38,38,.55);}
+    70%{box-shadow:0 0 0 16px rgba(220,38,38,0);}
+    100%{box-shadow:0 0 0 0 rgba(220,38,38,0);}
+  }
+  .popup-emergency-banner{background:#fee2e2;color:#991b1b;font-weight:700;font-size:.74rem;padding:7px 9px;border-radius:6px;margin-bottom:8px;line-height:1.45;}
+  .result-item.is-emergency{border-color:#dc2626;background:#fef2f2;}
+  .status-chip[data-filter="emergency"].active{background:#dc2626;}
+  .status-chip .dot.emergency{background:#dc2626;}
 </style>
 
 <div class="pg-wrap">
@@ -102,12 +124,13 @@
     <p class="pg-sub">Every geo-tagged property, plotted and colour-coded by payment status</p>
   </div>
 
-  <div class="stat-row">
+  <div class="stat-row" id="stat-row">
     <div class="stat-pill total"><div class="num" id="stat-total">–</div><div class="lbl">Properties mapped</div></div>
     <div class="stat-pill green"><div class="num" id="stat-green">–</div><div class="lbl">Fully paid</div></div>
     <div class="stat-pill yellow"><div class="num" id="stat-yellow">–</div><div class="lbl">Partially paid</div></div>
     <div class="stat-pill red"><div class="num" id="stat-red">–</div><div class="lbl">Unpaid (both)</div></div>
     <div class="stat-pill muted"><div class="num" id="stat-unmapped">–</div><div class="lbl">No coordinates yet</div></div>
+    <div class="stat-pill red" id="stat-emergency-pill" style="display:none;"><div class="num" id="stat-emergency">–</div><div class="lbl">🚨 Active emergencies</div></div>
   </div>
 
   <div class="toolbar">
@@ -119,6 +142,7 @@
     <span class="status-chip" data-filter="green"><span class="dot green"></span> Fully paid</span>
     <span class="status-chip" data-filter="yellow"><span class="dot yellow"></span> Partially paid</span>
     <span class="status-chip" data-filter="red"><span class="dot red"></span> Unpaid</span>
+    <span class="status-chip" data-filter="emergency" id="emergency-chip" style="display:none;"><span class="dot emergency"></span> 🚨 Emergency</span>
   </div>
 
   <div class="gis-layout">
@@ -266,6 +290,11 @@
   });
   map.addLayer(clusterGroup);
 
+  // Always-visible overlay for active emergencies — separate from the
+  // clustered status pins so a pulsing marker never gets tucked inside a
+  // cluster bubble where it could go unnoticed.
+  const emergencyLayerGroup = L.layerGroup().addTo(map);
+
   const loadingEl = document.getElementById('map-loading');
   const errorEl = document.getElementById('map-error');
   const searchInput = document.getElementById('gis-search');
@@ -297,8 +326,14 @@
   }
 
   function buildMarkers(points) {
-    return points.map(function (row) {
-      const [id, lat, lng, status, name, address, district, propertyType, owner, tenementPaid, sanitationPaid] = row;
+    emergencyLayerGroup.clearLayers();
+    let emergencyCount = 0;
+
+    const entries = points.map(function (row) {
+      const [
+        id, lat, lng, status, name, address, district, propertyType, owner, tenementPaid, sanitationPaid,
+        isEmergency, emergencyMessage, emergencyLandlord, emergencyLandlordPhone, emergencyReportedAt,
+      ] = row;
 
       const marker = L.circleMarker([lat, lng], {
         radius: 9,
@@ -317,7 +352,13 @@
         const tenementBadge = '<span class="popup-badge ' + (tenementPaid ? 'paid' : 'unpaid') + '">Tenement: ' + (tenementPaid ? 'Paid' : 'Unpaid') + '</span>';
         const sanitationBadge = '<span class="popup-badge ' + (sanitationPaid ? 'paid' : 'unpaid') + '">Sanitation: ' + (sanitationPaid ? 'Paid' : 'Unpaid') + '</span>';
         const viewUrl = viewPropertyUrlTemplate.replace('999999999', id);
+        const emergencyBanner = isEmergency
+          ? '<div class="popup-emergency-banner">🚨 EMERGENCY — reported ' + escapeHtml(emergencyReportedAt) + '<br>' +
+            'By: ' + escapeHtml(emergencyLandlord) + (emergencyLandlordPhone ? ' (' + escapeHtml(emergencyLandlordPhone) + ')' : '') + '<br>' +
+            escapeHtml(emergencyMessage) + '</div>'
+          : '';
         return (
+          emergencyBanner +
           '<div class="popup-title">' + escapeHtml(name) + '</div>' +
           '<div class="popup-row">' + escapeHtml(address) + '</div>' +
           '<div class="popup-row">' + escapeHtml(district) + ' &middot; ' + escapeHtml(propertyType) + '</div>' +
@@ -327,11 +368,36 @@
         );
       });
 
+      if (isEmergency) {
+        emergencyCount++;
+        const pulseIcon = L.divIcon({
+          className: 'emergency-pulse-icon',
+          html: '<div class="emergency-pulse"><i class="fas fa-triangle-exclamation"></i></div>',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+        });
+        const emergencyMarker = L.marker([lat, lng], { icon: pulseIcon, interactive: false, keyboard: false });
+        emergencyLayerGroup.addLayer(emergencyMarker);
+      }
+
       return {
         id: id, name: name, address: address, district: district,
-        owner: owner, color: status, marker: marker,
+        owner: owner, color: status, marker: marker, isEmergency: isEmergency,
       };
     });
+
+    const chip = document.getElementById('emergency-chip');
+    const pill = document.getElementById('stat-emergency-pill');
+    if (emergencyCount > 0) {
+      if (chip) chip.style.display = '';
+      if (pill) pill.style.display = '';
+      setStat('stat-emergency', emergencyCount);
+    } else {
+      if (chip) chip.style.display = 'none';
+      if (pill) pill.style.display = 'none';
+    }
+
+    return entries;
   }
 
   function applyFilters() {
@@ -340,7 +406,8 @@
 
     for (let i = 0; i < markerEntries.length; i++) {
       const entry = markerEntries[i];
-      const colorOk = activeColorFilter === 'all' || entry.color === activeColorFilter;
+      const colorOk = activeColorFilter === 'all'
+        || (activeColorFilter === 'emergency' ? entry.isEmergency : entry.color === activeColorFilter);
       if (!colorOk) continue;
       if (term) {
         const haystack = (entry.name + ' ' + entry.address + ' ' + entry.district + ' ' + entry.owner).toLowerCase();
@@ -365,11 +432,11 @@
       const shown = visibleEntries.slice(0, RESULT_LIST_CAP);
       shown.forEach(function (entry) {
         const li = document.createElement('li');
-        li.className = 'result-item';
+        li.className = 'result-item' + (entry.isEmergency ? ' is-emergency' : '');
         li.innerHTML =
           '<span class="dot ' + entry.color + '"></span>' +
           '<span>' +
-            '<span class="ri-name">' + escapeHtml(entry.name) + '</span>' +
+            '<span class="ri-name">' + (entry.isEmergency ? '🚨 ' : '') + escapeHtml(entry.name) + '</span>' +
             '<span class="ri-sub">' + escapeHtml(entry.district) + ' &middot; ' + escapeHtml(entry.owner) + '</span>' +
           '</span>';
         li.addEventListener('click', function () {

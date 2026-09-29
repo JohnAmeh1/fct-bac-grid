@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Emergencies | FCT BAC Grid{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f1117;--ink-2:#3b3f4a;--ink-3:#6b7280;--ink-4:#9ca3af;
+    --surface:#fff;--surface-2:#f7f8fa;--surface-3:#f0f2f5;--border:#e5e7eb;
+    --accent:#1e6cf0;--accent-dim:#dbeafe;
+    --green:#16a34a;--green-dim:#dcfce7;--red:#dc2626;--red-dim:#fee2e2;--red-dk:#991b1b;
+    --radius-sm:6px;--radius:10px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  .pg-wrap{font-family:'DM Sans',sans-serif;background:var(--surface-2);min-height:100vh;padding:40px 32px 64px;max-width:1100px;margin:0 auto;color:var(--ink);}
+  @media(max-width:640px){.pg-wrap{padding:24px 16px 48px;}}
+  .pg-header{margin-bottom:20px;}
+  .pg-title{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.4px;display:flex;align-items:center;gap:10px;}
+  .pg-title i{color:var(--red);}
+  .pg-sub{font-size:.82rem;color:var(--ink-3);margin:2px 0 0;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  @media(max-width:640px){.stat-row{grid-template-columns:1fr;}}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .stat-pill .num{font-size:1.35rem;font-weight:800;line-height:1;}
+  .stat-pill .lbl{font-size:.72rem;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:4px;}
+  .stat-pill.red .num{color:var(--red);}
+  .stat-pill.green .num{color:var(--green);}
+
+  .tab-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:99px;font-size:.8rem;font-weight:700;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-3);text-decoration:none;}
+  .tab-chip.active{border-color:transparent;background:var(--ink);color:#fff;}
+  .tab-chip.active.red-active{background:var(--red);}
+
+  .emg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:14px;}
+  .emg-card.is-open{border-color:#fca5a5;background:#fffbfb;}
+  .emg-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .emg-prop-name{font-size:1rem;font-weight:800;color:var(--ink);margin:0;}
+  .emg-prop-sub{font-size:.78rem;color:var(--ink-3);margin-top:2px;}
+  .emg-status{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;white-space:nowrap;}
+  .emg-status.open{background:var(--red-dim);color:var(--red-dk);}
+  .emg-status.closed{background:var(--green-dim);color:var(--green);}
+  .emg-meta{font-size:.78rem;color:var(--ink-3);margin-bottom:10px;line-height:1.6;}
+  .emg-meta strong{color:var(--ink-2);}
+  .emg-message{font-size:.86rem;color:var(--ink-2);background:var(--surface-2);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.55;margin-bottom:12px;}
+  .emg-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .emg-closed-note{font-size:.76rem;color:var(--ink-4);}
+  .emg-close-btn{background:var(--red-dk);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 16px;font-size:.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .emg-close-btn:hover{background:#7f1d1d;}
+
+  .empty-state{text-align:center;padding:48px 20px;color:var(--ink-4);font-size:.88rem;background:var(--surface);border-radius:var(--radius-lg);border:1px dashed var(--border);}
+  .empty-state i{font-size:1.6rem;margin-bottom:10px;display:block;color:var(--green);}
+
+  .pager{display:flex;justify-content:center;gap:6px;margin-top:20px;flex-wrap:wrap;}
+  .pager a, .pager span{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 8px;border-radius:var(--radius-sm);font-size:.8rem;font-weight:700;text-decoration:none;border:1px solid var(--border);color:var(--ink-2);background:var(--surface);}
+  .pager a:hover{background:var(--surface-2);}
+  .pager .current{background:var(--ink);color:#fff;border-color:var(--ink);}
+</style>
+
+<div class="pg-wrap">
+  <div class="pg-header">
+    <h1 class="pg-title"><i class="fas fa-triangle-exclamation"></i> Emergencies</h1>
+    <p class="pg-sub">Emergency reports from landlords — Admin/Staff only.</p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-pill red"><div class="num">{{ open_count }}</div><div class="lbl">Open</div></div>
+    <div class="stat-pill green"><div class="num">{{ closed_count }}</div><div class="lbl">Closed</div></div>
+    <div class="stat-pill"><div class="num">{{ total_count }}</div><div class="lbl">Total reported</div></div>
+  </div>
+
+  <div class="tab-row">
+    <a href="?status=open" class="tab-chip {% if status_filter == 'open' %}active red-active{% endif %}">Open</a>
+    <a href="?status=closed" class="tab-chip {% if status_filter == 'closed' %}active{% endif %}">Closed</a>
+  </div>
+
+  {% if emergencies %}
+    {% for em in emergencies %}
+    <div class="emg-card {% if em.status == 'open' %}is-open{% endif %}">
+      <div class="emg-top">
+        <div>
+          <p class="emg-prop-name">{{ em.property.name }}</p>
+          <div class="emg-prop-sub">{{ em.property.address }} &middot; {{ em.property.district }}</div>
+        </div>
+        <span class="emg-status {{ em.status }}">
+          {% if em.status == 'open' %}<i class="fas fa-circle" style="font-size:.5rem;"></i> Open{% else %}<i class="fas fa-check"></i> Closed{% endif %}
+        </span>
+      </div>
+
+      <div class="emg-meta">
+        <strong>Reported by:</strong> {{ em.reported_by.get_full_name|default:em.reported_by.username }}
+        {% if em.reported_by.userprofile.phone_number %} &middot; {{ em.reported_by.userprofile.phone_number }}{% endif %}
+        {% if em.reported_by.email %} &middot; {{ em.reported_by.email }}{% endif %}
+        <br>
+        <strong>Reported at:</strong> {{ em.created_at|date:"M d, Y \a\t g:i A" }} ({{ em.created_at|timesince }} ago)
+      </div>
+
+      <div class="emg-message">{{ em.message }}</div>
+
+      <div class="emg-foot">
+        <a href="{% url 'admin_view_property' em.property.id %}" style="font-size:.78rem;font-weight:700;color:var(--accent);text-decoration:none;">View property <i class="fas fa-arrow-right"></i></a>
+
+        {% if em.status == 'open' %}
+        <form method="POST" action="{% url 'close_emergency' em.id %}" onsubmit="return confirm('Close this emergency report? Only do this once the situation has been resolved.');">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="list">
+          <button type="submit" class="emg-close-btn"><i class="fas fa-check"></i> Close Emergency</button>
+        </form>
+        {% else %}
+        <span class="emg-closed-note">
+          Closed by {{ em.closed_by.get_full_name|default:em.closed_by.username|default:"—" }}
+          {% if em.closed_at %} on {{ em.closed_at|date:"M d, Y \a\t g:i A" }}{% endif %}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if emergencies.has_other_pages %}
+    <div class="pager">
+      {% if emergencies.has_previous %}
+        <a href="?status={{ status_filter }}&page={{ emergencies.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+      {% endif %}
+      {% for p in page_range %}
+        {% if p == emergencies.number %}
+          <span class="current">{{ p }}</span>
+        {% else %}
+          <a href="?status={{ status_filter }}&page={{ p }}">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if emergencies.has_next %}
+        <a href="?status={{ status_filter }}&page={{ emergencies.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <i class="fas fa-shield-heart"></i>
+      {% if status_filter == 'open' %}No active emergencies right now.{% else %}No closed emergencies yet.{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

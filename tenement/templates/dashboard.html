@@ -1215,6 +1215,33 @@
        ADMIN DASHBOARD
   ══════════════════════════════════════════════════════ -->
 
+  {% if open_emergency_count %}
+  <div class="fade" style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;font-size:.95rem;font-weight:800;color:#991b1b;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-triangle-exclamation"></i> Active Emergencies <span class="chip red">{{ open_emergency_count }}</span>
+      </h3>
+      <a href="{% url 'admin_manage_emergencies' %}" style="font-size:.78rem;font-weight:700;color:#991b1b;text-decoration:none;">View all <i class="fas fa-arrow-right"></i></a>
+    </div>
+    {% for em in recent_emergencies %}
+    <div style="background:#fff;border:1px solid #fca5a5;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);">{{ em.property.name }}</div>
+        <div style="font-size:.76rem;color:var(--ink-3);margin-top:2px;">
+          Reported by {{ em.reported_by.get_full_name|default:em.reported_by.username }}{% if em.reported_by.userprofile.phone_number %} · {{ em.reported_by.userprofile.phone_number }}{% endif %} · {{ em.created_at|timesince }} ago
+        </div>
+        <div style="font-size:.8rem;color:var(--ink-2);margin-top:6px;">{{ em.message|truncatechars:140 }}</div>
+      </div>
+      <form method="POST" action="{% url 'close_emergency' em.id %}" onsubmit="return confirm('Close this emergency report? Only do this once the situation has been resolved.');" style="flex-shrink:0;">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="list">
+        <button type="submit" class="btn-ghost" style="background:#991b1b;color:#fff;border:none;font-size:.74rem;padding:6px 12px;white-space:nowrap;">Close</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="stats-grid cols-4">
     <div class="stat-card c-blue fade fade-1">
       <div class="stat-top">
@@ -1828,6 +1855,34 @@
   <!-- ══════════════════════════════════════════════════════
        STAFF DASHBOARD
   ══════════════════════════════════════════════════════ -->
+
+  {% if open_emergency_count %}
+  <div class="fade" style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;font-size:.95rem;font-weight:800;color:#991b1b;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-triangle-exclamation"></i> Active Emergencies <span class="chip red">{{ open_emergency_count }}</span>
+      </h3>
+      <a href="{% url 'admin_manage_emergencies' %}" style="font-size:.78rem;font-weight:700;color:#991b1b;text-decoration:none;">View all <i class="fas fa-arrow-right"></i></a>
+    </div>
+    {% for em in recent_emergencies %}
+    <div style="background:#fff;border:1px solid #fca5a5;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);">{{ em.property.name }}</div>
+        <div style="font-size:.76rem;color:var(--ink-3);margin-top:2px;">
+          Reported by {{ em.reported_by.get_full_name|default:em.reported_by.username }}{% if em.reported_by.userprofile.phone_number %} · {{ em.reported_by.userprofile.phone_number }}{% endif %} · {{ em.created_at|timesince }} ago
+        </div>
+        <div style="font-size:.8rem;color:var(--ink-2);margin-top:6px;">{{ em.message|truncatechars:140 }}</div>
+      </div>
+      <form method="POST" action="{% url 'close_emergency' em.id %}" onsubmit="return confirm('Close this emergency report? Only do this once the situation has been resolved.');" style="flex-shrink:0;">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="list">
+        <button type="submit" class="btn-ghost" style="background:#991b1b;color:#fff;border:none;font-size:.74rem;padding:6px 12px;white-space:nowrap;">Close</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="stats-grid cols-4">
     <div class="stat-card c-blue fade fade-1">
       <div class="stat-top">
@@ -2233,6 +2288,36 @@
   ══════════════════════════════════════════════════════ -->
   <div class="landlord-desktop-content">
 
+  {% if active_emergencies %}
+    {% for em in active_emergencies %}
+    <div class="notice fade" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <i class="fas fa-triangle-exclamation" style="margin-top:2px;"></i>
+        <div>
+          <strong>Emergency reported at "{{ em.property.name }}"</strong>
+          <p style="margin:2px 0 0;font-size:.82rem;">BAC Grid staff and admin were notified on {{ em.created_at|date:"M d, Y \a\t g:i A" }}. This stays flagged on the GIS map until it's closed.</p>
+        </div>
+      </div>
+      <form method="POST" action="{% url 'close_emergency' em.id %}" onsubmit="return confirm('Close this emergency report? Only do this once the situation has been resolved.');">
+        {% csrf_token %}
+        <button type="submit" class="btn-ghost" style="background:#991b1b;color:#fff;border:none;white-space:nowrap;">Close Emergency</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if properties %}
+  <div class="notice fade" style="background:var(--red-dim);border:1px solid var(--red);color:var(--red);display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-bell" style="font-size:1.1rem;"></i>
+      <span>Fire, security incident, structural danger or other emergency at one of your properties? Report it and BAC Grid staff/admin are notified immediately.</span>
+    </div>
+    <button type="button" class="btn-ghost" style="background:var(--red);color:#fff;border:none;white-space:nowrap;" onclick="openEmergencyModal()">
+      <i class="fas fa-triangle-exclamation"></i> Report Emergency
+    </button>
+  </div>
+  {% endif %}
+
   <div class="stats-grid cols-3">
     <div class="stat-card c-green fade fade-1">
       <div class="stat-top">
@@ -2599,6 +2684,75 @@
     <a href="{% url 'landlord_payments' %}" class="cta-btn">View My Payments <i class="fas fa-arrow-right"></i></a>
   </div>
   </div>
+
+  {% if properties %}
+  <div class="emg-modal-backdrop" id="emergencyModalBackdrop" onclick="closeEmergencyModal(event)">
+    <div class="emg-modal" onclick="event.stopPropagation();">
+      <div class="emg-modal-head">
+        <h3><i class="fas fa-triangle-exclamation"></i> Report an Emergency</h3>
+        <button type="button" class="emg-modal-close" onclick="closeEmergencyModal()" aria-label="Close">&times;</button>
+      </div>
+      <form method="POST" action="{% url 'report_emergency' %}">
+        {% csrf_token %}
+        <div class="emg-modal-body">
+          <p class="emg-modal-sub">This immediately emails and notifies BAC Grid staff and admin, and flags the property on their GIS map. Use this only for genuine emergencies — fire, security incident, structural danger, or similar.</p>
+
+          {% if properties|length > 1 %}
+          <label class="emg-field-label" for="emergencyPropertySelect">Which property?</label>
+          <select name="property_id" id="emergencyPropertySelect" class="emg-select" required>
+            <option value="" disabled selected>Select a property…</option>
+            {% for prop in properties %}
+              <option value="{{ prop.id }}" {% if prop.id in properties_with_emergency_ids %}disabled{% endif %}>
+                {{ prop.name }}{% if prop.id in properties_with_emergency_ids %} (emergency already active){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          {% else %}
+            {% with prop=properties.0 %}
+            <label class="emg-field-label">Property</label>
+            <div class="emg-static-value">{{ prop.name }}</div>
+            <input type="hidden" name="property_id" value="{{ prop.id }}">
+            {% endwith %}
+          {% endif %}
+
+          <label class="emg-field-label" for="emergencyMessage">What's happening?</label>
+          <textarea name="message" id="emergencyMessage" class="emg-textarea" rows="4" required placeholder="Describe the emergency and any details responders should know…"></textarea>
+        </div>
+        <div class="emg-modal-foot">
+          <button type="button" class="btn-ghost" onclick="closeEmergencyModal()">Cancel</button>
+          <button type="submit" class="btn-ghost" style="background:var(--red);color:#fff;border:none;">
+            <i class="fas fa-triangle-exclamation"></i> Send Emergency Report
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <style>
+    .emg-modal-backdrop{display:none;position:fixed;inset:0;background:rgba(11,18,32,.55);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+    .emg-modal-backdrop.open{display:flex;}
+    .emg-modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);max-width:440px;width:100%;overflow:hidden;}
+    .emg-modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);}
+    .emg-modal-head h3{margin:0;font-size:1rem;font-weight:800;color:var(--red);display:flex;align-items:center;gap:8px;}
+    .emg-modal-close{background:none;border:none;font-size:1.4rem;line-height:1;color:var(--ink-3);cursor:pointer;padding:0 4px;}
+    .emg-modal-body{padding:16px 20px;}
+    .emg-modal-sub{font-size:.78rem;color:var(--ink-3);margin:0 0 14px;line-height:1.5;}
+    .emg-field-label{display:block;font-size:.78rem;font-weight:700;color:var(--ink-2);margin-bottom:6px;}
+    .emg-static-value{font-size:.86rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:14px;}
+    .emg-select,.emg-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:.86rem;font-family:inherit;color:var(--ink);margin-bottom:14px;box-sizing:border-box;}
+    .emg-select:focus,.emg-textarea:focus{outline:none;border-color:var(--red);}
+    .emg-textarea{resize:vertical;min-height:90px;}
+    .emg-modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:var(--surface-2);}
+  </style>
+  <script>
+    function openEmergencyModal() {
+      document.getElementById('emergencyModalBackdrop').classList.add('open');
+    }
+    function closeEmergencyModal(e) {
+      if (e) e.preventDefault();
+      document.getElementById('emergencyModalBackdrop').classList.remove('open');
+    }
+  </script>
+  {% endif %}
 
   {% endif %}
 

@@ -139,6 +139,11 @@ urlpatterns = [
     path('reset-password/', views.reset_password, name='reset_password'),
     path('resend-forgot-password-otp/', views.resend_forgot_password_otp, name='resend_forgot_password_otp'),
 
+    # ── Emergencies ─────────────────────────────────────────────
+    path('emergency/report/', views.report_emergency, name='report_emergency'),
+    path('emergency/<int:emergency_id>/close/', views.close_emergency, name='close_emergency'),
+    path('management/emergencies/', views.admin_manage_emergencies, name='admin_manage_emergencies'),
+
     # ── Bye-Law Pages ─────────────────────────────────────────────────────────────
     path('bylaws/', views.bylaw_preliminary, name='bylaw_preliminary'),
     path('bylaws/enabling-law/', views.bylaw_enabling_law, name='bylaw_enabling_law'),

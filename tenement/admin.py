@@ -1,4 +1,3 @@
-
 # Register your models here.
 from django.contrib import admin
 from django.contrib.auth.models import User
@@ -15,6 +14,7 @@ from .models import (
     Announcement,
     UserAnnouncementRead,
     OTP,
+    PropertyEmergency,
 )
 
 
@@ -325,4 +325,32 @@ class OTPAdmin(admin.ModelAdmin):
         return timezone.now() <= obj.expires_at
 
     def has_add_permission(self, request):
+        return False
+
+
+# ---------------------------------------------------------------------------
+# PropertyEmergency
+# ---------------------------------------------------------------------------
+@admin.register(PropertyEmergency)
+class PropertyEmergencyAdmin(admin.ModelAdmin):
+    list_display = ("property", "reported_by", "status", "created_at", "closed_at", "closed_by")
+    list_filter = ("status",)
+    search_fields = ("property__name", "reported_by__username", "reported_by__email", "message")
+    readonly_fields = ("property", "reported_by", "created_at", "closed_at", "closed_by")
+    ordering = ("-created_at",)
+    fieldsets = (
+        ("Report", {
+            "fields": ("property", "reported_by", "message"),
+        }),
+        ("Resolution", {
+            "fields": ("status", "closed_by", "closed_at"),
+        }),
+        ("Metadata", {
+            "fields": ("created_at",),
+            "classes": ("collapse",),
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Emergencies are only ever created from the landlord dashboard.
         return False
