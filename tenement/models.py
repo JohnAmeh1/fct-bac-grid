@@ -443,6 +443,11 @@ class PropertyEmergency(models.Model):
     def __str__(self):
         return f"Emergency at {self.property.name} — {self.get_status_display()}"
 
-    @property
+    # Same shadowing issue Payment already works around: this model has a
+    # field literally named `property`, which shadows the `property`
+    # builtin for the rest of this class body — so `@property` here would
+    # try to decorate with the ForeignKey field instead. Use the `_property`
+    # alias (defined near the top of this file) instead of the builtin.
+    @_property
     def is_open(self):
         return self.status == 'open'
