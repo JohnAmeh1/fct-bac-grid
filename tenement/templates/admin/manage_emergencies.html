@@ -53,11 +53,8 @@
         {% endif %}
       </div>
 
-      {% if em.message %}
-      <div class="emg-message">{{ em.message|linebreaksbr }}</div>
-      {% else %}
-      <div class="emg-message none">No details provided.</div>
-      {% endif %}
+      <div class="emg-message" style="font-weight:700;">{{ em.type_label }}</div>
+      {% if em.message %}<div class="emg-message">{{ em.message|linebreaksbr }}</div>{% endif %}
 
       <div class="emg-foot">
         <div class="emg-links">

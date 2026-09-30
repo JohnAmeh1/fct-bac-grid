@@ -2103,9 +2103,11 @@ def _send_emergency_alert_email(emergency, dashboard_url):
     else:
         location = "Location unavailable (no GPS coordinates on this property)"
 
-    subject = f"EMERGENCY ALERT – {prop.name} – FCT BAC Grid"
+    subject = f"EMERGENCY ALERT – {emergency.type_name} – {prop.name} – FCT BAC Grid"
     message = (
         "An emergency alert has been raised on FCT BAC Grid.\n\n"
+        "TYPE OF EMERGENCY\n"
+        f"    {emergency.type_label}\n\n"
         "LANDLORD\n"
         f"    Name:  {_display_name(landlord)}\n"
         f"    Phone: {landlord.userprofile.phone_number or 'Not provided'}\n"
@@ -2117,7 +2119,6 @@ def _send_emergency_alert_email(emergency, dashboard_url):
         f"    Type:     {prop.get_property_type_display()}\n"
         f"    Location: {location}\n\n"
         f"REPORTED AT\n    {reported_at}\n\n"
-        f"DETAILS\n    {emergency.message or 'No details provided.'}\n\n"
         f"View and manage this alert:\n    {dashboard_url}\n"
     )
 
@@ -2142,7 +2143,7 @@ def _dispatch_emergency_alert(request, emergency):
     detail_path = reverse('admin_view_emergency', args=[emergency.id])
     try:
         _notify_emergency_managers(
-            f'EMERGENCY: {_display_name(emergency.reported_by)} reported an emergency at "{emergency.property.name}".',
+            f'EMERGENCY ({emergency.type_name}): {_display_name(emergency.reported_by)} reported an emergency at "{emergency.property.name}".',
             link=detail_path,
         )
     except Exception:
@@ -2221,7 +2222,7 @@ def report_emergency(request):
                     "could not be delivered. If this is urgent, please also call BAC GRID support.",
                 )
             return redirect('my_emergencies')
-        messages.error(request, "Please select one of your properties and try again.")
+        messages.error(request, "Please select one of your properties and the type of emergency, then try again.")
     else:
         form = EmergencyReportForm(user=request.user)
 

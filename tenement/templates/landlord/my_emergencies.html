@@ -38,11 +38,8 @@
         <strong>Sent:</strong> {{ em.created_at|date:"M d, Y \a\t g:i A" }} ({{ em.created_at|timesince }} ago)
       </div>
 
-      {% if em.message %}
-      <div class="emg-message">{{ em.message|linebreaksbr }}</div>
-      {% else %}
-      <div class="emg-message none">No details provided.</div>
-      {% endif %}
+      <div class="emg-message" style="font-weight:700;">{{ em.type_label }}</div>
+      {% if em.message %}<div class="emg-message">{{ em.message|linebreaksbr }}</div>{% endif %}
 
       <div class="emg-foot">
         <div class="emg-links">

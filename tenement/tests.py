@@ -745,7 +745,7 @@ from django.core.cache import cache
 from django.test import Client, override_settings
 from django.utils.html import escape
 
-from tenement.models import Emergency, Notification
+from tenement.models import Emergency, Notification, EMERGENCY_TYPES, EMERGENCY_TYPE_CHOICES
 
 
 class EmergencyTestBase(TestCase):
@@ -784,13 +784,15 @@ class EmergencyTestBase(TestCase):
             property_type='residential', latitude=Decimal('9.1'), longitude=Decimal('7.2'),
         )
 
-    def make_emergency(self, prop=None, reporter=None, message='Fire in the kitchen', **kwargs):
+    def make_emergency(self, prop=None, reporter=None, emergency_type='fire', **kwargs):
         prop = prop or self.prop
-        return Emergency.objects.create(property=prop, reported_by=reporter or prop.owner, message=message, **kwargs)
+        return Emergency.objects.create(
+            property=prop, reported_by=reporter or prop.owner, emergency_type=emergency_type, **kwargs
+        )
 
-    def report(self, user, prop, message='Fire in the kitchen'):
+    def report(self, user, prop, emergency_type='fire'):
         self.client.force_login(user)
-        return self.client.post(reverse('report_emergency'), {'property': prop.pk, 'message': message})
+        return self.client.post(reverse('report_emergency'), {'property': prop.pk, 'emergency_type': emergency_type})
 
 
 class EmergencySubmissionTests(EmergencyTestBase):
@@ -801,13 +803,55 @@ class EmergencySubmissionTests(EmergencyTestBase):
         self.assertEqual(alert.property, self.prop)
         self.assertEqual(alert.reported_by, self.landlord)
         self.assertEqual(alert.status, 'open')
-        self.assertEqual(alert.message, 'Fire in the kitchen')
+        self.assertEqual(alert.emergency_type, 'fire')
+        self.assertEqual(alert.message, '')
         self.assertIsNone(alert.closed_by)
         self.assertIsNone(alert.closed_at)
 
-    def test_message_is_optional(self):
-        self.report(self.landlord, self.prop, message='')
+    def test_every_emergency_type_can_be_submitted(self):
+        for key, _emoji, _name in EMERGENCY_TYPES:
+            cache.clear()  # keep the rate limiter out of this loop
+            Emergency.objects.all().delete()
+            self.report(self.landlord, self.prop, emergency_type=key)
+            self.assertEqual(Emergency.objects.get().emergency_type, key, key)
+
+    def test_emergency_type_is_required(self):
+        self.client.force_login(self.landlord)
+        for payload in ({'property': self.prop.pk}, {'property': self.prop.pk, 'emergency_type': ''}):
+            response = self.client.post(reverse('report_emergency'), payload)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('emergency_type', response.context['form'].errors)
+        self.assertEqual(Emergency.objects.count(), 0)
+
+    def test_unknown_emergency_type_is_rejected(self):
+        response = self.report(self.landlord, self.prop, emergency_type='alien_invasion')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('emergency_type', response.context['form'].errors)
+        self.assertEqual(Emergency.objects.count(), 0)
+
+    def test_free_text_details_are_ignored(self):
+        self.client.force_login(self.landlord)
+        self.client.post(reverse('report_emergency'), {
+            'property': self.prop.pk, 'emergency_type': 'flooding', 'message': 'typed details',
+        })
         self.assertEqual(Emergency.objects.get().message, '')
+
+    def test_report_page_has_type_dropdown_and_no_details_box(self):
+        self.client.force_login(self.landlord)
+        response = self.client.get(reverse('report_emergency'))
+        self.assertContains(response, 'name="emergency_type"')
+        self.assertNotContains(response, 'name="message"')
+        self.assertNotContains(response, '<textarea')
+        for _key, label in EMERGENCY_TYPE_CHOICES:
+            self.assertContains(response, label)
+
+    def test_dropdown_lists_the_eleven_types_in_order(self):
+        labels = [label for _key, label in EMERGENCY_TYPE_CHOICES]
+        self.assertEqual(labels, [
+            '🔥 Fire Outbreak', '🔫 Armed Robbery', '🏠 Theft / Burglary', '⚠️ Murder', '🚨 Kidnapping',
+            '🚗 Road Traffic Accident', '🏗️ Building Collapse', '🌊 Flooding',
+            '💥 Gas Explosion / Gas Leak', '🏥 Medical Emergency', '🏠 Domestic Violence',
+        ])
 
     def test_report_page_only_offers_the_landlords_own_properties(self):
         self.client.force_login(self.landlord)
@@ -826,14 +870,14 @@ class EmergencySubmissionTests(EmergencyTestBase):
 
     def test_cannot_submit_without_a_property(self):
         self.client.force_login(self.landlord)
-        response = self.client.post(reverse('report_emergency'), {'message': 'help'})
+        response = self.client.post(reverse('report_emergency'), {'emergency_type': 'fire'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Emergency.objects.count(), 0)
 
     def test_non_landlord_roles_cannot_report(self):
         for user in (self.admin, self.staff, self.field_staff, self.govt):
             self.client.force_login(user)
-            response = self.client.post(reverse('report_emergency'), {'property': self.prop.pk, 'message': 'x'})
+            response = self.client.post(reverse('report_emergency'), {'property': self.prop.pk, 'emergency_type': 'fire'})
             self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
         self.assertEqual(Emergency.objects.count(), 0)
 
@@ -866,7 +910,7 @@ class EmergencySubmissionTests(EmergencyTestBase):
 
 class EmergencyNotificationTests(EmergencyTestBase):
     def test_email_goes_to_admin_and_staff_with_landlord_property_and_dashboard_link(self):
-        self.report(self.landlord, self.prop, message='Roof is on fire')
+        self.report(self.landlord, self.prop, emergency_type='gas_explosion')
         alert = Emergency.objects.get()
 
         recipients = {addr for m in mail.outbox for addr in m.to}
@@ -880,7 +924,9 @@ class EmergencyNotificationTests(EmergencyTestBase):
         self.assertIn('ada@example.com', body)
         self.assertIn('12 Market Road', body)        # property details
         self.assertIn('Bwari', body)
-        self.assertIn('Roof is on fire', body)
+        self.assertIn('💥 Gas Explosion / Gas Leak', body)        # emergency type
+        self.assertIn('Gas Explosion / Gas Leak', mail.outbox[0].subject)
+        self.assertNotIn('DETAILS', body)
         self.assertIn('https://www.google.com/maps/search/?api=1&query=9.288472,7.390101', body)
         self.assertIn(f'http://testserver/management/emergencies/{alert.pk}/', body)  # dashboard link
         alert.refresh_from_db()
@@ -919,7 +965,7 @@ class EmergencyNotificationTests(EmergencyTestBase):
         self.client.force_login(self.landlord)
         with mock.patch('tenement.views.send_mail', side_effect=Exception('SMTP down')):
             response = self.client.post(
-                reverse('report_emergency'), {'property': self.prop.pk, 'message': 'x'}, follow=True
+                reverse('report_emergency'), {'property': self.prop.pk, 'emergency_type': 'fire'}, follow=True
             )
         self.assertContains(response, 'could not be delivered')
 
@@ -935,6 +981,7 @@ class EmergencyNotificationTests(EmergencyTestBase):
         for user in (self.admin, self.staff, self.field_staff):
             note = Notification.objects.get(user=user)
             self.assertIn('Ada Court', note.message)
+            self.assertIn('Fire Outbreak', note.message)
             self.assertEqual(note.link, reverse('admin_view_emergency', args=[alert.pk]))
         self.assertFalse(Notification.objects.filter(user=self.govt).exists())
         self.assertFalse(Notification.objects.filter(user=self.landlord).exists())
@@ -960,12 +1007,12 @@ class EmergencyPermissionTests(EmergencyTestBase):
             self.assertNotEqual(self.client.get(url).status_code, 200)
 
     def test_landlord_sees_only_their_own_alerts(self):
-        self.make_emergency(self.prop, message='mine-marker')
-        self.make_emergency(self.other_prop, message='theirs-marker')
+        self.make_emergency(self.prop, emergency_type='fire')
+        self.make_emergency(self.other_prop, emergency_type='flooding')
         self.client.force_login(self.landlord)
         response = self.client.get(reverse('my_emergencies'))
-        self.assertContains(response, 'mine-marker')
-        self.assertNotContains(response, 'theirs-marker')
+        self.assertContains(response, 'Fire Outbreak')
+        self.assertNotContains(response, 'Flooding')
 
     def test_landlord_can_view_own_alert_but_not_anothers(self):
         mine = self.make_emergency(self.prop)
@@ -1097,21 +1144,21 @@ class EmergencyStatusTests(EmergencyTestBase):
         self.assertEqual(alert.closed_at, first_time)
 
     def test_list_filters_by_status(self):
-        self.make_emergency(message='open-marker')
-        self.make_emergency(message='progress-marker', status='in_progress')
-        self.make_emergency(message='closed-marker', status='closed')
+        self.make_emergency(emergency_type='fire')                              # open
+        self.make_emergency(emergency_type='flooding', status='in_progress')
+        self.make_emergency(emergency_type='medical', status='closed')
         self.client.force_login(self.admin)
 
         def page(status):
             return self.client.get(reverse('manage_emergencies'), {'status': status})
 
-        self.assertContains(page('open'), 'open-marker')
-        self.assertNotContains(page('open'), 'closed-marker')
-        self.assertContains(page('in_progress'), 'progress-marker')
-        self.assertContains(page('closed'), 'closed-marker')
-        for marker in ('open-marker', 'progress-marker', 'closed-marker'):
+        self.assertContains(page('open'), 'Fire Outbreak')
+        self.assertNotContains(page('open'), 'Medical Emergency')
+        self.assertContains(page('in_progress'), 'Flooding')
+        self.assertContains(page('closed'), 'Medical Emergency')
+        for marker in ('Fire Outbreak', 'Flooding', 'Medical Emergency'):
             self.assertContains(page('all'), marker)
-        self.assertContains(page('bogus'), 'open-marker')  # unknown filter falls back to Open
+        self.assertContains(page('bogus'), 'Fire Outbreak')  # unknown filter falls back to Open
 
     def test_status_counts_on_list_page(self):
         self.make_emergency()
@@ -1166,7 +1213,7 @@ class EmergencyMapLinkTests(EmergencyTestBase):
 
 class EmergencyStaffPageContentTests(EmergencyTestBase):
     def test_list_shows_landlord_property_date_and_status(self):
-        self.make_emergency(self.prop, message='Gas smell in the hallway')
+        self.make_emergency(self.prop, emergency_type='gas_explosion')
         self.client.force_login(self.admin)
         response = self.client.get(reverse('manage_emergencies'))
         self.assertContains(response, 'Ada Tester')
@@ -1174,12 +1221,25 @@ class EmergencyStaffPageContentTests(EmergencyTestBase):
         self.assertContains(response, 'ada@example.com')
         self.assertContains(response, 'Ada Court')
         self.assertContains(response, '12 Market Road')
-        self.assertContains(response, 'Gas smell in the hallway')
+        self.assertContains(response, 'Gas Explosion / Gas Leak')
         self.assertContains(response, 'Open')
         self.assertContains(response, 'View details')
         self.assertContains(response, 'Close Emergency')
 
-    def test_message_is_html_escaped(self):
+    def test_detail_page_shows_the_emergency_type(self):
+        alert = self.make_emergency(self.prop, emergency_type='kidnapping')
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse('admin_view_emergency', args=[alert.pk])), '🚨 Kidnapping')
+        self.client.force_login(self.landlord)
+        self.assertContains(self.client.get(reverse('view_emergency', args=[alert.pk])), '🚨 Kidnapping')
+
+    def test_legacy_alert_without_a_type_still_renders(self):
+        alert = self.make_emergency(emergency_type='')
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse('manage_emergencies')), 'type not recorded')
+        self.assertEqual(self.client.get(reverse('admin_view_emergency', args=[alert.pk])).status_code, 200)
+
+    def test_legacy_details_are_html_escaped(self):
         self.make_emergency(message='<script>alert(1)</script>')
         self.client.force_login(self.admin)
         response = self.client.get(reverse('manage_emergencies'))

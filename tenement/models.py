@@ -422,6 +422,26 @@ EMERGENCY_STATUS_CHOICES = (
 )
 
 
+# (key, emoji, plain name). The dropdown label is "<emoji> <name>"; the plain
+# name is used where an emoji would be awkward (email subject lines, notifications).
+EMERGENCY_TYPES = (
+    ('fire',             '🔥', 'Fire Outbreak'),
+    ('armed_robbery',    '🔫', 'Armed Robbery'),
+    ('theft_burglary',   '🏠', 'Theft / Burglary'),
+    ('murder',           '⚠️', 'Murder'),
+    ('kidnapping',       '🚨', 'Kidnapping'),
+    ('road_accident',    '🚗', 'Road Traffic Accident'),
+    ('building_collapse', '🏗️', 'Building Collapse'),
+    ('flooding',         '🌊', 'Flooding'),
+    ('gas_explosion',    '💥', 'Gas Explosion / Gas Leak'),
+    ('medical',          '🏥', 'Medical Emergency'),
+    ('domestic_violence', '🏠', 'Domestic Violence'),
+)
+EMERGENCY_TYPE_CHOICES = tuple((key, f"{emoji} {name}") for key, emoji, name in EMERGENCY_TYPES)
+EMERGENCY_TYPE_NAMES = {key: name for key, _emoji, name in EMERGENCY_TYPES}
+EMERGENCY_TYPE_EMOJIS = {key: emoji for key, emoji, _name in EMERGENCY_TYPES}
+
+
 class Emergency(models.Model):
     """
     An emergency alert raised by a landlord for one of their own properties.
@@ -432,7 +452,15 @@ class Emergency(models.Model):
     """
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='emergencies')
     reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emergencies_reported')
-    message = models.TextField(blank=True, help_text='Optional details typed by the landlord when raising the alert.')
+    # Blank only so alerts raised before types existed stay valid; the landlord
+    # form (EmergencyReportForm) makes it mandatory for every new alert.
+    emergency_type = models.CharField(
+        max_length=30, choices=EMERGENCY_TYPE_CHOICES, blank=True, default='', db_index=True,
+        help_text='What kind of emergency the landlord selected when raising the alert.',
+    )
+    # Legacy: free-text details from alerts raised before emergency types were
+    # introduced. No longer collected; kept so old alerts lose no information.
+    message = models.TextField(blank=True, help_text='Legacy free-text details (no longer collected).')
     status = models.CharField(max_length=20, choices=EMERGENCY_STATUS_CHOICES, default='open', db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -458,7 +486,7 @@ class Emergency(models.Model):
         indexes = [models.Index(fields=['status', '-created_at'])]
 
     def __str__(self):
-        return f"[{self.get_status_display()}] {self.property.name} — {self.reported_by.username}"
+        return f"[{self.get_status_display()}] {self.type_name} — {self.property.name} — {self.reported_by.username}"
 
     # NOTE: this model has a field called `property`, so the built-in
     # `property` decorator is shadowed inside the class body — use the
@@ -466,6 +494,16 @@ class Emergency(models.Model):
     @_property
     def is_active(self):
         return self.status != 'closed'
+
+    @_property
+    def type_name(self):
+        """Plain name of the emergency type (no emoji) — safe for subjects and notifications."""
+        return EMERGENCY_TYPE_NAMES.get(self.emergency_type, 'Emergency (type not recorded)')
+
+    @_property
+    def type_label(self):
+        """Emoji + name, e.g. "🔥 Fire Outbreak"; a generic siren for legacy alerts with no type."""
+        return f"{EMERGENCY_TYPE_EMOJIS.get(self.emergency_type, '🚨')} {self.type_name}"
 
     @_property
     def has_coordinates(self):

@@ -22,11 +22,8 @@
 
   <div class="detail-card" style="margin-bottom:14px;">
     <h2>What you reported</h2>
-    {% if emergency.message %}
-    <div class="emg-message" style="margin-bottom:0;">{{ emergency.message|linebreaksbr }}</div>
-    {% else %}
-    <div class="emg-message none" style="margin-bottom:0;">No details provided.</div>
-    {% endif %}
+    <div class="emg-message" style="margin-bottom:0;font-weight:700;font-size:1.05rem;">{{ emergency.type_label }}</div>
+    {% if emergency.message %}<div class="emg-message" style="margin:10px 0 0;">{{ emergency.message|linebreaksbr }}</div>{% endif %}
   </div>
 
   <div class="detail-card" style="margin-bottom:14px;">

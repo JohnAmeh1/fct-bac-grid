@@ -33,9 +33,9 @@
     </div>
 
     <div class="form-row">
-      <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
-      {{ form.message }}
-      {% for error in form.message.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      <label for="{{ form.emergency_type.id_for_label }}">{{ form.emergency_type.label }}</label>
+      {{ form.emergency_type }}
+      {% for error in form.emergency_type.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
     </div>
 
     <div class="form-actions">
@@ -49,15 +49,25 @@
   (function () {
     var form = document.getElementById('emergency-form');
     var btn = document.getElementById('emergency-submit');
-    var select = form.querySelector('select');
+    var propertySelect = document.getElementById('{{ form.property.id_for_label }}');
+    var typeSelect = document.getElementById('{{ form.emergency_type.id_for_label }}');
+    function chosen(select) {
+      return select && select.selectedIndex > 0 ? select.options[select.selectedIndex].text : '';
+    }
     form.addEventListener('submit', function (e) {
-      var label = select && select.selectedIndex > 0 ? select.options[select.selectedIndex].text : '';
-      if (!label) {
+      var propertyLabel = chosen(propertySelect);
+      var typeLabel = chosen(typeSelect);
+      if (!propertyLabel) {
         e.preventDefault();
         alert('Please select the affected property first.');
         return;
       }
-      if (!confirm('Send an EMERGENCY ALERT for:\n\n' + label + '\n\nBAC GRID staff will be notified immediately. Only continue if this is a real emergency.')) {
+      if (!typeLabel) {
+        e.preventDefault();
+        alert('Please select the type of emergency.');
+        return;
+      }
+      if (!confirm('Send an EMERGENCY ALERT?\n\nType: ' + typeLabel + '\nProperty: ' + propertyLabel + '\n\nBAC GRID staff will be notified immediately. Only continue if this is a real emergency.')) {
         e.preventDefault();
         return;
       }

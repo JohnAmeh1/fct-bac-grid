@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement, SupportTicket, Emergency
+from .models import UserProfile, Property, Complaint, SiteConfiguration, PaymentRate, Payment, Announcement, SupportTicket, Emergency, EMERGENCY_TYPE_CHOICES
 import re
 
 # ---------------------------------------------------------------------------
@@ -407,20 +407,20 @@ class EmergencyReportForm(forms.ModelForm):
     "Select a valid choice" — ownership is enforced here, server-side, not
     just by what the <select> happens to display.
     """
-    message = forms.CharField(
-        required=False,
-        max_length=1000,
-        label='What is happening? (optional)',
-        widget=forms.Textarea(attrs={
-            'rows': 4,
-            'maxlength': 1000,
-            'placeholder': 'e.g. Fire in the building, flooding, break-in, gas leak… Add anything responders should know.',
-        }),
+    # No free-text details: the landlord only picks the property and one of the
+    # fixed emergency types. ChoiceField rejects any value outside that list.
+    emergency_type = forms.ChoiceField(
+        choices=[('', 'Select the type of emergency')] + list(EMERGENCY_TYPE_CHOICES),
+        label='Type of emergency',
+        error_messages={
+            'required': 'Please select the type of emergency.',
+            'invalid_choice': 'Select a valid type of emergency.',
+        },
     )
 
     class Meta:
         model = Emergency
-        fields = ['property', 'message']
+        fields = ['property', 'emergency_type']
         labels = {'property': 'Affected property'}
 
     def __init__(self, *args, user=None, **kwargs):
@@ -433,9 +433,6 @@ class EmergencyReportForm(forms.ModelForm):
         # Pre-select when there is only one choice so a stressed user has one less thing to do.
         if not self.is_bound and owned.count() == 1:
             field.initial = owned.first().pk
-
-    def clean_message(self):
-        return (self.cleaned_data.get('message') or '').strip()
 
 
 class SiteConfigurationForm(forms.ModelForm):
