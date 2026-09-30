@@ -1,45 +1,67 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Report an Emergency | FCT BAC Grid{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}Report an Emergency
+| FCT BAC Grid{% endblock %} {% block content %}
 
 <div class="pg-wrap narrow">
-  <a href="{% url 'dashboard' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back to dashboard</a>
+  <a href="{% url 'dashboard' %}" class="back-link"
+    ><i class="fas fa-arrow-left"></i> Back to dashboard</a
+  >
 
   <div class="pg-header">
     <div>
-      <h1 class="pg-title"><i class="fas fa-triangle-exclamation"></i> Report an Emergency</h1>
-      <p class="pg-sub">Alert BAC GRID staff about an emergency at one of your properties.</p>
+      <h1 class="pg-title">
+        <i class="fas fa-triangle-exclamation"></i> Report an Emergency
+      </h1>
+      <p class="pg-sub">
+        Alert BAC GRID staff about an emergency at one of your properties.
+      </p>
     </div>
   </div>
 
   <div class="warn-banner">
     <i class="fas fa-circle-exclamation"></i>
-    <div>Use this only for a genuine emergency. Staff and administrators are notified immediately by email and on their dashboard.
-    For anything else, please use <a href="{% url 'submit_complaint' %}" style="color:inherit;font-weight:700;">Submit Report</a>.</div>
+    <div>
+      Use this only for genuine, immediate life-safety emergencies. Submitting a
+      false or malicious emergency report is a federal offense punishable by
+      fines, prosecution, and arrest under law. All submissions are logged and
+      flagged instantly to law enforcement authorities. For all non-emergency
+      issues, please use
+      <a
+        href="{% url 'submit_complaint' %}"
+        style="color: inherit; font-weight: 700"
+        >Submit Report</a
+      >.
+    </div>
   </div>
 
   <form method="POST" class="form-card" id="emergency-form" novalidate>
-    {% csrf_token %}
-
-    {% if form.non_field_errors %}<div class="field-error" style="margin-bottom:12px;">{{ form.non_field_errors }}</div>{% endif %}
+    {% csrf_token %} {% if form.non_field_errors %}
+    <div class="field-error" style="margin-bottom: 12px">
+      {{ form.non_field_errors }}
+    </div>
+    {% endif %}
 
     <div class="form-row">
-      <label for="{{ form.property.id_for_label }}">{{ form.property.label }}</label>
-      {{ form.property }}
-      {% for error in form.property.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      <label for="{{ form.property.id_for_label }}"
+        >{{ form.property.label }}</label
+      >
+      {{ form.property }} {% for error in form.property.errors %}
+      <div class="field-error">{{ error }}</div>
+      {% endfor %}
     </div>
 
     <div class="form-row">
-      <label for="{{ form.emergency_type.id_for_label }}">{{ form.emergency_type.label }}</label>
-      {{ form.emergency_type }}
-      {% for error in form.emergency_type.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      <label for="{{ form.emergency_type.id_for_label }}"
+        >{{ form.emergency_type.label }}</label
+      >
+      {{ form.emergency_type }} {% for error in form.emergency_type.errors %}
+      <div class="field-error">{{ error }}</div>
+      {% endfor %}
     </div>
 
     <div class="form-actions">
-      <button type="submit" class="btn btn-sos" id="emergency-submit"><i class="fas fa-triangle-exclamation"></i> Send Emergency Alert</button>
+      <button type="submit" class="btn btn-sos" id="emergency-submit">
+        <i class="fas fa-triangle-exclamation"></i> Send Emergency Alert
+      </button>
       <a href="{% url 'dashboard' %}" class="btn btn-ghost">Cancel</a>
     </div>
   </form>
@@ -47,31 +69,45 @@
 
 <script>
   (function () {
-    var form = document.getElementById('emergency-form');
-    var btn = document.getElementById('emergency-submit');
-    var propertySelect = document.getElementById('{{ form.property.id_for_label }}');
-    var typeSelect = document.getElementById('{{ form.emergency_type.id_for_label }}');
+    var form = document.getElementById("emergency-form");
+    var btn = document.getElementById("emergency-submit");
+    var propertySelect = document.getElementById(
+      "{{ form.property.id_for_label }}",
+    );
+    var typeSelect = document.getElementById(
+      "{{ form.emergency_type.id_for_label }}",
+    );
     function chosen(select) {
-      return select && select.selectedIndex > 0 ? select.options[select.selectedIndex].text : '';
+      return select && select.selectedIndex > 0
+        ? select.options[select.selectedIndex].text
+        : "";
     }
-    form.addEventListener('submit', function (e) {
+    form.addEventListener("submit", function (e) {
       var propertyLabel = chosen(propertySelect);
       var typeLabel = chosen(typeSelect);
       if (!propertyLabel) {
         e.preventDefault();
-        alert('Please select the affected property first.');
+        alert("Please select the affected property first.");
         return;
       }
       if (!typeLabel) {
         e.preventDefault();
-        alert('Please select the type of emergency.');
+        alert("Please select the type of emergency.");
         return;
       }
-      if (!confirm('Send an EMERGENCY ALERT?\n\nType: ' + typeLabel + '\nProperty: ' + propertyLabel + '\n\nBAC GRID staff will be notified immediately. Only continue if this is a real emergency.')) {
+      if (
+        !confirm(
+          "Send an EMERGENCY ALERT?\n\nType: " +
+            typeLabel +
+            "\nProperty: " +
+            propertyLabel +
+            "\n\nBAC GRID staff will be notified immediately. Only continue if this is a real emergency.",
+        )
+      ) {
         e.preventDefault();
         return;
       }
-      btn.disabled = true;               // blocks accidental double-taps
+      btn.disabled = true; // blocks accidental double-taps
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
     });
   })();
