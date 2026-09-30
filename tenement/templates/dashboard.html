@@ -1175,7 +1175,7 @@
     <span class="emg-sos-icon"><i class="fas fa-triangle-exclamation"></i></span>
     <div class="emg-sos-copy">
       <strong>Emergency at your property?</strong>
-      <span>Alert BAC GRID staff immediately.{% if active_emergency_count %} You have {{ active_emergency_count }} active alert{{ active_emergency_count|pluralize }} — <a href="{% url 'my_emergencies' %}">view</a>.{% else %} <a href="{% url 'my_emergencies' %}">My alerts</a>{% endif %}</span>
+      <span>Alert BAC GRID immediately.{% if active_emergency_count %} You have {{ active_emergency_count }} active alert{{ active_emergency_count|pluralize }} — <a href="{% url 'my_emergencies' %}">view</a>.{% else %} <a href="{% url 'my_emergencies' %}">My alerts</a>{% endif %}</span>
     </div>
     <a class="emg-sos-btn" href="{% url 'report_emergency' %}"><i class="fas fa-triangle-exclamation"></i> Emergency</a>
   </div>
